@@ -1,6 +1,7 @@
 package gwda
 
 import (
+	"encoding/json"
 	"errors"
 	"net/url"
 )
@@ -43,7 +44,7 @@ func (c *Client) NewSession(bundleId string) (s *Session, err error) {
 	// body["desiredCapabilities"] = map[string]string{"bundleId": bundleId}
 	capabilities := newWdaBody().set("bundleId", bundleId).set("shouldWaitForQuiescence", false)
 	body := newWdaBody().set("capabilities", capabilities)
-	wdaResp, err := internalPost("create session", urlJoin(c.deviceURL, "session"), body)
+	wdaResp, err := internalPost("New Session", urlJoin(c.deviceURL, "session"), body)
 	if err != nil {
 		return nil, err
 	}
@@ -66,7 +67,7 @@ func (c *Client) NewSession(bundleId string) (s *Session, err error) {
 
 // Status Checking service status
 func (c *Client) Status() (sJson string, err error) {
-	wdaResp, err := internalGet("检查服务状态", urlJoin(c.deviceURL, "status"))
+	wdaResp, err := internalGet("Status", urlJoin(c.deviceURL, "status"))
 	if err != nil {
 		return "", err
 	}
@@ -75,7 +76,7 @@ func (c *Client) Status() (sJson string, err error) {
 
 // HomeScreen Go to home screen
 func (c *Client) HomeScreen() (err error) {
-	wdaResp, err := internalPost("前往 Home 界面", urlJoin(c.deviceURL, "wda", "homescreen"), nil)
+	wdaResp, err := internalPost("Homescreen", urlJoin(c.deviceURL, "wda", "homescreen"), nil)
 	if err != nil {
 		return err
 	}
@@ -85,8 +86,9 @@ func (c *Client) HomeScreen() (err error) {
 }
 
 // HealthCheck
+// Health check might modify simulator state so it should only be called in-between testing sessions
 func (c *Client) HealthCheck() (err error) {
-	wdaResp, err := internalGet("Hit healthcheck", urlJoin(c.deviceURL, "wda", "healthcheck"))
+	wdaResp, err := internalGet("HealthCheck", urlJoin(c.deviceURL, "wda", "healthcheck"))
 	if err != nil {
 		return err
 	}
@@ -95,7 +97,7 @@ func (c *Client) HealthCheck() (err error) {
 
 // Locked
 func (c *Client) Locked() (isLocked bool, err error) {
-	wdaResp, err := internalGet("判断锁屏界面", urlJoin(c.deviceURL, "wda", "locked"))
+	wdaResp, err := internalGet("Locked", urlJoin(c.deviceURL, "wda", "locked"))
 	if err != nil {
 		return false, err
 	}
@@ -104,7 +106,7 @@ func (c *Client) Locked() (isLocked bool, err error) {
 
 // Unlock
 func (c *Client) Unlock() (err error) {
-	wdaResp, err := internalPost("触发解锁", urlJoin(c.deviceURL, "wda", "unlock"), nil)
+	wdaResp, err := internalPost("Unlock", urlJoin(c.deviceURL, "wda", "unlock"), nil)
 	if err != nil {
 		return err
 	}
@@ -113,7 +115,7 @@ func (c *Client) Unlock() (err error) {
 
 // Lock
 func (c *Client) Lock() (err error) {
-	wdaResp, err := internalPost("触发锁屏", urlJoin(c.deviceURL, "wda", "lock"), nil)
+	wdaResp, err := internalPost("Lock", urlJoin(c.deviceURL, "wda", "lock"), nil)
 	if err != nil {
 		return err
 	}
@@ -133,7 +135,7 @@ func (c *Client) Source(formattedAsJson ...bool) (s string, err error) {
 		q.Set("format", "json")
 		tmp.RawQuery = q.Encode()
 	}
-	wdaResp, err := internalGet("Source aka tree", urlJoin(tmp, "source"))
+	wdaResp, err := internalGet("Source", urlJoin(tmp, "source"))
 	if err != nil {
 		return "", err
 	}
@@ -142,11 +144,26 @@ func (c *Client) Source(formattedAsJson ...bool) (s string, err error) {
 
 // AccessibleSource
 func (c *Client) AccessibleSource() (sJson string, err error) {
-	wdaResp, err := internalGet("Source aka tree", urlJoin(c.deviceURL, "wda", "accessibleSource"))
+	wdaResp, err := internalGet("AccessibleSource", urlJoin(c.deviceURL, "wda", "accessibleSource"))
 	if err != nil {
 		return "", err
 	}
 	return wdaResp.getValue().String(), err
+}
+
+type WDAActiveAppInfo struct {
+	ProcessArguments struct {
+		Env  interface{}   `json:"env"`
+		Args []interface{} `json:"args"`
+	} `json:"processArguments"`
+	Name     string `json:"name"`
+	Pid      int    `json:"pid"`
+	BundleID string `json:"bundleId"`
+	_String  string
+}
+
+func (aai WDAActiveAppInfo) String() string {
+	return aai._String
 }
 
 // ActiveAppInfo
@@ -162,12 +179,15 @@ func (c *Client) AccessibleSource() (sJson string, err error) {
 //    "pid": 57,
 //    "bundleId": "com.apple.springboard"
 // }
-func (c *Client) ActiveAppInfo() (sJson string, err error) {
+func (c *Client) ActiveAppInfo() (wdaActiveAppInfo WDAActiveAppInfo, err error) {
 	wdaResp, err := internalGet("ActiveAppInfo", urlJoin(c.deviceURL, "wda", "activeAppInfo"))
 	if err != nil {
-		return "", err
+		return
 	}
-	return wdaResp.getValue().String(), nil
+	wdaActiveAppInfo._String = wdaResp.getValue().String()
+	err = json.Unmarshal([]byte(wdaActiveAppInfo._String), &wdaActiveAppInfo)
+	// err = json.Unmarshal(wdaResp.getValue2Bytes(), &wdaActiveAppInfo)
+	return
 }
 
 // TODO launchUnattached

@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+	"regexp"
 	"strings"
 	"time"
 )
@@ -41,6 +42,7 @@ func internalDo(actionName, method, url string, body wdaBody) (bsResp []byte, er
 	// 忽略 err 是因为在新建 Client 的时候已经校验了 URL 所以除此之外，应该不会出现其他错误
 	var bsBody []byte
 	if body != nil {
+		// body 已经通过 `newWdaBody` 进行初始化和修改，理论上也不存在 err
 		bsBody, err = json.Marshal(body)
 		if err != nil {
 			return nil, errors.New(fmt.Sprintf("%s 请求body错误 %s", actionName, err.Error()))
@@ -115,9 +117,15 @@ func (wdaResp wdaResponse) isReady() bool {
 func (wdaResp wdaResponse) getValue() gjson.Result {
 	return gjson.GetBytes(wdaResp, "value")
 }
+
+// func (wdaResp wdaResponse) getValue2Bytes() []byte {
+// 	return []byte(wdaResp.getValue().Raw)
+// }
+
 // func (wdaResp wdaResponse) getElementID() gjson.Result {
 // 	return wdaResp.getValue().get
 // }
+
 func (wdaResp wdaResponse) getSessionID() (sessionID string, err error) {
 	sessionID = wdaResp.getByPath("sessionId").String()
 	if sessionID == "" {
@@ -125,12 +133,28 @@ func (wdaResp wdaResponse) getSessionID() (sessionID string, err error) {
 	}
 	return
 }
+
 func (wdaResp wdaResponse) getErrMsg() error {
+	// {
+	//  "value" : {
+	//    "error" : "unknown error",
+	//    "message" : "Error Domain=com.facebook.WebDriverAgent Code=1 \"Timed out while waiting until the screen gets unlocked\" UserInfo={NSLocalizedDescription=Timed out while waiting until the screen gets unlocked}",
+	//    "traceback" : ""
+	//  },
+	//  "sessionId" : "215BB5C5-B189-496F-83B7-37CBBB2DC54E"
+	// }
 	wdaErrType := wdaResp.getByPath("value.error").String()
 	// if wdaErrType == "" && wdaResp.getValue().Type == gjson.Null {
 	if wdaErrType == "" {
 		return nil
 	}
 	wdaErrMsg := wdaResp.getByPath("value.message").String()
-	return errors.New(fmt.Sprintf("%s: %s", wdaErrType, wdaErrMsg))
+	errText := wdaErrMsg
+	// 获取 NSLocalizedDescription 的值
+	re := regexp.MustCompile(`{.+?=(.+?)}`)
+	subMatch := re.FindStringSubmatch(wdaErrMsg)
+	if subMatch != nil && len(subMatch) == 2 {
+		errText = subMatch[1]
+	}
+	return errors.New(fmt.Sprintf("%s: %s", wdaErrType, errText))
 }

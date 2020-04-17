@@ -1,6 +1,8 @@
 package gwda
 
-import "testing"
+import (
+	"testing"
+)
 
 func TestSession_DeviceInfo(t *testing.T) {
 	c, err := NewClient(deviceURL)
@@ -12,11 +14,13 @@ func TestSession_DeviceInfo(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	sJson, err := s.DeviceInfo()
+	dInfo, err := s.DeviceInfo()
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Log(sJson)
+	t.Log(dInfo)
+	t.Log(dInfo.Name)
+	t.Log(dInfo.UserInterfaceStyle)
 }
 
 func TestSession_BatteryInfo(t *testing.T) {
@@ -29,11 +33,13 @@ func TestSession_BatteryInfo(t *testing.T) {
 		t.Fatal(err)
 	}
 	Debug = true
-	sJson, err := s.BatteryInfo()
+	batteryInfo, err := s.BatteryInfo()
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Log(sJson)
+	t.Log(batteryInfo)
+	t.Log(batteryInfo.Level)
+	t.Log(batteryInfo.State)
 }
 
 func TestSession_WindowSize(t *testing.T) {
@@ -97,11 +103,13 @@ func TestSession_StatusBarSize(t *testing.T) {
 		t.Fatal(err)
 	}
 	Debug = true
-	sJson, err := s.StatusBarSize()
+	statusBarSize, err := s.StatusBarSize()
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Log(sJson)
+	t.Log(statusBarSize)
+	t.Log(statusBarSize.Width)
+	t.Log(statusBarSize.Height)
 }
 
 func TestSession_Tap(t *testing.T) {
@@ -211,6 +219,7 @@ func TestSession_AppState(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Log(state)
+	t.Log("app 是否前台活动中", state == WDAAppRunningFront)
 }
 
 func TestSession_SendKeys(t *testing.T) {
@@ -301,6 +310,23 @@ func TestSession_Lock(t *testing.T) {
 	}
 	Debug = true
 	err = s.Lock()
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestSession_Activate(t *testing.T) {
+	c, err := NewClient(deviceURL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	bundleId := "com.apple.Preferences"
+	s, err := c.NewSession(bundleId)
+	if err != nil {
+		t.Fatal(err)
+	}
+	Debug = true
+	err = s.Activate(bundleId)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -1,11 +1,24 @@
 package gwda
 
 import (
+	"encoding/json"
 	"net/url"
 )
 
 type Element struct {
 	elementURL *url.URL
+}
+
+type Position struct {
+	Y int `json:"y"`
+	X int `json:"x"`
+}
+
+type WDARect struct {
+	// Y int `json:"y"`
+	// X int `json:"x"`
+	Position
+	WDASize
 }
 
 func (e *Element) Click() error {
@@ -16,16 +29,18 @@ func (e *Element) Click() error {
 	return wdaResp.getErrMsg()
 }
 
-func (e *Element) Rect() (sJson string, err error) {
-	wdaResp, err := internalGet("GetRect", urlJoin(e.elementURL, "rect"))
+func (e *Element) Rect() (wdaRect WDARect, err error) {
+	wdaResp, err := internalGet("Rect", urlJoin(e.elementURL, "rect"))
 	if err != nil {
-		return "", err
+		return WDARect{}, err
 	}
-	return wdaResp.getValue().String(), nil
+	wdaRect._String = wdaResp.getValue().String()
+	err = json.Unmarshal([]byte(wdaRect._String), &wdaRect)
+	return
 }
 
 func (e *Element) Enabled() (isEnabled bool, err error) {
-	wdaResp, err := internalGet("GetRect", urlJoin(e.elementURL, "enabled"))
+	wdaResp, err := internalGet("Enabled", urlJoin(e.elementURL, "enabled"))
 	if err != nil {
 		return false, err
 	}

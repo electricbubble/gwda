@@ -84,6 +84,8 @@ func TestClient_Source(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Log(s)
+
+	t.Log(c.Source(true))
 }
 
 func TestClient_AccessibleSource(t *testing.T) {
@@ -105,11 +107,11 @@ func TestClient_ActiveAppInfo(t *testing.T) {
 		t.Fatal(err)
 	}
 	Debug = true
-	sJson, err := c.ActiveAppInfo()
+	info, err := c.ActiveAppInfo()
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Log(sJson)
+	t.Log(info)
 }
 
 func TestTmp(t *testing.T) {
@@ -137,7 +139,7 @@ func TestTmp(t *testing.T) {
 	// err = c.HealthCheck()
 	// t.Log("#@#", err)
 	// wdaResp, err := internalGet("healthcheck", urlJoin(c.deviceURL, "/wda/healthcheck", ))
-	wdaResp, err := internalGet("AppList", urlJoin(c.deviceURL, "/wda/apps/list", ))
+	wdaResp, err := internalGet("AppList", urlJoin(c.deviceURL, "/wda/apps/list"))
 	// if err != nil {
 	// 	t.Fatal(err)
 	// }
