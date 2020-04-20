@@ -1,10 +1,13 @@
 package gwda
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"net/url"
+	"os"
 )
 
 type Session struct {
@@ -406,6 +409,65 @@ func (s *Session) Activate(bundleId string) error {
 	return wdaResp.getErrMsg()
 }
 
+// DeactivateApp Deactivates application for given time
+func (s *Session) DeactivateApp(seconds ...float32) (err error) {
+	body := newWdaBody()
+	if len(seconds) != 0 {
+		body.set("seconds", seconds[0])
+	}
+	wdaResp, err := internalPost("DeactivateApp", urlJoin(s.sessionURL, "/wda/deactivateApp"), body)
+	if err != nil {
+		return err
+	}
+	return wdaResp.getErrMsg()
+}
+
+const (
+	WDAContentTypePlaintext = "plaintext"
+	WDAContentTypeImage     = "image"
+	WDAContentTypeUrl       = "url"
+)
+
+// SetPasteboardForType
+func (s *Session) SetPasteboardForPlaintext(content string) (err error) {
+	encodedContent := base64.StdEncoding.EncodeToString([]byte(content))
+	return s.SetPasteboard(WDAContentTypePlaintext, encodedContent)
+}
+
+// SetPasteboardForImage
+func (s *Session) SetPasteboardForImage(filename string) (err error) {
+	imgFile, err := os.Open(filename)
+	if err != nil {
+		return err
+	}
+	defer imgFile.Close()
+	all, err := ioutil.ReadAll(imgFile)
+	if err != nil {
+		return err
+	}
+	encodedContent := base64.StdEncoding.EncodeToString(all)
+	return s.SetPasteboard(WDAContentTypeImage, encodedContent)
+}
+
+// SetPasteboardForUrl
+func (s *Session) SetPasteboardForUrl(url string) (err error) {
+	encodedContent := base64.URLEncoding.EncodeToString([]byte(url))
+	return s.SetPasteboard(WDAContentTypeUrl, encodedContent)
+}
+
+// SetPasteboard
+func (s *Session) SetPasteboard(contentType, encodedContent string) (err error) {
+	body := newWdaBody()
+	body.set("contentType", contentType)
+	body.set("content", encodedContent)
+
+	wdaResp, err := internalPost("SetPasteboard", urlJoin(s.sessionURL, "/wda/setPasteboard"), body)
+	if err != nil {
+		return err
+	}
+	return wdaResp.getErrMsg()
+}
+
 // Source
 //
 // Source aka tree
@@ -451,7 +513,7 @@ func (s *Session) tttTmp() {
 	// 
 	// return
 
-	body := make(map[string]interface{})
+	// body := make(map[string]interface{})
 	// body["bundleId"] = "com.netease.cloudmusic"
 	// body["url"] = "baidu.com"
 	// body["shouldWaitForQuiescence"] = true
@@ -461,13 +523,34 @@ func (s *Session) tttTmp() {
 	// body["value"] = strings.Split("中文测试1.0", "")
 	// body["using"] = "link text"
 	// body["value"] = "label=发现"
-	body["url"] = "http://www.baidu.com"
+	// body["url"] = "http://www.baidu.com"
 	// bsJson, err := internalPost("tttTmp", urlJoin(s.sessionURL, "/wda/keyboard/dismiss"), nil)
 	// bsJson, err := internalPost("tttTmp", urlJoin(s.sessionURL, "/elements"), body)
 	// bsJson, err := internalPost("tttTmp", urlJoin(s.sessionURL, "/url"), body)
 	// bsJson, err := internalGet("tttTmp", urlJoin(s.sessionURL, "/window/size"))
-	bsJson, err := internalGet("tttTmp", urlJoin(s.sessionURL, "/wda/apps/list"))
+	// bsJson, err := internalGet("tttTmp", urlJoin(s.sessionURL, "/wda/apps/list"))
+	body := newWdaBody()
+	// body.set("duration", 7.1)
+	_ = body
+	body.set("contentType", "plaintext")
+	content := "abcd123"
+	vContent := base64.StdEncoding.EncodeToString([]byte(content))
+	body.set("content", vContent)
+
+	body = newWdaBody()
+	body.set("contentType", "image")
+	open, _ := os.Open("/Users/hero/Documents/leixipaopao/IMG_5246.JPG")
+	all, _ := ioutil.ReadAll(open)
+	vContent = base64.StdEncoding.EncodeToString(all)
+	body.set("content", vContent)
+
+	body = newWdaBody()
+	body.set("contentType", "url")
+	vContent = base64.URLEncoding.EncodeToString([]byte("http://baidu.com"))
+	body.set("content", vContent)
+
+	wdaResp, err := internalPost("#TEMP", urlJoin(s.sessionURL, "/wda/setPasteboard"), body)
 	// body["bundleId"] = bundleId
 	// bsJson, err := s.AppState("com.netease.cloudmusic")
-	fmt.Println(err, string(bsJson))
+	fmt.Println(err, wdaResp)
 }

@@ -1,6 +1,7 @@
 package gwda
 
 import (
+	"encoding/base64"
 	"testing"
 )
 
@@ -327,6 +328,92 @@ func TestSession_Activate(t *testing.T) {
 	}
 	Debug = true
 	err = s.Activate(bundleId)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestSession_DeactivateApp(t *testing.T) {
+	c, err := NewClient(deviceURL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	bundleId := "com.apple.Preferences"
+	s, err := c.NewSession(bundleId)
+	if err != nil {
+		t.Fatal(err)
+	}
+	Debug = true
+	err = s.DeactivateApp(20.1)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestSession_SetPasteboardForPlaintext(t *testing.T) {
+	c, err := NewClient(deviceURL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	bundleId := "com.apple.Preferences"
+	s, err := c.NewSession(bundleId)
+	if err != nil {
+		t.Fatal(err)
+	}
+	Debug = true
+	err = s.SetPasteboardForPlaintext("abcd1234")
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestSession_SetPasteboardForImage(t *testing.T) {
+	c, err := NewClient(deviceURL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	bundleId := "com.apple.Preferences"
+	s, err := c.NewSession(bundleId)
+	if err != nil {
+		t.Fatal(err)
+	}
+	Debug = true
+	err = s.SetPasteboardForImage("/Users/hero/Documents/leixipaopao/IMG_5246.JPG")
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestSession_SetPasteboardForUrl(t *testing.T) {
+	c, err := NewClient(deviceURL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	bundleId := "com.apple.Preferences"
+	s, err := c.NewSession(bundleId)
+	if err != nil {
+		t.Fatal(err)
+	}
+	Debug = true
+	err = s.SetPasteboardForUrl("http://baidu.com")
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestSession_SetPasteboard(t *testing.T) {
+	c, err := NewClient(deviceURL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	bundleId := "com.apple.Preferences"
+	s, err := c.NewSession(bundleId)
+	if err != nil {
+		t.Fatal(err)
+	}
+	Debug = true
+	encodedContent := base64.URLEncoding.EncodeToString([]byte("https://www.google.com"))
+	err = s.SetPasteboard(WDAContentTypeUrl, encodedContent)
 	if err != nil {
 		t.Fatal(err)
 	}
