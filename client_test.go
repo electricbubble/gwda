@@ -5,6 +5,41 @@ import (
 )
 
 var deviceURL = "http://localhost:8100"
+var bundleId = "com.apple.Preferences"
+
+func TestClient_NewSession(t *testing.T) {
+	type sTmp struct {
+		shouldUseTestManagerForVisibilityDetection *bool
+	}
+	// var wdaTrue *bool = true
+	// t.Log(sTmp{shouldUseTestManagerForVisibilityDetection: *bool(true))})
+	// t.Log(sTmp{shouldUseTestManagerForVisibilityDetection: sql.NullBool{Bool: true}})
+	// return
+	c, err := NewClient(deviceURL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	bundleId = "com.taobao.taobao4iphone"
+	// bundleId = "com.sgv.peanutsubwaywifi"
+	Debug = true
+	// _, err = c.NewSession()
+	_, err = c.NewSession(bundleId)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestClient_LaunchUnattached(t *testing.T) {
+	c, err := NewClient(deviceURL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	Debug = true
+	err = c.LaunchUnattachedApp(bundleId)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
 
 func TestClient_Status(t *testing.T) {
 	Debug = true
@@ -37,7 +72,7 @@ func TestClient_Locked(t *testing.T) {
 		t.Fatal(err)
 	}
 	Debug = true
-	isLocked, err := c.Locked()
+	isLocked, err := c.IsLocked()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -139,7 +174,10 @@ func TestTmp(t *testing.T) {
 	// err = c.HealthCheck()
 	// t.Log("#@#", err)
 	// wdaResp, err := internalGet("healthcheck", urlJoin(c.deviceURL, "/wda/healthcheck", ))
-	wdaResp, err := internalGet("AppList", urlJoin(c.deviceURL, "/wda/apps/list"))
+	body := newWdaBody()
+	_ = body
+	body.setBundleID("com.apple.Preferences")
+	wdaResp, err := internalPost("#TEMP", urlJoin(c.deviceURL, "/wda/apps/launchUnattached"), body)
 	// if err != nil {
 	// 	t.Fatal(err)
 	// }
