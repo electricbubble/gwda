@@ -33,7 +33,7 @@ func main() {
 	}
 
 	// 获取当前屏幕锁定状态
-	locked, err := c.Locked()
+	locked, err := c.IsLocked()
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -52,8 +52,9 @@ func main() {
 	fmt.Printf("当前 App 的 PID: %d\n当前 App 的 bundleId: %s\n", cAppInfo.Pid, cAppInfo.BundleID)
 
 	bundleId := "com.apple.Preferences"
-	// 创建 session
-	s, err := c.NewSession("")
+	// 创建 session，可选输入 bundle id，如指定，则启动并且等待 app 加载完毕 
+	// TODO 弹窗自动处理
+	s, err := c.NewSession()
 	if err != nil {
 		log.Fatalln("创建 session 失败", err)
 	}
@@ -104,7 +105,7 @@ func main() {
 		_ = s.Activate(bundleId)
 	case gwda.WDAAppNotRunning:
 		fmt.Println("该 App 未运行，开始打开 App")
-		_ = s.Launch(bundleId)
+		_ = s.AppLaunch(bundleId)
 	}
 
 	element, err := s.FindElement("partial link text", "label=通用")
