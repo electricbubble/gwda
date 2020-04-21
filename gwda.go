@@ -37,7 +37,11 @@ func internalPost(actionName, url string, body wdaBody) (wdaResp wdaResponse, er
 	return internalDo(actionName, http.MethodPost, url, body)
 }
 
-func internalDo(actionName, method, url string, body wdaBody) (bsResp []byte, err error) {
+func internalDelete(actionName, url string) (wdaResp wdaResponse, err error) {
+	return internalDo(actionName, http.MethodDelete, url, nil)
+}
+
+func internalDo(actionName, method, url string, body wdaBody) (wdaResp wdaResponse, err error) {
 	var req *http.Request
 	// 忽略 err 是因为在新建 Client 的时候已经校验了 URL 所以除此之外，应该不会出现其他错误
 	var bsBody []byte
@@ -45,7 +49,7 @@ func internalDo(actionName, method, url string, body wdaBody) (bsResp []byte, er
 		// body 已经通过 `newWdaBody` 进行初始化和修改，理论上也不存在 err
 		bsBody, err = json.Marshal(body)
 		if err != nil {
-			return nil, errors.New(fmt.Sprintf("%s 请求body错误 %s", actionName, err.Error()))
+			return nil, errors.New(fmt.Sprintf("%s: invalid request body %s", actionName, err.Error()))
 		}
 		req, _ = http.NewRequest(method, url, bytes.NewBuffer(bsBody))
 	} else {
@@ -57,7 +61,7 @@ func internalDo(actionName, method, url string, body wdaBody) (bsResp []byte, er
 	start := time.Now()
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return nil, errors.New(fmt.Sprintf("%s 请求发送失败 %s", actionName, err.Error()))
+		return nil, errors.New(fmt.Sprintf("%s: failed to send request %s", actionName, err.Error()))
 	}
 	defer func() {
 		_ = resp.Body.Close()
@@ -66,22 +70,23 @@ func internalDo(actionName, method, url string, body wdaBody) (bsResp []byte, er
 	if Debug {
 		output = fmt.Sprintf("[DEBUG]↩︎\nActionName: %s\nMethod: %s\nURL: %s\n", actionName, method, req.URL.String())
 		if body != nil {
-			output += fmt.Sprintf("Body: %s\n", string(bsBody))
+			output += fmt.Sprintf("Body: %s\n", wdaResp)
 		}
 		output += fmt.Sprintf("Duration: %s\n", time.Now().Sub(start).String())
 	}
-	bsResp, err = ioutil.ReadAll(resp.Body)
+	wdaResp, err = ioutil.ReadAll(resp.Body)
 	if err != nil {
 		if Debug {
 			log.Println(output)
 		}
-		return nil, errors.New(fmt.Sprintf("%s 响应读取失败 %s", actionName, err.Error()))
+		return nil, errors.New(fmt.Sprintf("%s: failed to read response %s", actionName, err.Error()))
 	}
 	if Debug {
-		output += fmt.Sprintf("Response: %s\n", string(bsResp))
+		output += fmt.Sprintf("Response: %s\n", wdaResp)
 		log.Println(output)
 	}
-	return bsResp, nil
+	err = wdaResp.getErrMsg()
+	return
 }
 
 type wdaBody map[string]interface{}
@@ -111,9 +116,7 @@ func (wdaResp wdaResponse) String() string {
 func (wdaResp wdaResponse) getByPath(path string) gjson.Result {
 	return gjson.GetBytes(wdaResp, path)
 }
-func (wdaResp wdaResponse) isReady() bool {
-	return gjson.GetBytes(wdaResp, "value.ready").Bool()
-}
+
 func (wdaResp wdaResponse) getValue() gjson.Result {
 	return gjson.GetBytes(wdaResp, "value")
 }
@@ -122,17 +125,21 @@ func (wdaResp wdaResponse) getValue() gjson.Result {
 // 	return []byte(wdaResp.getValue().Raw)
 // }
 
+// func (wdaResp wdaResponse) isReady() bool {
+// 	return gjson.GetBytes(wdaResp, "value.ready").Bool()
+// }
+
 // func (wdaResp wdaResponse) getElementID() gjson.Result {
 // 	return wdaResp.getValue().get
 // }
 
-func (wdaResp wdaResponse) getSessionID() (sessionID string, err error) {
-	sessionID = wdaResp.getByPath("sessionId").String()
-	if sessionID == "" {
-		err = errors.New("not find sessionId")
-	}
-	return
-}
+// func (wdaResp wdaResponse) getSessionID() (sessionID string, err error) {
+// 	sessionID = wdaResp.getByPath("sessionId").String()
+// 	if sessionID == "" {
+// 		err = errors.New("not find sessionId")
+// 	}
+// 	return
+// }
 
 func (wdaResp wdaResponse) getErrMsg() error {
 	// {
