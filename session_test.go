@@ -5,6 +5,28 @@ import (
 	"testing"
 )
 
+func TestSession_DeleteSession(t *testing.T) {
+	// 	DeleteSession
+	c, err := NewClient(deviceURL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	Debug = true
+	s, err := c.NewSession()
+	if err != nil {
+		t.Fatal(err)
+	}
+	// err = s.Delete()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// t.Log(c.ActiveAppInfo())
+	// t.Log(s.SiriActivate("打开 微信"))
+
+	t.Log(s.SiriOpenURL("weixin://"))
+}
+
 func TestSession_DeviceInfo(t *testing.T) {
 	c, err := NewClient(deviceURL)
 	if err != nil {
@@ -113,12 +135,28 @@ func TestSession_StatusBarSize(t *testing.T) {
 	t.Log(statusBarSize.Height)
 }
 
+func TestSession_ActiveAppInfo(t *testing.T) {
+	c, err := NewClient(deviceURL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	s, err := c.NewSession()
+	if err != nil {
+		t.Fatal(err)
+	}
+	appInfo, err := s.ActiveAppInfo()
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log(appInfo)
+}
+
 func TestSession_Tap(t *testing.T) {
 	c, err := NewClient(deviceURL)
 	if err != nil {
 		t.Fatal(err)
 	}
-	s, err := c.NewSession("com.apple.Preferences")
+	s, err := c.NewSession()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -131,11 +169,6 @@ func TestSession_Tap(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	sJson, err := s.ActiveAppInfo()
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Log(sJson)
 }
 
 func TestSession_DoubleTap(t *testing.T) {
@@ -143,7 +176,7 @@ func TestSession_DoubleTap(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	s, err := c.NewSession("com.apple.Preferences")
+	s, err := c.NewSession()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -159,12 +192,13 @@ func TestSession_TouchAndHold(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	s, err := c.NewSession("com.apple.Preferences")
+	s, err := c.NewSession()
 	if err != nil {
 		t.Fatal(err)
 	}
 	Debug = true
-	err = s.TouchAndHold(210, 290)
+	// err = s.TouchAndHold(210, 290)
+	err = s.TouchAndHold(230, 130)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -181,7 +215,7 @@ func TestSession_Launch(t *testing.T) {
 		t.Fatal(err)
 	}
 	Debug = true
-	err = s.Launch(bundleId)
+	err = s.AppLaunch(bundleId)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -209,7 +243,7 @@ func TestSession_AppState(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	bundleId := "com.apple.Preferences"
+	// bundleId := "com.apple.Preferences"
 	s, err := c.NewSession(bundleId)
 	if err != nil {
 		t.Fatal(err)
@@ -275,7 +309,7 @@ func TestSession_Locked(t *testing.T) {
 		t.Fatal(err)
 	}
 	Debug = true
-	locked, err := s.Locked()
+	locked, err := s.IsLocked()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -414,6 +448,89 @@ func TestSession_SetPasteboard(t *testing.T) {
 	Debug = true
 	encodedContent := base64.URLEncoding.EncodeToString([]byte("https://www.google.com"))
 	err = s.SetPasteboard(WDAContentTypeUrl, encodedContent)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestSession_PressHomeButton(t *testing.T) {
+	c, err := NewClient(deviceURL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	bundleId := "com.apple.Preferences"
+	s, err := c.NewSession(bundleId)
+	if err != nil {
+		t.Fatal(err)
+	}
+	Debug = true
+	err = s.PressHomeButton()
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestSession_PressVolumeUpButton(t *testing.T) {
+	c, err := NewClient(deviceURL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	bundleId := "com.apple.Preferences"
+	s, err := c.NewSession(bundleId)
+	if err != nil {
+		t.Fatal(err)
+	}
+	Debug = true
+	err = s.PressVolumeUpButton()
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestSession_PressVolumeDownButton(t *testing.T) {
+	c, err := NewClient(deviceURL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	bundleId := "com.apple.Preferences"
+	s, err := c.NewSession(bundleId)
+	if err != nil {
+		t.Fatal(err)
+	}
+	Debug = true
+	err = s.PressVolumeDownButton()
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestSession_SiriActivate(t *testing.T) {
+	c, err := NewClient(deviceURL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	s, err := c.NewSession()
+	if err != nil {
+		t.Fatal(err)
+	}
+	Debug = true
+	err = s.SiriActivate("查一下附近的餐厅")
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestSession_SiriOpenURL(t *testing.T) {
+	c, err := NewClient(deviceURL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	s, err := c.NewSession()
+	if err != nil {
+		t.Fatal(err)
+	}
+	Debug = true
+	err = s.SiriOpenURL("weixin://")
 	if err != nil {
 		t.Fatal(err)
 	}

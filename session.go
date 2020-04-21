@@ -16,14 +16,26 @@ type Session struct {
 	// bundleID   string
 }
 
-// Launch
-func (s *Session) Launch(bundleId string) error {
-	body := newWdaBody().setBundleID(bundleId).set("shouldWaitForQuiescence", false)
-	wdaResp, err := internalPost("Launch", urlJoin(s.sessionURL, "wda", "apps", "launch"), body)
-	if err != nil {
-		return err
-	}
-	return wdaResp.getErrMsg()
+// Delete kill session associated with that request
+//
+// 1. alertsMonitor disable
+// 2. testedApplicationBundleId terminate
+func (s *Session) Delete() (err error) {
+	_, err = internalDelete("DeleteSession", s.sessionURL.String())
+	return
+}
+
+// AppLaunch always wait for quiescence
+//
+// 1. registerApplicationWithBundleId
+// 2. launch OR activate
+func (s *Session) AppLaunch(bundleId string) (err error) {
+	// TODO
+	//  arguments
+	//  environment
+	body := newWdaBody().setBundleID(bundleId).set("shouldWaitForQuiescence", true)
+	_, err = internalPost("Launch", urlJoin(s.sessionURL, "wda", "apps", "launch"), body)
+	return
 }
 
 type WDADeviceInfo struct {
@@ -54,10 +66,11 @@ func (di WDADeviceInfo) String() string {
 //    "name": "x’s iPhone X"
 // }
 func (s *Session) DeviceInfo() (wdaDeviceInfo WDADeviceInfo, err error) {
-	wdaResp, err := internalGet("DeviceInfo", urlJoin(s.sessionURL, "wda", "device", "info"))
-	if err != nil {
+	var wdaResp wdaResponse
+	if wdaResp, err = internalGet("DeviceInfo", urlJoin(s.sessionURL, "wda", "device", "info")); err != nil {
 		return
 	}
+
 	wdaDeviceInfo._String = wdaResp.getValue().String()
 	err = json.Unmarshal([]byte(wdaDeviceInfo._String), &wdaDeviceInfo)
 	// err = json.Unmarshal(wdaResp.getValue2Bytes(), &wdaDeviceInfo)
@@ -109,10 +122,11 @@ func (v WDABatteryState) String() string {
 // UIDeviceBatteryStateCharging = 2   // plugged in, less than 100%
 // UIDeviceBatteryStateFull = 3       // plugged in, at 100%
 func (s *Session) BatteryInfo() (wdaBatteryInfo WDABatteryInfo, err error) {
-	wdaResp, err := internalGet("BatteryInfo", urlJoin(s.sessionURL, "wda", "batteryInfo"))
-	if err != nil {
+	var wdaResp wdaResponse
+	if wdaResp, err = internalGet("BatteryInfo", urlJoin(s.sessionURL, "wda", "batteryInfo")); err != nil {
 		return
 	}
+
 	wdaBatteryInfo._String = wdaResp.getValue().String()
 	err = json.Unmarshal([]byte(wdaBatteryInfo._String), &wdaBatteryInfo)
 	// err = json.Unmarshal(wdaResp.getValue2Bytes(), &wdaBatteryInfo)
@@ -126,10 +140,11 @@ func (s *Session) BatteryInfo() (wdaBatteryInfo WDABatteryInfo, err error) {
 //    "height": 375
 // }
 func (s *Session) WindowSize() (wdaSize WDASize, err error) {
-	wdaResp, err := internalGet("WindowSize", urlJoin(s.sessionURL, "window", "size"))
-	if err != nil {
+	var wdaResp wdaResponse
+	if wdaResp, err = internalGet("WindowSize", urlJoin(s.sessionURL, "window", "size")); err != nil {
 		return
 	}
+
 	wdaSize._String = wdaResp.getValue().String()
 	err = json.Unmarshal([]byte(wdaSize._String), &wdaSize)
 	// err = json.Unmarshal(wdaResp.getValue2Bytes(), &wdaSize)
@@ -166,10 +181,11 @@ func (s WDAScreen) String() string {
 //    "scale": 3
 // }
 func (s *Session) Screen() (wdaScreen WDAScreen, err error) {
-	wdaResp, err := internalGet("Screen", urlJoin(s.sessionURL, "wda", "screen"))
-	if err != nil {
+	var wdaResp wdaResponse
+	if wdaResp, err = internalGet("Screen", urlJoin(s.sessionURL, "wda", "screen")); err != nil {
 		return
 	}
+
 	wdaScreen.StatusBarSize._String = wdaResp.getValue().Get("statusBarSize").String()
 	wdaScreen._String = wdaResp.getValue().String()
 	err = json.Unmarshal([]byte(wdaScreen._String), &wdaScreen)
@@ -179,56 +195,23 @@ func (s *Session) Screen() (wdaScreen WDAScreen, err error) {
 
 // Scale
 func (s *Session) Scale() (scale float32, err error) {
-	// wdaResp, err := internalGet("Scale", urlJoin(s.sessionURL, "wda", "screen"))
-	// if err != nil {
-	// 	return 0, err
-	// }
-	// return wdaResp.getValue().Get("scale").Float(), nil
 	screen, err := s.Screen()
 	return screen.Scale, err
 }
 
 // StatusBarSize
-//
-// {
-//    "width": 375,
-//    "height": 44
-// }
 func (s *Session) StatusBarSize() (wdaStatusBarSize WDASize, err error) {
-	// wdaResp, err := internalGet("StatusBarSize", urlJoin(s.sessionURL, "wda", "screen"))
-	// if err != nil {
-	// 	return "", err
-	// }
-	// return wdaResp.getValue().Get("statusBarSize").String(), nil
 	screen, err := s.Screen()
 	return screen.StatusBarSize, err
 }
 
-// ActiveAppInfo
-//
-// {
-//    "processArguments": {
-//        "env": {
-//        },
-//        "args": [
-//        ]
-//    },
-//    "name": "",
-//    "pid": 57,
-//    "bundleId": "com.apple.springboard"
-// }
+// ActiveAppInfo Constructor used to get current active application
 func (s *Session) ActiveAppInfo() (wdaActiveAppInfo WDAActiveAppInfo, err error) {
-	wdaResp, err := internalGet("ActiveAppInfo", urlJoin(s.sessionURL, "wda", "activeAppInfo"))
-	if err != nil {
-		return WDAActiveAppInfo{}, err
-	}
-	wdaActiveAppInfo._String = wdaResp.getValue().String()
-	err = json.Unmarshal([]byte(wdaActiveAppInfo._String), &wdaActiveAppInfo)
-	// err = json.Unmarshal(wdaResp.getValue2Bytes(), &wdaActiveAppInfo)
-	return
+	return activeAppInfo(s.sessionURL)
 }
 
 // Tap
+// TODO tap
 func (s *Session) Tap(x, y int) error {
 	body := newWdaBody().setXY(x, y)
 	wdaResp, err := internalPost("Tap", urlJoin(s.sessionURL, "wda", "tap", "0"), body)
@@ -238,41 +221,34 @@ func (s *Session) Tap(x, y int) error {
 	return wdaResp.getErrMsg()
 }
 
-// DoubleTap
-func (s *Session) DoubleTap(x, y int) error {
+// DoubleTap double tap coordinate
+func (s *Session) DoubleTap(x, y int) (err error) {
 	body := newWdaBody().setXY(x, y)
-	wdaResp, err := internalPost("DoubleTap", urlJoin(s.sessionURL, "wda", "doubleTap"), body)
-	if err != nil {
-		return err
-	}
-	return wdaResp.getErrMsg()
+	_, err = internalPost("DoubleTap", urlJoin(s.sessionURL, "wda", "doubleTap"), body)
+	return
 }
 
-// TouchAndHold
-func (s *Session) TouchAndHold(x, y int, duration ...float32) error {
+// TouchAndHold touch and hold coordinate
+func (s *Session) TouchAndHold(x, y int, duration ...float32) (err error) {
 	body := newWdaBody().setXY(x, y)
 	if len(duration) == 0 {
 		body.set("duration", 1.0)
 	} else {
 		body.set("duration", duration[0])
 	}
-	wdaResp, err := internalPost("TouchAndHold", urlJoin(s.sessionURL, "wda", "touchAndHold"), body)
-	if err != nil {
-		return err
-	}
-	return wdaResp.getErrMsg()
+	_, err = internalPost("TouchAndHold", urlJoin(s.sessionURL, "wda", "touchAndHold"), body)
+	return
 }
 
 // AppTerminate Close the application by bundleId
-func (s *Session) AppTerminate(bundleId string) error {
+//
+// 1. unregisterApplicationWithBundleId
+func (s *Session) AppTerminate(bundleId string) (err error) {
 	body := newWdaBody().setBundleID(bundleId)
-	wdaResp, err := internalPost("AppTerminate", urlJoin(s.sessionURL, "wda", "apps", "terminate"), body)
-	if err != nil {
-		return err
-	}
+	_, err = internalPost("AppTerminate", urlJoin(s.sessionURL, "wda", "apps", "terminate"), body)
 	// "value" : true,
 	// "value" : false,
-	return wdaResp.getErrMsg()
+	return
 }
 
 type WDAAppRunState int
@@ -312,6 +288,7 @@ func (s *Session) AppState(bundleId string) (appRunState WDAAppRunState, err err
 
 // SendKeys
 // TODO 每个字符输入等待时间 5s, 输入失败不会报错
+// TODO frequency
 // `确定` 使用 `\n`
 func (s *Session) SendKeys(text string) error {
 	body := newWdaBody().setSendKeys(text)
@@ -324,6 +301,7 @@ func (s *Session) SendKeys(text string) error {
 
 var ErrNoSuchElement = errors.New("no such element")
 
+// TODO FindElements
 func (s *Session) FindElements(using, value string) (elements []Element, err error) {
 	body := newWdaBody().set("using", using).set("value", value)
 	wdaResp, err := internalPost("FindElements", urlJoin(s.sessionURL, "elements"), body)
@@ -347,6 +325,7 @@ func (s *Session) FindElements(using, value string) (elements []Element, err err
 	return
 }
 
+// TODO FindElement
 func (s *Session) FindElement(using, value string) (element Element, err error) {
 	body := newWdaBody().set("using", using).set("value", value)
 	wdaResp, err := internalPost("FindElements", urlJoin(s.sessionURL, "element"), body)
@@ -372,31 +351,19 @@ func (s *Session) FindElement(using, value string) (element Element, err error) 
 	return
 }
 
-// Locked
-func (s *Session) Locked() (isLocked bool, err error) {
-	wdaResp, err := internalGet("Locked", urlJoin(s.sessionURL, "wda", "locked"))
-	if err != nil {
-		return false, err
-	}
-	return wdaResp.getValue().Bool(), nil
+// IsLocked Whether the screen is locked
+func (s *Session) IsLocked() (bool, error) {
+	return isLocked(s.sessionURL)
 }
 
-// Unlock
+// Unlock unlock screen
 func (s *Session) Unlock() (err error) {
-	wdaResp, err := internalPost("Unlock", urlJoin(s.sessionURL, "wda", "unlock"), nil)
-	if err != nil {
-		return err
-	}
-	return wdaResp.getErrMsg()
+	return unlock(s.sessionURL)
 }
 
 // Lock
 func (s *Session) Lock() (err error) {
-	wdaResp, err := internalPost("Lock", urlJoin(s.sessionURL, "wda", "lock"), nil)
-	if err != nil {
-		return err
-	}
-	return wdaResp.getErrMsg()
+	return lock(s.sessionURL)
 }
 
 // TODO /wda/apps/activate
@@ -422,10 +389,12 @@ func (s *Session) DeactivateApp(seconds ...float32) (err error) {
 	return wdaResp.getErrMsg()
 }
 
+type WDAContentType string
+
 const (
-	WDAContentTypePlaintext = "plaintext"
-	WDAContentTypeImage     = "image"
-	WDAContentTypeUrl       = "url"
+	WDAContentTypePlaintext WDAContentType = "plaintext"
+	WDAContentTypeImage     WDAContentType = "image"
+	WDAContentTypeUrl       WDAContentType = "url"
 )
 
 // SetPasteboardForType
@@ -455,55 +424,79 @@ func (s *Session) SetPasteboardForUrl(url string) (err error) {
 	return s.SetPasteboard(WDAContentTypeUrl, encodedContent)
 }
 
-// SetPasteboard
-func (s *Session) SetPasteboard(contentType, encodedContent string) (err error) {
+// SetPasteboard Sets data to the general pasteboard
+func (s *Session) SetPasteboard(contentType WDAContentType, encodedContent string) (err error) {
 	body := newWdaBody()
 	body.set("contentType", contentType)
 	body.set("content", encodedContent)
 
-	wdaResp, err := internalPost("SetPasteboard", urlJoin(s.sessionURL, "/wda/setPasteboard"), body)
-	if err != nil {
-		return err
-	}
-	return wdaResp.getErrMsg()
+	_, err = internalPost("SetPasteboard", urlJoin(s.sessionURL, "/wda/setPasteboard"), body)
+	return
+}
+
+type WDADeviceButtonName string
+
+const (
+	WDADeviceButtonHome       WDADeviceButtonName = "home"
+	WDADeviceButtonVolumeUp   WDADeviceButtonName = "volumeUp"
+	WDADeviceButtonVolumeDown WDADeviceButtonName = "volumeDown"
+)
+
+func (s *Session) PressHomeButton() (err error) {
+	return s.PressButton(WDADeviceButtonHome)
+}
+
+func (s *Session) PressVolumeUpButton() (err error) {
+	return s.PressButton(WDADeviceButtonVolumeUp)
+}
+
+func (s *Session) PressVolumeDownButton() (err error) {
+	return s.PressButton(WDADeviceButtonVolumeDown)
+}
+
+// PressButton Presses the corresponding hardware button on the device
+//
+// !!! not a synchronous action
+func (s *Session) PressButton(wdaDeviceButton WDADeviceButtonName) (err error) {
+	body := newWdaBody().set("name", wdaDeviceButton)
+	_, err = internalPost("PressButton", urlJoin(s.sessionURL, "/wda/pressButton"), body)
+	return
+}
+
+// SiriActivate Activates Siri service voice recognition with the given text to parse
+func (s *Session) SiriActivate(text string) (err error) {
+	body := newWdaBody().set("text", text)
+	_, err = internalPost("SiriActivate", urlJoin(s.sessionURL, "/wda/siri/activate"), body)
+	return
+}
+
+// SiriOpenURL Open {%@}
+// It doesn't actually work, right?
+func (s *Session) SiriOpenURL(url string) (err error) {
+	body := newWdaBody().set("url", url)
+	_, err = internalPost("OpenURL", urlJoin(s.sessionURL, "/url"), body)
+	return
 }
 
 // Source
 //
 // Source aka tree
 func (s *Session) Source(formattedAsJson ...bool) (sTree string, err error) {
-	tmp, _ := url.Parse(s.sessionURL.String())
-	if len(formattedAsJson) != 0 && formattedAsJson[0] {
-		q := tmp.Query()
-		q.Set("format", "json")
-		tmp.RawQuery = q.Encode()
-	}
-	wdaResp, err := internalGet("Source", urlJoin(tmp, "source"))
-	if err != nil {
-		return "", err
-	}
-	return wdaResp.getValue().String(), err
+	return source(s.sessionURL, formattedAsJson...)
 }
 
 // AccessibleSource
 func (s *Session) AccessibleSource() (sJson string, err error) {
-	wdaResp, err := internalGet("AccessibleSource", urlJoin(s.sessionURL, "wda", "accessibleSource"))
-	if err != nil {
-		return "", err
-	}
-	return wdaResp.getValue().String(), err
+	return accessibleSource(s.sessionURL)
 }
 
+// It's not working
+// /timeouts
+// /wda/keyboard/dismiss
+// /wda/getPasteboard
+
 // TODO DELETE	/session/{session id}
-// TODO /timeouts
 // TODO /screenshot
-// TODO /wda/deactivateApp
-// TODO /wda/setPasteboard
-// TODO /wda/getPasteboard
-// TODO /wda/pressButton
-// TODO /wda/siri/activate
-// TODO /wda/apps/launchUnattachedlaunch
-// TODO /wda/keyboard/dismiss 失效？
 // TODO wdaResp, err := internalGet("AppList", urlJoin(s.sessionURL, "/wda/apps/list", ))	handleGetActiveAppsList	fb_activeAppsInfo
 
 func (s *Session) tttTmp() {
@@ -530,26 +523,11 @@ func (s *Session) tttTmp() {
 	// bsJson, err := internalGet("tttTmp", urlJoin(s.sessionURL, "/window/size"))
 	// bsJson, err := internalGet("tttTmp", urlJoin(s.sessionURL, "/wda/apps/list"))
 	body := newWdaBody()
-	// body.set("duration", 7.1)
 	_ = body
-	body.set("contentType", "plaintext")
-	content := "abcd123"
-	vContent := base64.StdEncoding.EncodeToString([]byte(content))
-	body.set("content", vContent)
 
-	body = newWdaBody()
-	body.set("contentType", "image")
-	open, _ := os.Open("/Users/hero/Documents/leixipaopao/IMG_5246.JPG")
-	all, _ := ioutil.ReadAll(open)
-	vContent = base64.StdEncoding.EncodeToString(all)
-	body.set("content", vContent)
-
-	body = newWdaBody()
-	body.set("contentType", "url")
-	vContent = base64.URLEncoding.EncodeToString([]byte("http://baidu.com"))
-	body.set("content", vContent)
-
-	wdaResp, err := internalPost("#TEMP", urlJoin(s.sessionURL, "/wda/setPasteboard"), body)
+	// body.set("bundleId", "com.netease.cloudmusic")
+	body.set("url", "baidu.com")
+	wdaResp, err := internalPost("#TEMP", urlJoin(s.sessionURL, "/url"), body)
 	// body["bundleId"] = bundleId
 	// bsJson, err := s.AppState("com.netease.cloudmusic")
 	fmt.Println(err, wdaResp)
