@@ -70,7 +70,7 @@ func internalDo(actionName, method, url string, body wdaBody) (wdaResp wdaRespon
 	if Debug {
 		output = fmt.Sprintf("[DEBUG]↩︎\nActionName: %s\nMethod: %s\nURL: %s\n", actionName, method, req.URL.String())
 		if body != nil {
-			output += fmt.Sprintf("Body: %s\n", wdaResp)
+			output += fmt.Sprintf("Body: %s\n", bsBody)
 		}
 		output += fmt.Sprintf("Duration: %s\n", time.Now().Sub(start).String())
 	}
