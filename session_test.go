@@ -2,11 +2,11 @@ package gwda
 
 import (
 	"encoding/base64"
+	"strings"
 	"testing"
 )
 
-func TestSession_DeleteSession(t *testing.T) {
-	// 	DeleteSession
+func TestSession_GetActiveSession(t *testing.T) {
 	c, err := NewClient(deviceURL)
 	if err != nil {
 		t.Fatal(err)
@@ -16,15 +16,46 @@ func TestSession_DeleteSession(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	// err = s.Delete()
+	sessionInfo, err := s.GetActiveSession()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if sessionInfo.SessionID == "" {
+		t.Fatal("session id should not be empty")
+	}
+
+	t.Logf("\n当前 App 的 名称:\t\t%s\n"+
+		"当前 App 的 BundleId:\t%s\n"+
+		"当前设备的系统版本:\t\t%s\n",
+		sessionInfo.Capabilities.BrowserName, sessionInfo.Capabilities.CFBundleIdentifier, sessionInfo.Capabilities.SdkVersion)
+	// t.Log("当前 App 的 BundleId:", sessionInfo.Capabilities.CFBundleIdentifier)
+}
+
+func TestSession_DeleteSession(t *testing.T) {
+	c, err := NewClient(deviceURL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	Debug = true
+	s, err := c.NewSession()
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = s.Delete()
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	// t.Log(c.ActiveAppInfo())
-	// t.Log(s.SiriActivate("打开 微信"))
+	err = s.SiriActivate("打开 微信")
+	if err == nil {
+		t.Fatal("It should not be nil")
+	}
+	if !strings.EqualFold(err.Error(), "invalid session id: Session does not exist") {
+		t.Fatal(err)
+	}
 
-	t.Log(s.SiriOpenURL("weixin://"))
+	// t.Log(s.SiriOpenURL("weixin://"))
 }
 
 func TestSession_DeviceInfo(t *testing.T) {
@@ -75,11 +106,11 @@ func TestSession_WindowSize(t *testing.T) {
 		t.Fatal(err)
 	}
 	Debug = true
-	sJson, err := s.WindowSize()
+	windowSize, err := s.WindowSize()
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Log(sJson)
+	t.Log(windowSize)
 }
 
 func TestSession_Screen(t *testing.T) {
@@ -92,11 +123,11 @@ func TestSession_Screen(t *testing.T) {
 		t.Fatal(err)
 	}
 	Debug = true
-	sJson, err := s.Screen()
+	screen, err := s.Screen()
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Log(sJson)
+	t.Log(screen)
 }
 
 func TestSession_Scale(t *testing.T) {
@@ -149,6 +180,23 @@ func TestSession_ActiveAppInfo(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Log(appInfo)
+}
+
+func TestSession_ActiveAppsList(t *testing.T) {
+	c, err := NewClient(deviceURL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	s, err := c.NewSession()
+	if err != nil {
+		t.Fatal(err)
+	}
+	Debug = true
+	appsList, err := s.ActiveAppsList()
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log(appsList)
 }
 
 func TestSession_Tap(t *testing.T) {
@@ -204,18 +252,28 @@ func TestSession_TouchAndHold(t *testing.T) {
 	}
 }
 
-func TestSession_Launch(t *testing.T) {
+func TestSession_AppLaunch(t *testing.T) {
 	c, err := NewClient(deviceURL)
 	if err != nil {
 		t.Fatal(err)
 	}
-	bundleId := "com.apple.Preferences"
-	s, err := c.NewSession(bundleId)
+	s, err := c.NewSession()
 	if err != nil {
 		t.Fatal(err)
 	}
 	Debug = true
-	err = s.AppLaunch(bundleId)
+	// bundleId = "com.apple.AppStore"
+	_ = s.AppTerminate(bundleId)
+	// bool 类型初始值为 false，在设置启动操作选项需要主动设置 ShouldWaitForQuiescence 为 true （如果需要的话）
+	launchOpt := WDAAppLaunchOption{
+		ShouldWaitForQuiescence: true,
+		Arguments:               []string{"-AppleLanguages", "(Russian)"},
+		// Arguments:               []string{"-AppleLanguages", "(ru)"},
+		// Environment:             map[string]string{"DYLD_PRINT_STATISTICS": "YES"},
+	}
+	_ = launchOpt
+	err = s.AppLaunch(bundleId, launchOpt)
+	// err = s.AppLaunch(bundleId)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -303,8 +361,7 @@ func TestSession_Locked(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	bundleId := "com.apple.Preferences"
-	s, err := c.NewSession(bundleId)
+	s, err := c.NewSession()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -313,7 +370,11 @@ func TestSession_Locked(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Log(locked)
+	if locked {
+		t.Log("设备处于 屏幕锁定 界面")
+	} else {
+		t.Log("设备已屏幕解锁")
+	}
 }
 
 func TestSession_Unlock(t *testing.T) {
@@ -355,13 +416,13 @@ func TestSession_Activate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	bundleId := "com.apple.Preferences"
-	s, err := c.NewSession(bundleId)
+	// bundleId := "com.apple.Preferences"
+	s, err := c.NewSession()
 	if err != nil {
 		t.Fatal(err)
 	}
 	Debug = true
-	err = s.Activate(bundleId)
+	err = s.AppActivate(bundleId)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -578,8 +639,7 @@ func TestTmpSession(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	bundleId := "com.apple.Preferences"
-	s, err := c.NewSession(bundleId)
+	s, err := c.NewSession()
 	if err != nil {
 		t.Fatal(err)
 	}

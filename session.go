@@ -16,6 +16,42 @@ type Session struct {
 	// bundleID   string
 }
 
+type WDASessionInfo struct {
+	Capabilities struct {
+		CFBundleIdentifier string `json:"CFBundleIdentifier"`
+		BrowserName        string `json:"browserName"`
+		Device             string `json:"device"`
+		SdkVersion         string `json:"sdkVersion"`
+	} `json:"capabilities"`
+	SessionID string `json:"sessionId"`
+	_String   string
+}
+
+func (si WDASessionInfo) String() string {
+	return si._String
+}
+
+// GetActiveSession get current session information
+// {
+//    "sessionId" : "8BF16568-832F-4A14-A137-FD0CA566FC64",
+//    "capabilities" : {
+//      "device" : "iphone",
+//      "browserName" : "设置",
+//      "sdkVersion" : "11.4.1",
+//      "CFBundleIdentifier" : "com.apple.Preferences"
+//    }
+// }
+func (s *Session) GetActiveSession() (wdaSessionInfo WDASessionInfo, err error) {
+	var wdaResp wdaResponse
+	if wdaResp, err = internalGet("GetActiveSession", urlJoin(s.sessionURL, "")); err != nil {
+		return
+	}
+
+	wdaSessionInfo._String = wdaResp.getValue().String()
+	err = json.Unmarshal([]byte(wdaSessionInfo._String), &wdaSessionInfo)
+	return
+}
+
 // Delete kill session associated with that request
 //
 // 1. alertsMonitor disable
@@ -25,16 +61,28 @@ func (s *Session) Delete() (err error) {
 	return
 }
 
-// AppLaunch always wait for quiescence
+// WDAAppLaunchOption launch application configuration
+type WDAAppLaunchOption struct {
+	ShouldWaitForQuiescence bool              // It allows to turn on/off waiting for application quiescence, while performing queries. Defaults to NO.
+	Arguments               []string          // The optional array of application command line arguments. The arguments are going to be applied if the application was not running before.
+	Environment             map[string]string // The optional dictionary of environment variables for the application, which is going to be executed. The environment variables are going to be applied if the application was not running before.
+}
+
+// AppLaunch Launch an application with given bundle identifier in scope of current session.
+// !This method is only available since Xcode9 SDK
+//
+// Default wait for quiescence
 //
 // 1. registerApplicationWithBundleId
 // 2. launch OR activate
-func (s *Session) AppLaunch(bundleId string) (err error) {
-	// TODO
-	//  arguments
-	//  environment
-	body := newWdaBody().setBundleID(bundleId).set("shouldWaitForQuiescence", true)
-	_, err = internalPost("Launch", urlJoin(s.sessionURL, "wda", "apps", "launch"), body)
+func (s *Session) AppLaunch(bundleId string, opt ...WDAAppLaunchOption) (err error) {
+	// TODO BundleId is required 如果不存在 wda 内部会报错导致接下来的操作都无法接收处理
+	if len(opt) == 0 {
+		opt = []WDAAppLaunchOption{{ShouldWaitForQuiescence: true}}
+	}
+	body := newWdaBody().setBundleID(bundleId)
+	body.setAppLaunchOption(opt[0])
+	_, err = internalPost("AppLaunch", urlJoin(s.sessionURL, "wda", "apps", "launch"), body)
 	return
 }
 
@@ -210,6 +258,17 @@ func (s *Session) ActiveAppInfo() (wdaActiveAppInfo WDAActiveAppInfo, err error)
 	return activeAppInfo(s.sessionURL)
 }
 
+// ActiveAppsList
+func (s *Session) ActiveAppsList() (appsList []WDAAppBaseInfo, err error) {
+	var wdaResp wdaResponse
+	if wdaResp, err = internalGet("ActiveAppsList", urlJoin(s.sessionURL, "/wda/apps/list")); err != nil {
+		return nil, err
+	}
+	appsList = make([]WDAAppBaseInfo, 0)
+	err = json.Unmarshal([]byte(wdaResp.getValue().String()), &appsList)
+	return
+}
+
 // Tap
 // TODO tap
 func (s *Session) Tap(x, y int) error {
@@ -273,14 +332,10 @@ func (v WDAAppRunState) String() string {
 }
 
 // AppState
-//
-// 1 未运行？
-// 2 运行中（后台活动）
-// 4 运行中（前台活动）
 func (s *Session) AppState(bundleId string) (appRunState WDAAppRunState, err error) {
 	body := newWdaBody().setBundleID(bundleId)
-	wdaResp, err := internalPost("AppState", urlJoin(s.sessionURL, "wda", "apps", "state"), body)
-	if err != nil {
+	var wdaResp wdaResponse
+	if wdaResp, err = internalPost("AppState", urlJoin(s.sessionURL, "/wda/apps/state"), body); err != nil {
 		return -1, err
 	}
 	return WDAAppRunState(wdaResp.getValue().Int()), nil
@@ -366,14 +421,14 @@ func (s *Session) Lock() (err error) {
 	return lock(s.sessionURL)
 }
 
-// TODO /wda/apps/activate
-func (s *Session) Activate(bundleId string) error {
+// AppActivate
+//
+// 1. activate
+// 2. waitForState:XCUIApplicationStateRunningForeground
+func (s *Session) AppActivate(bundleId string) (err error) {
 	body := newWdaBody().setBundleID(bundleId)
-	wdaResp, err := internalPost("Activate", urlJoin(s.sessionURL, "wda", "apps", "activate"), body)
-	if err != nil {
-		return err
-	}
-	return wdaResp.getErrMsg()
+	_, err = internalPost("AppActivate", urlJoin(s.sessionURL, "wda", "apps", "activate"), body)
+	return
 }
 
 // DeactivateApp Deactivates application for given time
@@ -486,6 +541,7 @@ func (s *Session) Source(formattedAsJson ...bool) (sTree string, err error) {
 }
 
 // AccessibleSource
+// ignore all elements except for the main window for accessibility tree
 func (s *Session) AccessibleSource() (sJson string, err error) {
 	return accessibleSource(s.sessionURL)
 }
@@ -500,35 +556,14 @@ func (s *Session) AccessibleSource() (sJson string, err error) {
 // TODO wdaResp, err := internalGet("AppList", urlJoin(s.sessionURL, "/wda/apps/list", ))	handleGetActiveAppsList	fb_activeAppsInfo
 
 func (s *Session) tttTmp() {
-
-	// wdaResp, err := internalGet("AppList", urlJoin(s.sessionURL, "/wda/apps/list", ))
-	// fmt.Println(err, wdaResp)
-	// 
-	// return
-
-	// body := make(map[string]interface{})
-	// body["bundleId"] = "com.netease.cloudmusic"
-	// body["url"] = "baidu.com"
-	// body["shouldWaitForQuiescence"] = true
-	// body["x"] = 230
-	// body["y"] = 130
-	// body["duration"] = 1.0
-	// body["value"] = strings.Split("中文测试1.0", "")
-	// body["using"] = "link text"
-	// body["value"] = "label=发现"
-	// body["url"] = "http://www.baidu.com"
-	// bsJson, err := internalPost("tttTmp", urlJoin(s.sessionURL, "/wda/keyboard/dismiss"), nil)
-	// bsJson, err := internalPost("tttTmp", urlJoin(s.sessionURL, "/elements"), body)
-	// bsJson, err := internalPost("tttTmp", urlJoin(s.sessionURL, "/url"), body)
-	// bsJson, err := internalGet("tttTmp", urlJoin(s.sessionURL, "/window/size"))
-	// bsJson, err := internalGet("tttTmp", urlJoin(s.sessionURL, "/wda/apps/list"))
+	actionName := "handleGetActiveAppsList"
 	body := newWdaBody()
 	_ = body
+	_ = actionName
+	// body.set("url", "baidu.com")
 
-	// body.set("bundleId", "com.netease.cloudmusic")
-	body.set("url", "baidu.com")
-	wdaResp, err := internalPost("#TEMP", urlJoin(s.sessionURL, "/url"), body)
-	// body["bundleId"] = bundleId
-	// bsJson, err := s.AppState("com.netease.cloudmusic")
+	// wdaResp, err := internalPost("#TEMP", urlJoin(s.sessionURL, "/url"), body)
+	// fb_activeAppsInfo
+	wdaResp, err := internalGet(actionName, urlJoin(s.sessionURL, "/wda/apps/list"))
 	fmt.Println(err, wdaResp)
 }
