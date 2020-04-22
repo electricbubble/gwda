@@ -101,6 +101,17 @@ func (wb wdaBody) set(k string, v interface{}) (body wdaBody) {
 func (wb wdaBody) setBundleID(bundleId string) (body wdaBody) {
 	return wb.set("bundleId", bundleId)
 }
+func (wb wdaBody) setAppLaunchOption(opt WDAAppLaunchOption) (body2 wdaBody) {
+	wb.set("shouldWaitForQuiescence", opt.ShouldWaitForQuiescence)
+	if len(opt.Arguments) != 0 {
+		wb.set("arguments", opt.Arguments)
+	}
+	if len(opt.Environment) != 0 {
+		fmt.Println(opt.Environment)
+		wb.set("environment", opt.Environment)
+	}
+	return wb
+}
 func (wb wdaBody) setXY(x, y int) (body wdaBody) {
 	return wb.set("x", x).set("y", y)
 }
