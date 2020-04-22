@@ -102,7 +102,7 @@ func main() {
 	switch appRunState {
 	case gwda.WDAAppRunningBack:
 		fmt.Println("该 App 正后台运行中，开始切换到前台运行")
-		_ = s.Activate(bundleId)
+		_ = s.AppActivate(bundleId)
 	case gwda.WDAAppNotRunning:
 		fmt.Println("该 App 未运行，开始打开 App")
 		_ = s.AppLaunch(bundleId)
@@ -152,7 +152,7 @@ func main() {
 
 }
 ```
-> 以上代码仅使用了 iPhone X 和 iPhone 6s 进行了测试。
+> 以上代码仅使用了 iPhone X (13.4.1) 和 iPhone 6s (11.4.1) 进行了测试。
 
 ## TODO
 
