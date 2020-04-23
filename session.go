@@ -12,8 +12,6 @@ import (
 
 type Session struct {
 	sessionURL *url.URL
-	// sessionID  string
-	// bundleID   string
 }
 
 type WDASessionInfo struct {
@@ -24,14 +22,17 @@ type WDASessionInfo struct {
 		SdkVersion         string `json:"sdkVersion"`
 	} `json:"capabilities"`
 	SessionID string `json:"sessionId"`
-	_String   string
+	_string   string
 }
 
 func (si WDASessionInfo) String() string {
-	return si._String
+	return si._string
 }
 
-// GetActiveSession get current session information
+// GetActiveSession
+//
+// get current session information
+//
 // {
 //    "sessionId" : "8BF16568-832F-4A14-A137-FD0CA566FC64",
 //    "capabilities" : {
@@ -47,28 +48,53 @@ func (s *Session) GetActiveSession() (wdaSessionInfo WDASessionInfo, err error) 
 		return
 	}
 
-	wdaSessionInfo._String = wdaResp.getValue().String()
-	err = json.Unmarshal([]byte(wdaSessionInfo._String), &wdaSessionInfo)
+	wdaSessionInfo._string = wdaResp.getValue().String()
+	err = json.Unmarshal([]byte(wdaSessionInfo._string), &wdaSessionInfo)
 	return
 }
 
-// Delete kill session associated with that request
+// DeleteSession
+//
+// kill session (and App) associated with that request
 //
 // 1. alertsMonitor disable
 // 2. testedApplicationBundleId terminate
-func (s *Session) Delete() (err error) {
+func (s *Session) DeleteSession() (err error) {
 	_, err = internalDelete("DeleteSession", s.sessionURL.String())
 	return
 }
 
-// WDAAppLaunchOption launch application configuration
-type WDAAppLaunchOption struct {
-	ShouldWaitForQuiescence bool              // It allows to turn on/off waiting for application quiescence, while performing queries. Defaults to NO.
-	Arguments               []string          // The optional array of application command line arguments. The arguments are going to be applied if the application was not running before.
-	Environment             map[string]string // The optional dictionary of environment variables for the application, which is going to be executed. The environment variables are going to be applied if the application was not running before.
+// launch application configuration
+type WDAAppLaunchOption wdaBody
+
+func NewWDAAppLaunchOption() WDAAppLaunchOption {
+	return make(WDAAppLaunchOption)
 }
 
-// AppLaunch Launch an application with given bundle identifier in scope of current session.
+// SetShouldWaitForQuiescence
+//
+// It allows to turn on/off waiting for application quiescence, while performing queries.
+func (alo WDAAppLaunchOption) SetShouldWaitForQuiescence(b bool) WDAAppLaunchOption {
+	return WDAAppLaunchOption(wdaBody(alo).set("shouldWaitForQuiescence", b))
+}
+
+// SetArguments
+//
+// The optional array of application command line arguments. The arguments are going to be applied if the application was not running before.
+func (alo WDAAppLaunchOption) SetArguments(args []string) WDAAppLaunchOption {
+	return WDAAppLaunchOption(wdaBody(alo).set("arguments", args))
+}
+
+// SetEnvironment
+//
+// The optional dictionary of environment variables for the application, which is going to be executed. The environment variables are going to be applied if the application was not running before.
+func (alo WDAAppLaunchOption) SetEnvironment(env map[string]string) WDAAppLaunchOption {
+	return WDAAppLaunchOption(wdaBody(alo).set("environment", env))
+}
+
+// AppLaunch
+//
+// Launch an application with given bundle identifier in scope of current session.
 // !This method is only available since Xcode9 SDK
 //
 // Default wait for quiescence
@@ -76,13 +102,13 @@ type WDAAppLaunchOption struct {
 // 1. registerApplicationWithBundleId
 // 2. launch OR activate
 func (s *Session) AppLaunch(bundleId string, opt ...WDAAppLaunchOption) (err error) {
-	// TODO BundleId is required 如果不存在 wda 内部会报错导致接下来的操作都无法接收处理
+	// TODO BundleId is required 如果是不存在的 bundleId 会导致 wda 内部报错导致接下来的操作都无法接收处理
 	if len(opt) == 0 {
-		opt = []WDAAppLaunchOption{{ShouldWaitForQuiescence: true}}
+		opt = []WDAAppLaunchOption{NewWDAAppLaunchOption().SetShouldWaitForQuiescence(true)}
 	}
 	body := newWdaBody().setBundleID(bundleId)
 	body.setAppLaunchOption(opt[0])
-	_, err = internalPost("AppLaunch", urlJoin(s.sessionURL, "wda", "apps", "launch"), body)
+	_, err = internalPost("AppLaunch", urlJoin(s.sessionURL, "/wda/apps/launch"), body)
 	return
 }
 
@@ -95,11 +121,11 @@ type WDADeviceInfo struct {
 	UserInterfaceStyle string `json:"userInterfaceStyle"`
 	Name               string `json:"name"`
 	IsSimulator        bool   `json:"isSimulator"`
-	_String            string
+	_string            string
 }
 
 func (di WDADeviceInfo) String() string {
-	return di._String
+	return di._string
 }
 
 // DeviceInfo
@@ -115,12 +141,12 @@ func (di WDADeviceInfo) String() string {
 // }
 func (s *Session) DeviceInfo() (wdaDeviceInfo WDADeviceInfo, err error) {
 	var wdaResp wdaResponse
-	if wdaResp, err = internalGet("DeviceInfo", urlJoin(s.sessionURL, "wda", "device", "info")); err != nil {
+	if wdaResp, err = internalGet("DeviceInfo", urlJoin(s.sessionURL, "/wda/device/info")); err != nil {
 		return
 	}
 
-	wdaDeviceInfo._String = wdaResp.getValue().String()
-	err = json.Unmarshal([]byte(wdaDeviceInfo._String), &wdaDeviceInfo)
+	wdaDeviceInfo._string = wdaResp.getValue().String()
+	err = json.Unmarshal([]byte(wdaDeviceInfo._string), &wdaDeviceInfo)
 	// err = json.Unmarshal(wdaResp.getValue2Bytes(), &wdaDeviceInfo)
 	return
 }
@@ -128,11 +154,11 @@ func (s *Session) DeviceInfo() (wdaDeviceInfo WDADeviceInfo, err error) {
 type WDABatteryInfo struct {
 	Level   float32         `json:"level"` // Battery level in range [0.0, 1.0], where 1.0 means 100% charge.
 	State   WDABatteryState `json:"state"` // Battery state ( 1: on battery, discharging; 2: plugged in, less than 100%, 3: plugged in, at 100% )
-	_String string
+	_string string
 }
 
 func (bi WDABatteryInfo) String() string {
-	return bi._String
+	return bi._string
 }
 
 type WDABatteryState int
@@ -171,12 +197,12 @@ func (v WDABatteryState) String() string {
 // UIDeviceBatteryStateFull = 3       // plugged in, at 100%
 func (s *Session) BatteryInfo() (wdaBatteryInfo WDABatteryInfo, err error) {
 	var wdaResp wdaResponse
-	if wdaResp, err = internalGet("BatteryInfo", urlJoin(s.sessionURL, "wda", "batteryInfo")); err != nil {
+	if wdaResp, err = internalGet("BatteryInfo", urlJoin(s.sessionURL, "/wda/batteryInfo")); err != nil {
 		return
 	}
 
-	wdaBatteryInfo._String = wdaResp.getValue().String()
-	err = json.Unmarshal([]byte(wdaBatteryInfo._String), &wdaBatteryInfo)
+	wdaBatteryInfo._string = wdaResp.getValue().String()
+	err = json.Unmarshal([]byte(wdaBatteryInfo._string), &wdaBatteryInfo)
 	// err = json.Unmarshal(wdaResp.getValue2Bytes(), &wdaBatteryInfo)
 	return
 }
@@ -189,12 +215,12 @@ func (s *Session) BatteryInfo() (wdaBatteryInfo WDABatteryInfo, err error) {
 // }
 func (s *Session) WindowSize() (wdaSize WDASize, err error) {
 	var wdaResp wdaResponse
-	if wdaResp, err = internalGet("WindowSize", urlJoin(s.sessionURL, "window", "size")); err != nil {
+	if wdaResp, err = internalGet("WindowSize", urlJoin(s.sessionURL, "/window/size")); err != nil {
 		return
 	}
 
-	wdaSize._String = wdaResp.getValue().String()
-	err = json.Unmarshal([]byte(wdaSize._String), &wdaSize)
+	wdaSize._string = wdaResp.getValue().String()
+	err = json.Unmarshal([]byte(wdaSize._string), &wdaSize)
 	// err = json.Unmarshal(wdaResp.getValue2Bytes(), &wdaSize)
 	return
 }
@@ -202,21 +228,21 @@ func (s *Session) WindowSize() (wdaSize WDASize, err error) {
 type WDASize struct {
 	Width   int `json:"width"`
 	Height  int `json:"height"`
-	_String string
+	_string string
 }
 
 func (s WDASize) String() string {
-	return s._String
+	return s._string
 }
 
 type WDAScreen struct {
 	StatusBarSize WDASize `json:"statusBarSize"`
 	Scale         float32 `json:"scale"`
-	_String       string
+	_string       string
 }
 
 func (s WDAScreen) String() string {
-	return s._String
+	return s._string
 }
 
 // Screen
@@ -230,13 +256,13 @@ func (s WDAScreen) String() string {
 // }
 func (s *Session) Screen() (wdaScreen WDAScreen, err error) {
 	var wdaResp wdaResponse
-	if wdaResp, err = internalGet("Screen", urlJoin(s.sessionURL, "wda", "screen")); err != nil {
+	if wdaResp, err = internalGet("Screen", urlJoin(s.sessionURL, "/wda/screen")); err != nil {
 		return
 	}
 
-	wdaScreen.StatusBarSize._String = wdaResp.getValue().Get("statusBarSize").String()
-	wdaScreen._String = wdaResp.getValue().String()
-	err = json.Unmarshal([]byte(wdaScreen._String), &wdaScreen)
+	wdaScreen.StatusBarSize._string = wdaResp.getValue().Get("statusBarSize").String()
+	wdaScreen._string = wdaResp.getValue().String()
+	err = json.Unmarshal([]byte(wdaScreen._string), &wdaScreen)
 	// err = json.Unmarshal(wdaResp.getValue2Bytes(), &wdaScreen)
 	return
 }
@@ -253,12 +279,27 @@ func (s *Session) StatusBarSize() (wdaStatusBarSize WDASize, err error) {
 	return screen.StatusBarSize, err
 }
 
-// ActiveAppInfo Constructor used to get current active application
+// ActiveAppInfo
+//
+// get current active application
 func (s *Session) ActiveAppInfo() (wdaActiveAppInfo WDAActiveAppInfo, err error) {
 	return activeAppInfo(s.sessionURL)
 }
 
 // ActiveAppsList
+//
+// use multitasking on iPad
+//
+// [
+//    {
+//      "pid" : 3573,
+//      "bundleId" : "com.apple.DocumentsApp"
+//    },
+//    {
+//      "pid" : 3311,
+//      "bundleId" : "com.apple.reminders"
+//    }
+//  ]
 func (s *Session) ActiveAppsList() (appsList []WDAAppBaseInfo, err error) {
 	var wdaResp wdaResponse
 	if wdaResp, err = internalGet("ActiveAppsList", urlJoin(s.sessionURL, "/wda/apps/list")); err != nil {
@@ -299,12 +340,14 @@ func (s *Session) TouchAndHold(x, y int, duration ...float32) (err error) {
 	return
 }
 
-// AppTerminate Close the application by bundleId
+// AppTerminate
+//
+// Close the application by bundleId
 //
 // 1. unregisterApplicationWithBundleId
 func (s *Session) AppTerminate(bundleId string) (err error) {
 	body := newWdaBody().setBundleID(bundleId)
-	_, err = internalPost("AppTerminate", urlJoin(s.sessionURL, "wda", "apps", "terminate"), body)
+	_, err = internalPost("AppTerminate", urlJoin(s.sessionURL, "/wda/apps/terminate"), body)
 	// "value" : true,
 	// "value" : false,
 	return
@@ -332,6 +375,9 @@ func (v WDAAppRunState) String() string {
 }
 
 // AppState
+//
+// Get the state of the particular application in scope of the current session.
+// !This method is only returning reliable results since Xcode9 SDK
 func (s *Session) AppState(bundleId string) (appRunState WDAAppRunState, err error) {
 	body := newWdaBody().setBundleID(bundleId)
 	var wdaResp wdaResponse
@@ -406,38 +452,49 @@ func (s *Session) FindElement(using, value string) (element Element, err error) 
 	return
 }
 
-// IsLocked Whether the screen is locked
+// IsLocked
+//
+// Checks if the screen is locked or not.
 func (s *Session) IsLocked() (bool, error) {
 	return isLocked(s.sessionURL)
 }
 
-// Unlock unlock screen
+// Unlock
+//
+// Forces the device under test to unlock.
+// An immediate return will happen if the device is already unlocked and an error is going to be thrown if the screen has not been unlocked after the timeout.
 func (s *Session) Unlock() (err error) {
 	return unlock(s.sessionURL)
 }
 
 // Lock
+//
+// Forces the device under test to switch to the lock screen.
+// An immediate return will happen if the device is already locked and an error is going to be thrown if the screen has not been locked after the timeout.
 func (s *Session) Lock() (err error) {
 	return lock(s.sessionURL)
 }
 
 // AppActivate
 //
-// 1. activate
-// 2. waitForState:XCUIApplicationStateRunningForeground
+// Activate the application by restoring it from the background.
+// Nothing will happen if the application is already in foreground.
+// This method is only supported since Xcode9.
 func (s *Session) AppActivate(bundleId string) (err error) {
 	body := newWdaBody().setBundleID(bundleId)
-	_, err = internalPost("AppActivate", urlJoin(s.sessionURL, "wda", "apps", "activate"), body)
+	_, err = internalPost("AppActivate", urlJoin(s.sessionURL, "/wda/apps/activate"), body)
 	return
 }
 
-// DeactivateApp Deactivates application for given time
-func (s *Session) DeactivateApp(seconds ...float32) (err error) {
+// AppDeactivate
+//
+// Deactivates application for given time and then activate it again
+func (s *Session) AppDeactivate(seconds ...float32) (err error) {
 	body := newWdaBody()
 	if len(seconds) != 0 {
-		body.set("seconds", seconds[0])
+		body.set("duration", seconds[0])
 	}
-	wdaResp, err := internalPost("DeactivateApp", urlJoin(s.sessionURL, "/wda/deactivateApp"), body)
+	wdaResp, err := internalPost("AppDeactivate", urlJoin(s.sessionURL, "/wda/deactivateApp"), body)
 	if err != nil {
 		return err
 	}
@@ -518,7 +575,9 @@ func (s *Session) PressButton(wdaDeviceButton WDADeviceButtonName) (err error) {
 	return
 }
 
-// SiriActivate Activates Siri service voice recognition with the given text to parse
+// SiriActivate
+//
+// Activates Siri service voice recognition with the given text to parse
 func (s *Session) SiriActivate(text string) (err error) {
 	body := newWdaBody().set("text", text)
 	_, err = internalPost("SiriActivate", urlJoin(s.sessionURL, "/wda/siri/activate"), body)
@@ -529,21 +588,43 @@ func (s *Session) SiriActivate(text string) (err error) {
 // It doesn't actually work, right?
 func (s *Session) SiriOpenURL(url string) (err error) {
 	body := newWdaBody().set("url", url)
-	_, err = internalPost("OpenURL", urlJoin(s.sessionURL, "/url"), body)
+	_, err = internalPost("SiriOpenURL", urlJoin(s.sessionURL, "/url"), body)
 	return
 }
 
 // Source
-//
-// Source aka tree
-func (s *Session) Source(formattedAsJson ...bool) (sTree string, err error) {
-	return source(s.sessionURL, formattedAsJson...)
+func (s *Session) Source(srcOpt ...WDASourceOption) (sTree string, err error) {
+	return source(s.sessionURL, srcOpt...)
 }
 
 // AccessibleSource
+//
+// Return application elements accessibility tree
+//
 // ignore all elements except for the main window for accessibility tree
 func (s *Session) AccessibleSource() (sJson string, err error) {
 	return accessibleSource(s.sessionURL)
+}
+
+func (s *Session) GetAppiumSettings() (sJson string, err error) {
+	var wdaResp wdaResponse
+	if wdaResp, err = internalGet("GetAppiumSettings", urlJoin(s.sessionURL, "/appium/settings")); err != nil {
+		return "", err
+	}
+	return wdaResp.getValue().String(), nil
+}
+
+func (s *Session) SetAppiumSetting(key string, value interface{}) (sJson string, err error) {
+	return s.SetAppiumSettings(map[string]interface{}{key: value})
+}
+
+func (s *Session) SetAppiumSettings(settings map[string]interface{}) (sJson string, err error) {
+	body := newWdaBody().set("settings", settings)
+	var wdaResp wdaResponse
+	if wdaResp, err = internalPost("SetAppiumSettings", urlJoin(s.sessionURL, "/appium/settings"), body); err != nil {
+		return "", err
+	}
+	return wdaResp.getValue().String(), nil
 }
 
 // It's not working
@@ -551,19 +632,15 @@ func (s *Session) AccessibleSource() (sJson string, err error) {
 // /wda/keyboard/dismiss
 // /wda/getPasteboard
 
-// TODO DELETE	/session/{session id}
 // TODO /screenshot
-// TODO wdaResp, err := internalGet("AppList", urlJoin(s.sessionURL, "/wda/apps/list", ))	handleGetActiveAppsList	fb_activeAppsInfo
 
 func (s *Session) tttTmp() {
-	actionName := "handleGetActiveAppsList"
 	body := newWdaBody()
 	_ = body
-	_ = actionName
 	// body.set("url", "baidu.com")
 
 	// wdaResp, err := internalPost("#TEMP", urlJoin(s.sessionURL, "/url"), body)
-	// fb_activeAppsInfo
-	wdaResp, err := internalGet(actionName, urlJoin(s.sessionURL, "/wda/apps/list"))
+	body.set("contentType", "plaintext")
+	wdaResp, err := internalPost("###############", urlJoin(s.sessionURL, "/wda/getPasteboard"), body)
 	fmt.Println(err, wdaResp)
 }
