@@ -2,31 +2,46 @@ package gwda
 
 import (
 	"testing"
+	"time"
 )
 
 var deviceURL = "http://localhost:8100"
 var bundleId = "com.apple.Preferences"
 
 func TestClient_NewSession(t *testing.T) {
-	type sTmp struct {
-		shouldUseTestManagerForVisibilityDetection *bool
-	}
-	// var wdaTrue *bool = true
-	// t.Log(sTmp{shouldUseTestManagerForVisibilityDetection: *bool(true))})
-	// t.Log(sTmp{shouldUseTestManagerForVisibilityDetection: sql.NullBool{Bool: true}})
-	// return
+	Debug = true
 	c, err := NewClient(deviceURL)
 	if err != nil {
 		t.Fatal(err)
 	}
 	bundleId = "com.taobao.taobao4iphone"
-	// bundleId = "com.sgv.peanutsubwaywifi"
-	Debug = true
+	bundleId = "com.sgv.peanutsubwaywifi"
+	// bundleId = "com.apple.camera"
+
 	// _, err = c.NewSession()
-	_, err = c.NewSession(bundleId)
+	// 未解锁状态下指定 bundleId 会导致 wda 内部会报错导致接下来的操作都无法接收处理
+	// s, err := c.NewSession(NewWDASessionCapability(bundleId))
+	// s, err := c.NewSession(NewWDASessionCapability())
+	s, err := c.NewSession(NewWDASessionCapability(bundleId).SetDefaultAlertAction(WDASessionAlertActionAccept))
+	// s, err := c.NewSession(NewWDASessionCapability().SetDefaultAlertAction(WDASessionAlertActionAccept))
+	// s, err := c.NewSession(NewWDASessionCapability())
+	// s, err := c.NewSession()
 	if err != nil {
 		t.Fatal(err)
 	}
+	// 如果使用了弹窗监控，却没有删除 session，新建的 session 也使用了弹窗监控，将会导致弹窗监控全都失效(弹窗监控是全局的，脱离于 session)
+	// defer s.Delete()
+	defer func() {
+		s.DeleteSession()
+		time.Sleep(time.Second * 1)
+	}()
+	_ = s
+	time.Sleep(time.Second * 30)
+	// s.Delete()
+	// s.AppLaunch(bundleId)
+	// s.AppLaunch(bundleId)
+	// s.AppLaunch("com.apple.DocumentsApp")
+	// _, err = c.NewSession("com.apple.DocumentsApp")
 }
 
 func TestClient_LaunchUnattached(t *testing.T) {
@@ -35,7 +50,10 @@ func TestClient_LaunchUnattached(t *testing.T) {
 		t.Fatal(err)
 	}
 	Debug = true
-	err = c.LaunchUnattachedApp(bundleId)
+	// 锁屏界面下，启动会失败 `LSApplicationWorkspace failed to launch app`
+	// 但是，如果被打开的 App 正在运行中（前台或后台），则不会报错
+	// 但也不会点亮屏幕
+	err = c.AppLaunchUnattached(bundleId)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -47,11 +65,11 @@ func TestClient_Status(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	wdaResp, err := c.Status()
+	status, err := c.Status()
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Log(wdaResp)
+	t.Log(status)
 }
 
 func TestClient_Home(t *testing.T) {
@@ -60,7 +78,7 @@ func TestClient_Home(t *testing.T) {
 		t.Fatal(err)
 	}
 	Debug = true
-	err = c.HomeScreen()
+	err = c.Homescreen()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -113,14 +131,21 @@ func TestClient_Source(t *testing.T) {
 		t.Fatal(err)
 	}
 	Debug = true
-	s, err := c.Source()
-	// s, err := c.Source(true)
+	// s, err := c.Source() // xml
+	// s, err := c.Source(NewWDASourceOption().SetFormatAsJson())
+	// s, err := c.Source(NewWDASourceOption().SetFormatAsDescription())
+	// s, err := c.Source(NewWDASourceOption().SetFormatAsJson().SetExcludedAttributes([]string{"enabled", "visible", "type"}))
+	s, err := c.Source(NewWDASourceOption().SetExcludedAttributes([]string{"enabled", "visible", "type"}))
 	if err != nil {
 		t.Fatal(err)
 	}
 	t.Log(s)
 
-	t.Log(c.Source(true))
+	// s2, err := c.Source()
+	// if err != nil {
+	// 	t.Fatal(err)
+	// }
+	// t.Log(s2)
 }
 
 func TestClient_AccessibleSource(t *testing.T) {
@@ -147,6 +172,8 @@ func TestClient_ActiveAppInfo(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Log(info)
+	t.Log(info.BundleID)
+	t.Log(info.Pid)
 }
 
 func TestTmp(t *testing.T) {
