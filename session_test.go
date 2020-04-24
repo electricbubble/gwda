@@ -2,6 +2,7 @@ package gwda
 
 import (
 	"encoding/base64"
+	"io/ioutil"
 	"strings"
 	"testing"
 )
@@ -213,10 +214,10 @@ func TestSession_Tap(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = s.Tap(210, 290)
-	if err != nil {
-		t.Fatal(err)
-	}
+	// err = s.Tap(210, 290)
+	// if err != nil {
+	// 	t.Fatal(err)
+	// }
 }
 
 func TestSession_DoubleTap(t *testing.T) {
@@ -315,24 +316,74 @@ func TestSession_AppState(t *testing.T) {
 	t.Log("app 是否前台活动中", state == WDAAppRunningFront)
 }
 
-func TestSession_SendKeys(t *testing.T) {
+func TestSession_TypeText(t *testing.T) {
 	c, err := NewClient(deviceURL)
 	if err != nil {
 		t.Fatal(err)
 	}
-	bundleId := "com.apple.Preferences"
 	s, err := c.NewSession()
 	if err != nil {
 		t.Fatal(err)
 	}
 	Debug = true
-	err = s.SendKeys(bundleId)
+	err = s.TypeText(bundleId + "\n")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	file, _ := ioutil.ReadFile("/Users/hero/Documents/Workspace/Golang/gwda/examples/main.go")
+	err = s.TypeText(string(file), 30)
 	if err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestSession_FindElement(t *testing.T) {
+	c, err := NewClient(deviceURL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	bundleId := "com.apple.Preferences"
+	_ = bundleId
+	s, err := c.NewSession()
+	if err != nil {
+		t.Fatal(err)
+	}
+	Debug = true
+	// elements, err := s.FindElements("partial link text", "label=看一看")
+	// elements, err := s.FindElements("partial link text", "label=发现")
+	// **/XCUIElementTypeButton[`label == '允许' OR label == '好'`]
+	// "XCUIElementTypeWindow/*/*[$type == 'XCUIElementTypeButton' AND label BEGINSWITH 'A'$]"
+	// elements, err := s.FindElements("class chain", "**/XCUIElementTypeButton[`label == '允许' OR label == '好' OR label == '仅在使用应用期间' OR label == '暂不'`]")
+	// elements, err := s.FindElements("class chain", "**/XCUIElementTypeButton[`label == '允许' OR label == '好' OR label == '仅在使用应用期间' OR label == '暂不'`]")
+	// elements, err := s.FindElement("partial link text", "label=计算器")
+	// elements, err := s.FindElement("name", "附加程序")
+	// elements, err := s.FindElement("id", "附加程序")
+	// elements, err := s.FindElement("accessibility id", "附加程序")
+
+	// elements, err := s.FindElement("link text", `label=“附加程序”文件夹`)
+	// elements, err := s.FindElement("link text", `name=附加程序`)
+	// 默认搜索 name
+	// elements, err := s.FindElement("link text", `附加程序`)
+	// elements, err := s.FindElement("link text", `type=XCUIElementTypeIcon`)
+	elements, err := s.FindElement("link text", `value=6 个应用`)
+	// elements, err := s.FindElement("partial link text", `value=6`)
+
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log(elements)
+
+	t.Log(elements.Rect())
+	t.Log(elements.Click())
+
+	// if len(elements) == 1 {
+	// 	err := elements[0].Click()
+	// 	t.Log(err)
+	// }
+}
+
+func TestSession_FindElements(t *testing.T) {
 	c, err := NewClient(deviceURL)
 	if err != nil {
 		t.Fatal(err)
@@ -487,7 +538,7 @@ func TestSession_SetPasteboardForImage(t *testing.T) {
 		t.Fatal(err)
 	}
 	Debug = true
-	err = s.SetPasteboardForImage("/Users/hero/Documents/leixipaopao/IMG_5246.JPG")
+	err = s.SetPasteboardForImage("~/Documents/leixipaopao/IMG_5246.JPG")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -614,6 +665,58 @@ func TestSession_SiriOpenURL(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+}
+
+func TestSession_Screenshot(t *testing.T) {
+	c, err := NewClient(deviceURL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	s, err := c.NewSession()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer s.DeleteSession()
+	Debug = true
+	_, err = s.Screenshot()
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestSession_ScreenshotToDiskAsPng(t *testing.T) {
+	c, err := NewClient(deviceURL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	s, err := c.NewSession()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer s.DeleteSession()
+	Debug = true
+	err = s.ScreenshotToDiskAsPng("/Users/hero/Desktop/1.png")
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestSession_ScreenshotToPng(t *testing.T) {
+	c, err := NewClient(deviceURL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	s, err := c.NewSession()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer s.DeleteSession()
+	Debug = true
+	toPng, err := s.ScreenshotToPng()
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log("图片大小", toPng.Bounds().Size())
 }
 
 func TestSession_Source(t *testing.T) {

@@ -10,7 +10,8 @@ func TestElement_Click(t *testing.T) {
 		t.Fatal(err)
 	}
 	bundleId := "com.apple.Preferences"
-	s, err := c.NewSession(bundleId)
+	_ = bundleId
+	s, err := c.NewSession()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -32,8 +33,7 @@ func TestElement_Rect(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	bundleId := "com.apple.Preferences"
-	s, err := c.NewSession(bundleId)
+	s, err := c.NewSession()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -57,7 +57,8 @@ func TestElement_Enabled(t *testing.T) {
 		t.Fatal(err)
 	}
 	bundleId := "com.apple.Preferences"
-	s, err := c.NewSession(bundleId)
+	_ = bundleId
+	s, err := c.NewSession()
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -34,8 +34,8 @@ func (e *Element) Rect() (wdaRect WDARect, err error) {
 	if err != nil {
 		return WDARect{}, err
 	}
-	wdaRect._String = wdaResp.getValue().String()
-	err = json.Unmarshal([]byte(wdaRect._String), &wdaRect)
+	wdaRect._string = wdaResp.getValue().String()
+	err = json.Unmarshal([]byte(wdaRect._string), &wdaRect)
 	return
 }
 

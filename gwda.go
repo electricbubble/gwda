@@ -12,7 +12,6 @@ import (
 	"net/url"
 	"path"
 	"regexp"
-	"strings"
 	"time"
 )
 
@@ -82,7 +81,11 @@ func internalDo(actionName, method, url string, body wdaBody) (wdaResp wdaRespon
 		return nil, errors.New(fmt.Sprintf("%s: failed to read response %s", actionName, err.Error()))
 	}
 	if Debug {
-		output += fmt.Sprintf("Response: %s\n", wdaResp)
+		if actionName == "Screenshot" {
+			output += fmt.Sprintf("Response: too long, don't display (%s)\n", url)
+		} else {
+			output += fmt.Sprintf("Response: %s\n", wdaResp)
+		}
 		log.Println(output)
 	}
 	err = wdaResp.getErrMsg()
@@ -111,9 +114,9 @@ func (wb wdaBody) setAppLaunchOption(opt WDAAppLaunchOption) (body wdaBody) {
 func (wb wdaBody) setXY(x, y int) (body wdaBody) {
 	return wb.set("x", x).set("y", y)
 }
-func (wb wdaBody) setSendKeys(text string) (body wdaBody) {
-	return wb.set("value", strings.Split(text, ""))
-}
+// func (wb wdaBody) setTextToType(text string) (body wdaBody) {
+// 	return wb.set("value", strings.Split(text, ""))
+// }
 
 type wdaResponse []byte
 

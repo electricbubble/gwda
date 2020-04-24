@@ -1,8 +1,13 @@
 package gwda
 
 import (
+	"bytes"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"image"
+	"image/png"
+	"io/ioutil"
 	"log"
 	"net/url"
 	"strings"
@@ -267,8 +272,52 @@ func (c *Client) Lock() (err error) {
 	return lock(c.deviceURL)
 }
 
-// TODO Screenshot
-// func (c *Client) Screenshot() {}
+func screenshot(baseUrl *url.URL) (raw *bytes.Buffer, err error) {
+	var wdaResp wdaResponse
+	if wdaResp, err = internalGet("Screenshot", urlJoin(baseUrl, "/screenshot")); err != nil {
+		return nil, err
+	}
+
+	if decodeString, err := base64.StdEncoding.DecodeString(wdaResp.getValue().String()); err != nil {
+		return nil, err
+	} else {
+		raw = bytes.NewBuffer(decodeString)
+		return raw, nil
+	}
+}
+
+func screenshotToDiskAsPng(baseUrl *url.URL, filename string) (err error) {
+	var raw *bytes.Buffer
+	if raw, err = screenshot(baseUrl); err != nil {
+		return err
+	}
+	err = ioutil.WriteFile(filename, raw.Bytes(), 0666)
+	return
+}
+
+func screenshotToPng(baseUrl *url.URL) (img image.Image, err error) {
+	if raw, err := screenshot(baseUrl); err != nil {
+		return nil, err
+	} else {
+		img, err = png.Decode(raw)
+		return img, err
+	}
+}
+
+// Screenshot
+func (c *Client) Screenshot() (raw *bytes.Buffer, err error) {
+	return screenshot(c.deviceURL)
+}
+
+// ScreenshotToDiskAsPng
+func (c *Client) ScreenshotToDiskAsPng(filename string) (err error) {
+	return screenshotToDiskAsPng(c.deviceURL, filename)
+}
+
+// ScreenshotToPng
+func (c *Client) ScreenshotToPng() (img image.Image, err error) {
+	return screenshotToPng(c.deviceURL)
+}
 
 type WDASourceOption wdaBody
 
@@ -376,7 +425,7 @@ type WDAAppBaseInfo struct {
 func activeAppInfo(baseUrl *url.URL) (wdaActiveAppInfo WDAActiveAppInfo, err error) {
 	var wdaResp wdaResponse
 	if wdaResp, err = internalGet("ActiveAppInfo", urlJoin(baseUrl, "/wda/activeAppInfo")); err != nil {
-		return
+		return WDAActiveAppInfo{}, err
 	}
 
 	wdaActiveAppInfo._string = wdaResp.getValue().String()

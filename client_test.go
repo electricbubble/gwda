@@ -125,17 +125,54 @@ func TestClient_Lock(t *testing.T) {
 	}
 }
 
+func TestClient_Screenshot(t *testing.T) {
+	c, err := NewClient(deviceURL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	Debug = true
+	_, err = c.Screenshot()
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestClient_ScreenshotToPng(t *testing.T) {
+	c, err := NewClient(deviceURL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	Debug = true
+	toPng, err := c.ScreenshotToPng()
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log("图片大小", toPng.Bounds().Size())
+}
+
+func TestClient_ScreenshotToDiskAsPng(t *testing.T) {
+	c, err := NewClient(deviceURL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	Debug = true
+	err = c.ScreenshotToDiskAsPng("/Users/hero/Desktop/3.png")
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestClient_Source(t *testing.T) {
 	c, err := NewClient(deviceURL)
 	if err != nil {
 		t.Fatal(err)
 	}
 	Debug = true
-	// s, err := c.Source() // xml
+	s, err := c.Source() // xml
 	// s, err := c.Source(NewWDASourceOption().SetFormatAsJson())
 	// s, err := c.Source(NewWDASourceOption().SetFormatAsDescription())
 	// s, err := c.Source(NewWDASourceOption().SetFormatAsJson().SetExcludedAttributes([]string{"enabled", "visible", "type"}))
-	s, err := c.Source(NewWDASourceOption().SetExcludedAttributes([]string{"enabled", "visible", "type"}))
+	// s, err := c.Source(NewWDASourceOption().SetExcludedAttributes([]string{"enabled", "visible", "type"}))
 	if err != nil {
 		t.Fatal(err)
 	}

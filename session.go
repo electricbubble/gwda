@@ -1,13 +1,16 @@
 package gwda
 
 import (
+	"bytes"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"image"
 	"io/ioutil"
 	"net/url"
 	"os"
+	"strings"
 )
 
 type Session struct {
@@ -45,7 +48,7 @@ func (si WDASessionInfo) String() string {
 func (s *Session) GetActiveSession() (wdaSessionInfo WDASessionInfo, err error) {
 	var wdaResp wdaResponse
 	if wdaResp, err = internalGet("GetActiveSession", urlJoin(s.sessionURL, "")); err != nil {
-		return
+		return WDASessionInfo{}, err
 	}
 
 	wdaSessionInfo._string = wdaResp.getValue().String()
@@ -310,21 +313,26 @@ func (s *Session) ActiveAppsList() (appsList []WDAAppBaseInfo, err error) {
 	return
 }
 
-// Tap
-// TODO tap
-func (s *Session) Tap(x, y int) error {
+func tap(baseUrl *url.URL, x, y int) (err error) {
 	body := newWdaBody().setXY(x, y)
-	wdaResp, err := internalPost("Tap", urlJoin(s.sessionURL, "wda", "tap", "0"), body)
-	if err != nil {
-		return err
+	// /session/24B04022-9385-4764-9E00-D8F480B36CE9/element/20000000-0000-0000-010C-000000000000
+	tmpUrlPath := "/wda/tap"
+	if len(strings.Split(baseUrl.Path, "/")) == 3 {
+		tmpUrlPath += "/0"
 	}
-	return wdaResp.getErrMsg()
+	_, err = internalPost("Tap", urlJoin(baseUrl, tmpUrlPath), body)
+	return
+}
+
+// Tap
+func (s *Session) Tap(x, y int) error {
+	return tap(s.sessionURL, x, y)
 }
 
 // DoubleTap double tap coordinate
 func (s *Session) DoubleTap(x, y int) (err error) {
 	body := newWdaBody().setXY(x, y)
-	_, err = internalPost("DoubleTap", urlJoin(s.sessionURL, "wda", "doubleTap"), body)
+	_, err = internalPost("DoubleTap", urlJoin(s.sessionURL, "/wda/doubleTap"), body)
 	return
 }
 
@@ -336,7 +344,7 @@ func (s *Session) TouchAndHold(x, y int, duration ...float32) (err error) {
 	} else {
 		body.set("duration", duration[0])
 	}
-	_, err = internalPost("TouchAndHold", urlJoin(s.sessionURL, "wda", "touchAndHold"), body)
+	_, err = internalPost("TouchAndHold", urlJoin(s.sessionURL, "/wda/touchAndHold"), body)
 	return
 }
 
@@ -387,13 +395,16 @@ func (s *Session) AppState(bundleId string) (appRunState WDAAppRunState, err err
 	return WDAAppRunState(wdaResp.getValue().Int()), nil
 }
 
-// SendKeys
-// TODO 每个字符输入等待时间 5s, 输入失败不会报错
-// TODO frequency
+// TypeText
+//
+// static NSUInteger FBMaxTypingFrequency = 60;
 // `确定` 使用 `\n`
-func (s *Session) SendKeys(text string) error {
-	body := newWdaBody().setSendKeys(text)
-	wdaResp, err := internalPost("SendKeys", urlJoin(s.sessionURL, "/wda/keys"), body)
+func (s *Session) TypeText(text string, typingFrequency ...int) error {
+	body := newWdaBody().set("value", strings.Split(text, ""))
+	if len(typingFrequency) != 0 {
+		body.set("frequency", typingFrequency[0])
+	}
+	wdaResp, err := internalPost("TypeText", urlJoin(s.sessionURL, "/wda/keys"), body)
 	if err != nil {
 		return err
 	}
@@ -427,19 +438,19 @@ func (s *Session) FindElements(using, value string) (elements []Element, err err
 }
 
 // TODO FindElement
-func (s *Session) FindElement(using, value string) (element Element, err error) {
+func (s *Session) FindElement(using, value string) (element *Element, err error) {
 	body := newWdaBody().set("using", using).set("value", value)
-	wdaResp, err := internalPost("FindElements", urlJoin(s.sessionURL, "element"), body)
-	if err != nil {
-		return Element{}, err
+	var wdaResp wdaResponse
+	if wdaResp, err = internalPost("FindElement", urlJoin(s.sessionURL, "/element"), body); err != nil {
+		return nil, err
 	}
 	// fmt.Println(wdaResp)
 	// fmt.Println(wdaResp.getValue().IsArray())
 	elementID := wdaResp.getValue().Get("ELEMENT").String()
 	if elementID == "" {
-		return Element{}, ErrNoSuchElement
+		return nil, ErrNoSuchElement
 	}
-	element = Element{}
+	element = new(Element)
 	element.elementURL, _ = url.Parse(urlJoin(s.sessionURL, "element", elementID))
 	// element = make([]Element, 0, len(elementID))
 	// for _, res := range elementID {
@@ -592,6 +603,21 @@ func (s *Session) SiriOpenURL(url string) (err error) {
 	return
 }
 
+// Screenshot
+func (s *Session) Screenshot() (raw *bytes.Buffer, err error) {
+	return screenshot(s.sessionURL)
+}
+
+// ScreenshotToDiskAsPng
+func (s *Session) ScreenshotToDiskAsPng(filename string) (err error) {
+	return screenshotToDiskAsPng(s.sessionURL, filename)
+}
+
+// ScreenshotToPng
+func (s *Session) ScreenshotToPng() (img image.Image, err error) {
+	return screenshotToPng(s.sessionURL)
+}
+
 // Source
 func (s *Session) Source(srcOpt ...WDASourceOption) (sTree string, err error) {
 	return source(s.sessionURL, srcOpt...)
@@ -631,8 +657,6 @@ func (s *Session) SetAppiumSettings(settings map[string]interface{}) (sJson stri
 // /timeouts
 // /wda/keyboard/dismiss
 // /wda/getPasteboard
-
-// TODO /screenshot
 
 func (s *Session) tttTmp() {
 	body := newWdaBody()
