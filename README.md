@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"github.com/electricbubble/gwda"
 	"log"
+	"time"
 )
 
 func main() {
@@ -52,12 +53,19 @@ func main() {
 	fmt.Printf("当前 App 的 PID: %d\n当前 App 的 bundleId: %s\n", cAppInfo.Pid, cAppInfo.BundleID)
 
 	bundleId := "com.apple.Preferences"
-	// 创建 session，可选输入 bundle id，如指定，则启动并且等待 app 加载完毕 
-	// TODO 弹窗自动处理
-	s, err := c.NewSession()
+	// 创建 session，可选输入 bundle id，如指定，则启动并且等待 app 加载完毕
+	// 弹窗自动处理
+	// gwda.NewWDASessionCapability(bundleId).SetDefaultAlertAction(gwda.WDASessionAlertActionAccept)
+	// gwda.NewWDASessionCapability(bundleId).SetDefaultAlertAction(gwda.WDASessionAlertActionDismiss)
+	s, err := c.NewSession(gwda.NewWDASessionCapability(bundleId))
 	if err != nil {
 		log.Fatalln("创建 session 失败", err)
 	}
+	defer func() {
+		time.Sleep(time.Second * 10)
+		// 如果使用了弹窗自动处理，一定要执行删除，保证 弹窗监控 被禁用，避免 wda 内部错误
+		s.DeleteSession()
+	}()
 
 	btyInfo, err := s.BatteryInfo()
 	if err != nil {
@@ -108,7 +116,7 @@ func main() {
 		_ = s.AppLaunch(bundleId)
 	}
 
-	element, err := s.FindElement("partial link text", "label=通用")
+	element, err := s.FindElement(gwda.WDALocator{LinkText: gwda.NewWDAElementAttribute().SetLabel("通用")})
 	if err != nil {
 		log.Fatalln("查找元素失败", err)
 	}
@@ -122,25 +130,25 @@ func main() {
 	// source, _ := s.Source()
 	// gwda.Debug = true
 
-	elementReport, err := s.FindElement("partial link text", "label=关于本机")
+	elementAbout, err := s.FindElement(gwda.WDALocator{PartialLinkText: gwda.NewWDAElementAttribute().SetValue("关于本")})
 	if err != nil {
 		log.Fatalln("查找元素失败", err)
 	}
-	// fmt.Println(elementReport.Rect())
-	rectBack, err := elementReport.Rect()
+	// fmt.Println(elementAbout.Rect())
+	rect, err := elementAbout.Rect()
 	if err != nil {
 		log.Fatalln("元素 rect 获取失败", err)
 	}
-	fmt.Printf("该元素的坐标 x,y: (%d, %d)\t宽: %d, 高: %d\n", rectBack.X, rectBack.Y, rectBack.Width, rectBack.Height)
+	fmt.Printf("该元素的坐标 x,y: (%d, %d)\t宽: %d, 高: %d\n", rect.X, rect.Y, rect.Width, rect.Height)
 
 	// 点击指定坐标
-	err = s.Tap(rectBack.X+1, rectBack.Y+1)
+	err = s.Tap(rect.X+1, rect.Y+1)
 	if err != nil {
 		log.Fatalln("点击失败", err)
 	}
 
 	// 可以当作字符串输出从 wda 收到的响应值
-	fmt.Println(rectBack)
+	// fmt.Println(rect)
 	// {
 	//    "y" : 99,
 	//    "x" : 0,
@@ -151,6 +159,7 @@ func main() {
 	// fmt.Println(source)
 
 }
+
 ```
 > 以上代码仅使用了 iPhone X (13.4.1) 和 iPhone 6s (11.4.1) 进行了测试。
 
