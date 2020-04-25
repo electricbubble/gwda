@@ -11,13 +11,14 @@ func TestElement_Click(t *testing.T) {
 	}
 	bundleId := "com.apple.Preferences"
 	_ = bundleId
-	s, err := c.NewSession()
+	s, err := c.NewSession(NewWDASessionCapability(bundleId))
 	if err != nil {
 		t.Fatal(err)
 	}
 	Debug = true
-	element, err := s.FindElement("partial link text", "label=通知")
+	element, err := s.FindElement(WDALocator{LinkText: NewWDAElementAttribute().SetValue("通知")})
 	if err != nil {
+		// staleElementReferenceErrorWithMessage
 		t.Fatal(err)
 	}
 	t.Log(element)
@@ -38,7 +39,7 @@ func TestElement_Rect(t *testing.T) {
 		t.Fatal(err)
 	}
 	Debug = true
-	element, err := s.FindElement("partial link text", "label=通知")
+	element, err := s.FindElement(WDALocator{LinkText: NewWDAElementAttribute().SetValue("通知")})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -63,7 +64,7 @@ func TestElement_Enabled(t *testing.T) {
 		t.Fatal(err)
 	}
 	Debug = true
-	element, err := s.FindElement("partial link text", "label=通知")
+	element, err := s.FindElement(WDALocator{LinkText: NewWDAElementAttribute().SetValue("通知")})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -73,4 +74,23 @@ func TestElement_Enabled(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Log(enabled)
+}
+
+func TestElement_Tmp(t *testing.T) {
+	c, err := NewClient(deviceURL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	s, err := c.NewSession()
+	if err != nil {
+		t.Fatal(err)
+	}
+	Debug = true
+	element, err := s.FindElement(WDALocator{LinkText: NewWDAElementAttribute().SetLabel("通用")})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	element.tttTmp()
+
 }

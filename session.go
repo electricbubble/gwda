@@ -411,55 +411,50 @@ func (s *Session) TypeText(text string, typingFrequency ...int) error {
 	return wdaResp.getErrMsg()
 }
 
-var ErrNoSuchElement = errors.New("no such element")
-
-// TODO FindElements
-func (s *Session) FindElements(using, value string) (elements []Element, err error) {
+// FindElements
+func (s *Session) FindElements(wdaLocator WDALocator) (elements []*Element, err error) {
+	using, value := wdaLocator.getUsingAndValue()
 	body := newWdaBody().set("using", using).set("value", value)
-	wdaResp, err := internalPost("FindElements", urlJoin(s.sessionURL, "elements"), body)
-	if err != nil {
+	var wdaResp wdaResponse
+	if wdaResp, err = internalPost("FindElements", urlJoin(s.sessionURL, "/elements"), body); err != nil {
 		return nil, err
 	}
-	// fmt.Println(wdaResp)
-	// fmt.Println(wdaResp.getValue().IsArray())
 	results := wdaResp.getValue().Array()
 	if len(results) == 0 {
-		return nil, ErrNoSuchElement
+		return nil, errors.New(fmt.Sprintf("no such element: unable to find an element using '%s', value '%s'", using, value))
 	}
-	elements = make([]Element, 0, len(results))
+	elements = make([]*Element, 0, len(results))
 	for _, res := range results {
-		elementId := res.Get("ELEMENT").String()
-		ele := Element{}
-		ele.elementURL, _ = url.Parse(urlJoin(s.sessionURL, "element", elementId))
-		elements = append(elements, ele)
-		// fmt.Println("###", elementId)
+		elem := new(Element)
+		elem.elementURL, _ = url.Parse(urlJoin(s.sessionURL, "element", res.Get("ELEMENT").String()))
+		elements = append(elements, elem)
 	}
 	return
 }
 
-// TODO FindElement
-func (s *Session) FindElement(using, value string) (element *Element, err error) {
+// FindElement
+func (s *Session) FindElement(wdaLocator WDALocator) (element *Element, err error) {
+	using, value := wdaLocator.getUsingAndValue()
 	body := newWdaBody().set("using", using).set("value", value)
 	var wdaResp wdaResponse
 	if wdaResp, err = internalPost("FindElement", urlJoin(s.sessionURL, "/element"), body); err != nil {
 		return nil, err
 	}
-	// fmt.Println(wdaResp)
-	// fmt.Println(wdaResp.getValue().IsArray())
-	elementID := wdaResp.getValue().Get("ELEMENT").String()
-	if elementID == "" {
-		return nil, ErrNoSuchElement
+	element = new(Element)
+	element.elementURL, _ = url.Parse(urlJoin(s.sessionURL, "element", wdaResp.getValue().Get("ELEMENT").String()))
+	return
+}
+
+// ActiveElement
+//
+// [NSPredicate predicateWithFormat:@"hasKeyboardFocus == YES"]
+func (s *Session) ActiveElement() (element *Element, err error) {
+	var wdaResp wdaResponse
+	if wdaResp, err = internalGet("ActiveElement", urlJoin(s.sessionURL, "/element/active")); err != nil {
+		return nil, err
 	}
 	element = new(Element)
-	element.elementURL, _ = url.Parse(urlJoin(s.sessionURL, "element", elementID))
-	// element = make([]Element, 0, len(elementID))
-	// for _, res := range elementID {
-	// 	elementId := res.Get("ELEMENT").String()
-	// 	ele := Element{}
-	// 	ele.elementURL, _ = url.Parse(urlJoin(s.sessionURL, "element", elementId))
-	// 	element = append(element, ele)
-	// 	// fmt.Println("###", elementId)
-	// }
+	element.elementURL, _ = url.Parse(urlJoin(s.sessionURL, "element", wdaResp.getValue().Get("ELEMENT").String()))
 	return
 }
 
@@ -661,10 +656,8 @@ func (s *Session) SetAppiumSettings(settings map[string]interface{}) (sJson stri
 func (s *Session) tttTmp() {
 	body := newWdaBody()
 	_ = body
-	// body.set("url", "baidu.com")
 
-	// wdaResp, err := internalPost("#TEMP", urlJoin(s.sessionURL, "/url"), body)
-	body.set("contentType", "plaintext")
-	wdaResp, err := internalPost("###############", urlJoin(s.sessionURL, "/wda/getPasteboard"), body)
+	// [NSPredicate predicateWithFormat:@"hasKeyboardFocus == YES"]
+	wdaResp, err := internalGet("###############", urlJoin(s.sessionURL, "/element/active"))
 	fmt.Println(err, wdaResp)
 }

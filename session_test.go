@@ -343,8 +343,6 @@ func TestSession_FindElement(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	bundleId := "com.apple.Preferences"
-	_ = bundleId
 	s, err := c.NewSession()
 	if err != nil {
 		t.Fatal(err)
@@ -365,9 +363,36 @@ func TestSession_FindElement(t *testing.T) {
 	// elements, err := s.FindElement("link text", `name=附加程序`)
 	// 默认搜索 name
 	// elements, err := s.FindElement("link text", `附加程序`)
+	// elements, err := s.FindElement("link text", `wdValue=21个App`)
+	// elements, err := s.FindElement("link text", NewWDAElementAttribute().SetValue("21个App").String())
+	// elements, err := s.FindElement("partial link text", NewWDAElementAttribute().SetValue("21个").String())
+	// elements, err := s.FindElement("link text", NewWDAElementAttribute().SetLabel("通知").String())
 	// elements, err := s.FindElement("link text", `type=XCUIElementTypeIcon`)
-	elements, err := s.FindElement("link text", `value=6 个应用`)
-	// elements, err := s.FindElement("partial link text", `value=6`)
+	// elements, err := s.FindElement("link text", `type=XCUIElementTypeStaticText`)
+	// elements, err := s.FindElement("link text", NewWDAElementAttribute().SetType(WDAElementType{StaticText: true}).String())
+	// elements, err := s.FindElement("link text", NewWDAElementAttribute().SetSelected(false).String()) // err
+	// elements, err := s.FindElement("link text", NewWDAElementAttribute().SetVisible(true).String()) // err
+
+	// elements, err := s.FindElement("class name", `XCUIElementTypePageIndicator`)
+	// elements, err := s.FindElement("class name", WDAElementType{PageIndicator: true}.String())
+
+	// using, value := WDALocator{LinkText: NewWDAElementAttribute().SetLabel("知乎")}.getUsingAndValue()
+	// using, value = WDALocator{ClassName: WDAElementType{PageIndicator: true}}.getUsingAndValue()
+	// using, value = WDALocator{LinkText: NewWDAElementAttribute().SetValue("21个App")}.getUsingAndValue()
+	// using, value = WDALocator{PartialLinkText: NewWDAElementAttribute().SetValue("21个")}.getUsingAndValue()
+	// _ = using
+	// _ = value
+
+	// elements, err := s.FindElement(WDALocator{PartialLinkText: NewWDAElementAttribute().SetValue("21个")})
+	// elements, err := s.FindElement(WDALocator{LinkText: NewWDAElementAttribute().SetLabel("“ ”文件夹")})
+	// elements, err := s.FindElement(WDALocator{ClassName: WDAElementType{PageIndicator: true}})
+	// elements, err := s.FindElement(WDALocator{ClassChain: "**/XCUIElementTypeCell[`label == '关于本机' OR label == 'Siri信息播报'`]"})
+	// elements, err := s.FindElement(WDALocator{Predicate: "label = 'Alerts'"})
+	// elements, err := s.FindElement(WDALocator{Predicate: "type == 'XCUIElementTypeCell'"})
+	// elements, err := s.FindElement(WDALocator{Predicate: "type = 'XCUIElementTypeButton'"})
+	// elements, err := s.FindElement(WDALocator{Predicate: "selected == true"})
+	// elements, err := s.FindElement(WDALocator{Predicate: "type == 'XCUIElementTypeIcon'"})
+	elements, err := s.FindElement(WDALocator{ClassChain: "**/XCUIElementTypeCell[`label == 'abcd'`]"})
 
 	if err != nil {
 		t.Fatal(err)
@@ -388,8 +413,6 @@ func TestSession_FindElements(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	bundleId := "com.apple.Preferences"
-	_ = bundleId
 	s, err := c.NewSession()
 	if err != nil {
 		t.Fatal(err)
@@ -401,11 +424,12 @@ func TestSession_FindElements(t *testing.T) {
 	// "XCUIElementTypeWindow/*/*[$type == 'XCUIElementTypeButton' AND label BEGINSWITH 'A'$]"
 	// elements, err := s.FindElements("class chain", "**/XCUIElementTypeButton[`label == '允许' OR label == '好' OR label == '仅在使用应用期间' OR label == '暂不'`]")
 	// elements, err := s.FindElements("class chain", "**/XCUIElementTypeButton[`label == '允许' OR label == '好' OR label == '仅在使用应用期间' OR label == '暂不'`]")
-	elements, err := s.FindElements("class chain", "**/XCUIElementTypeButton[`label == '不允许' OR label == '暂不'`]")
+	elements, err := s.FindElements(WDALocator{Predicate: "label == 'Siri信息播报'"})
 	if err != nil {
 		t.Fatal(err)
 	}
 	t.Log(elements)
+	t.Log(len(elements))
 
 	t.Log(elements[0].Rect())
 	t.Log(elements[0].Click())
@@ -414,6 +438,23 @@ func TestSession_FindElements(t *testing.T) {
 	// 	err := elements[0].Click()
 	// 	t.Log(err)
 	// }
+}
+
+func TestSession_ActiveElement(t *testing.T) {
+	c, err := NewClient(deviceURL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	s, err := c.NewSession()
+	if err != nil {
+		t.Fatal(err)
+	}
+	Debug = true
+	element, err := s.ActiveElement()
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log(element.Rect())
 }
 
 func TestSession_Locked(t *testing.T) {
