@@ -424,7 +424,8 @@ func TestSession_FindElements(t *testing.T) {
 	// "XCUIElementTypeWindow/*/*[$type == 'XCUIElementTypeButton' AND label BEGINSWITH 'A'$]"
 	// elements, err := s.FindElements("class chain", "**/XCUIElementTypeButton[`label == '允许' OR label == '好' OR label == '仅在使用应用期间' OR label == '暂不'`]")
 	// elements, err := s.FindElements("class chain", "**/XCUIElementTypeButton[`label == '允许' OR label == '好' OR label == '仅在使用应用期间' OR label == '暂不'`]")
-	elements, err := s.FindElements(WDALocator{Predicate: "label == 'Siri信息播报'"})
+	// elements, err := s.FindElements(WDALocator{Predicate: "label == 'Siri信息播报'"})
+	elements, err := s.FindElements(WDALocator{Predicate: "selected == true AND label == '通用'"})
 	if err != nil {
 		t.Fatal(err)
 	}

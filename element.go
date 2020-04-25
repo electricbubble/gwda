@@ -2,6 +2,7 @@ package gwda
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/url"
 	"reflect"
@@ -18,23 +19,18 @@ type WDAPosition struct {
 }
 
 type WDARect struct {
-	// Y int `json:"y"`
-	// X int `json:"x"`
 	WDAPosition
 	WDASize
 }
 
-func (e *Element) Click() error {
-	wdaResp, err := internalPost("Click", urlJoin(e.elementURL, "click"), nil)
-	if err != nil {
-		return err
-	}
-	return wdaResp.getErrMsg()
+func (e *Element) Click() (err error) {
+	_, err = internalPost("Click", urlJoin(e.elementURL, "/click"), nil)
+	return
 }
 
 func (e *Element) Rect() (wdaRect WDARect, err error) {
-	wdaResp, err := internalGet("Rect", urlJoin(e.elementURL, "rect"))
-	if err != nil {
+	var wdaResp wdaResponse
+	if wdaResp, err = internalGet("Rect", urlJoin(e.elementURL, "/rect")); err != nil {
 		return WDARect{}, err
 	}
 	wdaRect._string = wdaResp.getValue().String()
@@ -42,12 +38,64 @@ func (e *Element) Rect() (wdaRect WDARect, err error) {
 	return
 }
 
-func (e *Element) Enabled() (isEnabled bool, err error) {
-	wdaResp, err := internalGet("Enabled", urlJoin(e.elementURL, "enabled"))
-	if err != nil {
+func (e *Element) IsEnabled() (isEnabled bool, err error) {
+	var wdaResp wdaResponse
+	if wdaResp, err = internalGet("IsEnabled", urlJoin(e.elementURL, "/enabled")); err != nil {
 		return false, err
 	}
 	return wdaResp.getValue().Bool(), nil
+}
+
+func (e *Element) IsDisplayed() (isDisplayed bool, err error) {
+	var wdaResp wdaResponse
+	if wdaResp, err = internalGet("IsDisplayed", urlJoin(e.elementURL, "/displayed")); err != nil {
+		return false, err
+	}
+	return wdaResp.getValue().Bool(), nil
+}
+
+func (e *Element) IsSelected() (isSelected bool, err error) {
+	var wdaResp wdaResponse
+	if wdaResp, err = internalGet("IsSelected", urlJoin(e.elementURL, "/selected")); err != nil {
+		return false, err
+	}
+	return wdaResp.getValue().Bool(), nil
+}
+
+// GetAttribute
+// 
+// Returns value of given property specified in WebDriver Spec
+// Check the FBElement protocol to get list of supported attributes.
+// This method also supports shortcuts, like wdName == name, wdValue == value.
+func (e *Element) GetAttribute(attr WDAElementAttribute) (value string, err error) {
+	attrName := attr.getAttributeName()
+	if attrName == "UNKNOWN" {
+		return "", errors.New("'WDAElementAttribute' does not have 'Attribute Name'")
+	}
+	var wdaResp wdaResponse
+	if wdaResp, err = internalGet("GetAttribute", urlJoin(e.elementURL, "/attribute", attrName)); err != nil {
+		return "", err
+	}
+	return wdaResp.getValue().String(), nil
+}
+
+func (e *Element) Text() (text string, err error) {
+	var wdaResp wdaResponse
+	if wdaResp, err = internalGet("Text", urlJoin(e.elementURL, "/text")); err != nil {
+		return "", err
+	}
+	return wdaResp.getValue().String(), nil
+}
+
+// Type
+//
+// Element's type ( WDAElementType )
+func (e *Element) Type() (elemType string, err error) {
+	var wdaResp wdaResponse
+	if wdaResp, err = internalGet("Type", urlJoin(e.elementURL, "/name")); err != nil {
+		return "", err
+	}
+	return wdaResp.getValue().String(), nil
 }
 
 func (e *Element) tttTmp() {
@@ -56,7 +104,17 @@ func (e *Element) tttTmp() {
 	// TODO [[FBRoute GET:@"/wda/element/:uuid/getVisibleCells"] respondWithTarget:self action:@selector(handleFindVisibleCells:)],
 	body := newWdaBody()
 	_ = body
-	wdaResp, err := internalGet("###############", urlJoin(e.elementURL, "/xxxxxxxxxxxx"))
+
+	// attrName := "type"
+	// attrName = NewWDAElementAttribute().SetType(WDAElementType{}).GetAttributeName()
+	// attrName = WDAElementType{T}
+	// tmp, _ := url.Parse(urlJoin(e.elementURL, "/attribute"))
+	// q := tmp.Query()
+	// q.Set("name", attrName)
+	// tmp.RawQuery = q.Encode()
+	// wdaResp, err := internalGet("###############", tmp.String())
+
+	wdaResp, err := internalGet("###############", urlJoin(e.elementURL, "/name"))
 	fmt.Println(err, wdaResp)
 }
 
@@ -114,6 +172,21 @@ func (ea WDAElementAttribute) String() string {
 		default:
 			return k + "=" + fmt.Sprintf("%v", v)
 		}
+	}
+	return "UNKNOWN"
+}
+
+func (ea WDAElementAttribute) getAttributeName() string {
+	for k, _ := range ea {
+		// switch v.(type) {
+		// case bool:
+		// 	return k + "=" + strconv.FormatBool(v.(bool))
+		// case string:
+		// 	return k + "=" + v.(string)
+		// default:
+		// 	return k + "=" + fmt.Sprintf("%v", v)
+		// }
+		return k
 	}
 	return "UNKNOWN"
 }
