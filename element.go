@@ -1,16 +1,49 @@
 package gwda
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"image"
 	"net/url"
+	"path"
 	"reflect"
 	"strconv"
 )
 
 type Element struct {
-	elementURL *url.URL
+	endpoint *url.URL
+	UID      string
+}
+
+func newElement(sessionURL *url.URL, elemUID string) (elem *Element) {
+	elem = new(Element)
+	elem.endpoint = sessionURL
+	elem.UID = elemUID
+	return
+}
+
+// /element/:uuid
+func (e *Element) _withFormat(elem ...string) string {
+	return path.Join(append([]string{"element", e.UID}, elem...)...)
+}
+
+func (e *Element) Click() (err error) {
+	// [FBRoute POST:@"/element/:uuid/click"]
+	_, err = internalPost("Click", urlJoin(e.endpoint, e._withFormat("/click")), nil)
+	return
+}
+
+func (e *Element) SendKeys(text string, typingFrequency ...int) error {
+	// [FBRoute POST:@"/element/:uuid/value"]
+	return sendKeys(urlJoin(e.endpoint, e._withFormat("/value")), text, typingFrequency...)
+}
+
+func (e *Element) Clear() (err error) {
+	// [FBRoute POST:@"/element/:uuid/clear"]
+	_, err = internalPost("Clear", urlJoin(e.endpoint, e._withFormat("/clear")), nil)
+	return
 }
 
 type WDAPosition struct {
@@ -23,14 +56,10 @@ type WDARect struct {
 	WDASize
 }
 
-func (e *Element) Click() (err error) {
-	_, err = internalPost("Click", urlJoin(e.elementURL, "/click"), nil)
-	return
-}
-
 func (e *Element) Rect() (wdaRect WDARect, err error) {
 	var wdaResp wdaResponse
-	if wdaResp, err = internalGet("Rect", urlJoin(e.elementURL, "/rect")); err != nil {
+	// [FBRoute GET:@"/element/:uuid/rect"]
+	if wdaResp, err = internalGet("Rect", urlJoin(e.endpoint, e._withFormat("/rect"))); err != nil {
 		return WDARect{}, err
 	}
 	wdaRect._string = wdaResp.getValue().String()
@@ -40,7 +69,8 @@ func (e *Element) Rect() (wdaRect WDARect, err error) {
 
 func (e *Element) IsEnabled() (isEnabled bool, err error) {
 	var wdaResp wdaResponse
-	if wdaResp, err = internalGet("IsEnabled", urlJoin(e.elementURL, "/enabled")); err != nil {
+	// [FBRoute GET:@"/element/:uuid/enabled"]
+	if wdaResp, err = internalGet("IsEnabled", urlJoin(e.endpoint, e._withFormat("/enabled"))); err != nil {
 		return false, err
 	}
 	return wdaResp.getValue().Bool(), nil
@@ -48,7 +78,8 @@ func (e *Element) IsEnabled() (isEnabled bool, err error) {
 
 func (e *Element) IsDisplayed() (isDisplayed bool, err error) {
 	var wdaResp wdaResponse
-	if wdaResp, err = internalGet("IsDisplayed", urlJoin(e.elementURL, "/displayed")); err != nil {
+	// [FBRoute GET:@"/element/:uuid/displayed"]
+	if wdaResp, err = internalGet("IsDisplayed", urlJoin(e.endpoint, e._withFormat("/displayed"))); err != nil {
 		return false, err
 	}
 	return wdaResp.getValue().Bool(), nil
@@ -56,7 +87,8 @@ func (e *Element) IsDisplayed() (isDisplayed bool, err error) {
 
 func (e *Element) IsSelected() (isSelected bool, err error) {
 	var wdaResp wdaResponse
-	if wdaResp, err = internalGet("IsSelected", urlJoin(e.elementURL, "/selected")); err != nil {
+	// [FBRoute GET:@"/element/:uuid/selected"]
+	if wdaResp, err = internalGet("IsSelected", urlJoin(e.endpoint, e._withFormat("/selected"))); err != nil {
 		return false, err
 	}
 	return wdaResp.getValue().Bool(), nil
@@ -73,7 +105,8 @@ func (e *Element) GetAttribute(attr WDAElementAttribute) (value string, err erro
 		return "", errors.New("'WDAElementAttribute' does not have 'Attribute Name'")
 	}
 	var wdaResp wdaResponse
-	if wdaResp, err = internalGet("GetAttribute", urlJoin(e.elementURL, "/attribute", attrName)); err != nil {
+	// [FBRoute GET:@"/element/:uuid/attribute/:name"]
+	if wdaResp, err = internalGet("GetAttribute", urlJoin(e.endpoint, e._withFormat("/attribute", attrName))); err != nil {
 		return "", err
 	}
 	return wdaResp.getValue().String(), nil
@@ -81,7 +114,8 @@ func (e *Element) GetAttribute(attr WDAElementAttribute) (value string, err erro
 
 func (e *Element) Text() (text string, err error) {
 	var wdaResp wdaResponse
-	if wdaResp, err = internalGet("Text", urlJoin(e.elementURL, "/text")); err != nil {
+	// [FBRoute GET:@"/element/:uuid/text"]
+	if wdaResp, err = internalGet("Text", urlJoin(e.endpoint, e._withFormat("/text"))); err != nil {
 		return "", err
 	}
 	return wdaResp.getValue().String(), nil
@@ -92,11 +126,40 @@ func (e *Element) Text() (text string, err error) {
 // Element's type ( WDAElementType )
 func (e *Element) Type() (elemType string, err error) {
 	var wdaResp wdaResponse
-	if wdaResp, err = internalGet("Type", urlJoin(e.elementURL, "/name")); err != nil {
+	// [FBRoute GET:@"/element/:uuid/name"]
+	if wdaResp, err = internalGet("Type", urlJoin(e.endpoint, e._withFormat("/name"))); err != nil {
 		return "", err
 	}
 	return wdaResp.getValue().String(), nil
 }
+
+// W3C element screenshot
+// [[FBRoute GET:@"/element/:uuid/screenshot"] respondWithTarget:self action:@selector(handleElementScreenshot:)],
+// JSONWP element screenshot
+// [[FBRoute GET:@"/screenshot/:uuid"] respondWithTarget:self action:@selector(handleElementScreenshot:)],
+
+// Screenshot
+func (e *Element) Screenshot() (raw *bytes.Buffer, err error) {
+	tmp, _ := url.Parse(urlJoin(e.endpoint, e._withFormat()))
+	// [FBRoute GET:@"/element/:uuid/screenshot"]
+	return screenshot(tmp)
+}
+
+// ScreenshotToDiskAsJpeg
+func (e *Element) ScreenshotToDiskAsJpeg(filename string) (err error) {
+	tmp, _ := url.Parse(urlJoin(e.endpoint, e._withFormat()))
+	return screenshotToDisk(tmp, filename)
+}
+
+// ScreenshotToJpeg
+func (e *Element) ScreenshotToJpeg() (img image.Image, err error) {
+	tmp, _ := url.Parse(urlJoin(e.endpoint, e._withFormat()))
+	return screenshotToJpeg(tmp, "")
+}
+
+// func addToRootWda(baseUrl *url.URL) {
+// fmt.Println(url.Parse(urlJoin(baseUrl, "/accessible")))
+// }
 
 func (e *Element) tttTmp() {
 	// TODO [[FBRoute POST:@"/element/:uuid/element"] respondWithTarget:self action:@selector(handleFindSubElement:)],
@@ -114,7 +177,7 @@ func (e *Element) tttTmp() {
 	// tmp.RawQuery = q.Encode()
 	// wdaResp, err := internalGet("###############", tmp.String())
 
-	wdaResp, err := internalGet("###############", urlJoin(e.elementURL, "/name"))
+	wdaResp, err := internalGet("###############", urlJoin(e.endpoint, e._withFormat("/name")))
 	fmt.Println(err, wdaResp)
 }
 

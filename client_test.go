@@ -44,7 +44,7 @@ func TestClient_NewSession(t *testing.T) {
 	// _, err = c.NewSession("com.apple.DocumentsApp")
 }
 
-func TestClient_LaunchUnattached(t *testing.T) {
+func TestClient_AppLaunchUnattached(t *testing.T) {
 	c, err := NewClient(deviceURL)
 	if err != nil {
 		t.Fatal(err)
@@ -72,7 +72,7 @@ func TestClient_Status(t *testing.T) {
 	t.Log(status)
 }
 
-func TestClient_Home(t *testing.T) {
+func TestClient_Homescreen(t *testing.T) {
 	c, err := NewClient(deviceURL)
 	if err != nil {
 		t.Fatal(err)
@@ -84,7 +84,7 @@ func TestClient_Home(t *testing.T) {
 	}
 }
 
-func TestClient_Locked(t *testing.T) {
+func TestClient_IsLocked(t *testing.T) {
 	c, err := NewClient(deviceURL)
 	if err != nil {
 		t.Fatal(err)
@@ -156,7 +156,7 @@ func TestClient_ScreenshotToDiskAsPng(t *testing.T) {
 		t.Fatal(err)
 	}
 	Debug = true
-	err = c.ScreenshotToDiskAsPng("/Users/hero/Desktop/3.png")
+	err = c.ScreenshotToDiskAsPng("/Users/hero/Desktop/c1.png")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -213,57 +213,41 @@ func TestClient_ActiveAppInfo(t *testing.T) {
 	t.Log(info.Pid)
 }
 
-func TestTmp(t *testing.T) {
-	// body := make(map[string]interface{})
-	// body["capabilities"] = map[string]string{"bundleId": "com.netease.cloudmusic"}
-	// bsResp, err := internalPost("tmp", deviceURL+"/session", body)
-	// bsResp, err := internalGet("test", deviceURL+"/session/4713B32E-4F89-42CC-9118-3DB4C3A18A75")
-
-	// body := newWdaBody().set("bundleId", "com.netease.cloudmusic").set("shouldWaitForQuiescence", false)
-	// bodyCap := newWdaBody().set("capabilities", body)
-	// bsBody, err := json.Marshal(body)
-	// if err != nil {
-	// 	t.Fatal(err)
-	// }
-	// t.Log(string(bsBody))
-	// bsBody, _ = json.Marshal(bodyCap)
-	// t.Log(string(bsBody))
-	// return
-
-	Debug = true
+func TestClient_IsWdaHealth(t *testing.T) {
 	c, err := NewClient(deviceURL)
 	if err != nil {
 		t.Fatal(err)
 	}
-	// err = c.HealthCheck()
-	// t.Log("#@#", err)
-	// wdaResp, err := internalGet("healthcheck", urlJoin(c.deviceURL, "/wda/healthcheck", ))
-	body := newWdaBody()
-	_ = body
-	body.setBundleID("com.apple.Preferences")
-	wdaResp, err := internalPost("#TEMP", urlJoin(c.deviceURL, "/wda/apps/launchUnattached"), body)
-	// if err != nil {
-	// 	t.Fatal(err)
-	// }
-	// t.Log(wdaResp)
-	// s, err := c.NewSession("com.netease.cloudmusic")
-	// s, err := c.NewSession("com.apple.mobilesafari")
-	// if err != nil {
-	// 	t.Fatal(err)
-	// }
-	//
-	// // bsJson, err := s.Tap(230, 130)
-	// // bsJson, err = s.Tap(210, 290)
-	// // c.tttTmp()
-	// _ = s
-	// t.Log("client:", c.sessionID)
-	// t.Log("session:", s.sessionID)
-	// t.Log(c.ActiveAppInfo())
-	// s.tttTmp()
-	// // bsJson, err := s.ActiveAppInfo()
-	// if err != nil {
-	// 	t.Fatal(err)
-	// }
-	// t.Log(string(bsJson))
-	t.Log(wdaResp)
+	Debug = true
+	isWdaHealth, err := c.IsWdaHealth()
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log(isWdaHealth)
+}
+
+func TestClient_WdaShutdown(t *testing.T) {
+	c, err := NewClient(deviceURL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	Debug = true
+	err = c.WdaShutdown()
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, err = c.IsWdaHealth()
+	if err == nil {
+		t.Fatal("wda 关闭失败")
+	}
+	t.Log(err)
+}
+
+func TestTmp(t *testing.T) {
+	c, err := NewClient(deviceURL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	Debug = true
+	c.tttTmp()
 }

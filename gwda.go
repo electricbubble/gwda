@@ -22,9 +22,13 @@ var wdaHeader = map[string]string{
 }
 
 // urlJoin fix `path.Join`
-func urlJoin(endpoint *url.URL, elem ...string) string {
+func urlJoin(endpoint *url.URL, elem string, isWdaFirst ...bool) string {
 	tmp, _ := url.Parse(endpoint.String())
-	tmp.Path = path.Join(append([]string{endpoint.Path}, elem...)...)
+	if len(isWdaFirst) != 0 && isWdaFirst[0] {
+		tmp.Path = path.Join(endpoint.Path, "wda", elem)
+	} else {
+		tmp.Path = path.Join(endpoint.Path, elem)
+	}
 	return tmp.String()
 }
 
@@ -114,6 +118,7 @@ func (wb wdaBody) setAppLaunchOption(opt WDAAppLaunchOption) (body wdaBody) {
 func (wb wdaBody) setXY(x, y int) (body wdaBody) {
 	return wb.set("x", x).set("y", y)
 }
+
 // func (wb wdaBody) setTextToType(text string) (body wdaBody) {
 // 	return wb.set("value", strings.Split(text, ""))
 // }

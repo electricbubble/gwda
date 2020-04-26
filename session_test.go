@@ -316,7 +316,7 @@ func TestSession_AppState(t *testing.T) {
 	t.Log("app 是否前台活动中", state == WDAAppRunningFront)
 }
 
-func TestSession_TypeText(t *testing.T) {
+func TestSession_SendKeys(t *testing.T) {
 	c, err := NewClient(deviceURL)
 	if err != nil {
 		t.Fatal(err)
@@ -326,13 +326,13 @@ func TestSession_TypeText(t *testing.T) {
 		t.Fatal(err)
 	}
 	Debug = true
-	err = s.TypeText(bundleId + "\n")
+	err = s.SendKeys(bundleId + "\n")
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	file, _ := ioutil.ReadFile("/Users/hero/Documents/Workspace/Golang/gwda/examples/main.go")
-	err = s.TypeText(string(file), 30)
+	err = s.SendKeys(string(file), 30)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -347,63 +347,33 @@ func TestSession_FindElement(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	_ = s.AppLaunch(bundleId)
 	Debug = true
-	// elements, err := s.FindElements("partial link text", "label=看一看")
-	// elements, err := s.FindElements("partial link text", "label=发现")
 	// **/XCUIElementTypeButton[`label == '允许' OR label == '好'`]
 	// "XCUIElementTypeWindow/*/*[$type == 'XCUIElementTypeButton' AND label BEGINSWITH 'A'$]"
-	// elements, err := s.FindElements("class chain", "**/XCUIElementTypeButton[`label == '允许' OR label == '好' OR label == '仅在使用应用期间' OR label == '暂不'`]")
-	// elements, err := s.FindElements("class chain", "**/XCUIElementTypeButton[`label == '允许' OR label == '好' OR label == '仅在使用应用期间' OR label == '暂不'`]")
-	// elements, err := s.FindElement("partial link text", "label=计算器")
-	// elements, err := s.FindElement("name", "附加程序")
-	// elements, err := s.FindElement("id", "附加程序")
-	// elements, err := s.FindElement("accessibility id", "附加程序")
 
-	// elements, err := s.FindElement("link text", `label=“附加程序”文件夹`)
-	// elements, err := s.FindElement("link text", `name=附加程序`)
-	// 默认搜索 name
-	// elements, err := s.FindElement("link text", `附加程序`)
-	// elements, err := s.FindElement("link text", `wdValue=21个App`)
-	// elements, err := s.FindElement("link text", NewWDAElementAttribute().SetValue("21个App").String())
-	// elements, err := s.FindElement("partial link text", NewWDAElementAttribute().SetValue("21个").String())
-	// elements, err := s.FindElement("link text", NewWDAElementAttribute().SetLabel("通知").String())
-	// elements, err := s.FindElement("link text", `type=XCUIElementTypeIcon`)
-	// elements, err := s.FindElement("link text", `type=XCUIElementTypeStaticText`)
-	// elements, err := s.FindElement("link text", NewWDAElementAttribute().SetType(WDAElementType{StaticText: true}).String())
-	// elements, err := s.FindElement("link text", NewWDAElementAttribute().SetSelected(false).String()) // err
-	// elements, err := s.FindElement("link text", NewWDAElementAttribute().SetVisible(true).String()) // err
-
-	// elements, err := s.FindElement("class name", `XCUIElementTypePageIndicator`)
-	// elements, err := s.FindElement("class name", WDAElementType{PageIndicator: true}.String())
-
-	// using, value := WDALocator{LinkText: NewWDAElementAttribute().SetLabel("知乎")}.getUsingAndValue()
-	// using, value = WDALocator{ClassName: WDAElementType{PageIndicator: true}}.getUsingAndValue()
-	// using, value = WDALocator{LinkText: NewWDAElementAttribute().SetValue("21个App")}.getUsingAndValue()
-	// using, value = WDALocator{PartialLinkText: NewWDAElementAttribute().SetValue("21个")}.getUsingAndValue()
-	// _ = using
-	// _ = value
-
-	// elements, err := s.FindElement(WDALocator{PartialLinkText: NewWDAElementAttribute().SetValue("21个")})
-	// elements, err := s.FindElement(WDALocator{LinkText: NewWDAElementAttribute().SetLabel("“ ”文件夹")})
-	// elements, err := s.FindElement(WDALocator{ClassName: WDAElementType{PageIndicator: true}})
-	// elements, err := s.FindElement(WDALocator{ClassChain: "**/XCUIElementTypeCell[`label == '关于本机' OR label == 'Siri信息播报'`]"})
-	// elements, err := s.FindElement(WDALocator{Predicate: "label = 'Alerts'"})
-	// elements, err := s.FindElement(WDALocator{Predicate: "type == 'XCUIElementTypeCell'"})
-	// elements, err := s.FindElement(WDALocator{Predicate: "type = 'XCUIElementTypeButton'"})
-	// elements, err := s.FindElement(WDALocator{Predicate: "selected == true"})
-	// elements, err := s.FindElement(WDALocator{Predicate: "type == 'XCUIElementTypeIcon'"})
-	elements, err := s.FindElement(WDALocator{ClassChain: "**/XCUIElementTypeCell[`label == 'abcd'`]"})
+	element, err := s.FindElement(WDALocator{PartialLinkText: NewWDAElementAttribute().SetValue("中心")})
+	// element, err := s.FindElement(WDALocator{LinkText: NewWDAElementAttribute().SetLabel("“ ”文件夹")})
+	// element, err := s.FindElement(WDALocator{ClassName: WDAElementType{PageIndicator: true}})
+	// element, err := s.FindElement(WDALocator{ClassChain: "**/XCUIElementTypeCell[`label == '关于本机' OR label == 'Siri信息播报'`]"})
+	// element, err := s.FindElement(WDALocator{Predicate: "label = 'Alerts'"})
+	// element, err := s.FindElement(WDALocator{Predicate: "type == 'XCUIElementTypeCell'"})
+	// element, err := s.FindElement(WDALocator{Predicate: "type = 'XCUIElementTypeButton'"})
+	// element, err := s.FindElement(WDALocator{Predicate: "selected == true"})
+	// element, err := s.FindElement(WDALocator{Predicate: "type == 'XCUIElementTypeIcon'"})
+	// element, err := s.FindElement(WDALocator{LinkText: NewWDAElementAttribute().SetType(WDAElementType{Icon: true})})
+	// element, err := s.FindElement(WDALocator{ClassChain: "**/XCUIElementTypeCell[`label == '通知' OR label == '通知'`]"})
 
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Log(elements)
+	t.Log(element)
 
-	t.Log(elements.Rect())
-	t.Log(elements.Click())
+	t.Log(element.Rect())
+	t.Log(element.Click())
 
-	// if len(elements) == 1 {
-	// 	err := elements[0].Click()
+	// if len(element) == 1 {
+	// 	err := element[0].Click()
 	// 	t.Log(err)
 	// }
 }
@@ -458,7 +428,7 @@ func TestSession_ActiveElement(t *testing.T) {
 	t.Log(element.Rect())
 }
 
-func TestSession_Locked(t *testing.T) {
+func TestSession_IsLocked(t *testing.T) {
 	c, err := NewClient(deviceURL)
 	if err != nil {
 		t.Fatal(err)
@@ -515,7 +485,7 @@ func TestSession_Lock(t *testing.T) {
 	}
 }
 
-func TestSession_Activate(t *testing.T) {
+func TestSession_AppActivate(t *testing.T) {
 	c, err := NewClient(deviceURL)
 	if err != nil {
 		t.Fatal(err)
@@ -532,7 +502,7 @@ func TestSession_Activate(t *testing.T) {
 	}
 }
 
-func TestSession_DeactivateApp(t *testing.T) {
+func TestSession_AppDeactivate(t *testing.T) {
 	c, err := NewClient(deviceURL)
 	if err != nil {
 		t.Fatal(err)
@@ -718,7 +688,7 @@ func TestSession_Screenshot(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer s.DeleteSession()
+	// defer s.DeleteSession()
 	Debug = true
 	_, err = s.Screenshot()
 	if err != nil {
@@ -735,9 +705,9 @@ func TestSession_ScreenshotToDiskAsPng(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer s.DeleteSession()
+	// defer s.DeleteSession()
 	Debug = true
-	err = s.ScreenshotToDiskAsPng("/Users/hero/Desktop/1.png")
+	err = s.ScreenshotToDiskAsPng("/Users/hero/Desktop/s1.png")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -752,13 +722,82 @@ func TestSession_ScreenshotToPng(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer s.DeleteSession()
+	// defer s.DeleteSession()
 	Debug = true
 	toPng, err := s.ScreenshotToPng()
 	if err != nil {
 		t.Fatal(err)
 	}
 	t.Log("图片大小", toPng.Bounds().Size())
+}
+
+func TestSession_ScreenshotElement(t *testing.T) {
+	c, err := NewClient(deviceURL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	_ = c.Unlock()
+	s, err := c.NewSession()
+	if err != nil {
+		t.Fatal(err)
+	}
+	element, err := s.FindElement(WDALocator{Predicate: "type == 'XCUIElementTypeCell' AND name == '通知'"})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	Debug = true
+	// _, err = s.ScreenshotElement(element.UID)
+	_, err = s.Screenshot(element.UID)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestSession_ScreenshotElementToDiskAsJpeg(t *testing.T) {
+	c, err := NewClient(deviceURL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	_ = c.Unlock()
+	s, err := c.NewSession()
+	if err != nil {
+		t.Fatal(err)
+	}
+	element, err := s.FindElement(WDALocator{Predicate: "type == 'XCUIElementTypeCell' AND name == '通知'"})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	Debug = true
+	err = s.ScreenshotElementToDiskAsJpeg(element.UID, "/Users/hero/Desktop/s2.jpeg")
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestSession_ScreenshotElementToPng(t *testing.T) {
+	c, err := NewClient(deviceURL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	_ = c.Unlock()
+	s, err := c.NewSession()
+	if err != nil {
+		t.Fatal(err)
+	}
+	element, err := s.FindElement(WDALocator{Predicate: "type == 'XCUIElementTypeCell' AND name == '通知'"})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	Debug = true
+	toJpeg, err := s.ScreenshotElementToJpeg(element.UID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log("元素图片的大小", toJpeg.Bounds().Size())
+	t.Log(element.Rect())
 }
 
 func TestSession_Source(t *testing.T) {
@@ -800,7 +839,7 @@ func TestSession_AccessibleSource(t *testing.T) {
 	t.Log(source)
 }
 
-func TestSession_AppiumGetSettings(t *testing.T) {
+func TestSession_GetAppiumSettings(t *testing.T) {
 	c, err := NewClient(deviceURL)
 	if err != nil {
 		t.Fatal(err)

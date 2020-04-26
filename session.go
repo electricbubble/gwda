@@ -17,6 +17,12 @@ type Session struct {
 	sessionURL *url.URL
 }
 
+func newSession(deviceURL *url.URL, sid string) (s *Session) {
+	s = new(Session)
+	s.sessionURL, _ = url.Parse(deviceURL.String() + "/session/" + sid)
+	return
+}
+
 type WDASessionInfo struct {
 	Capabilities struct {
 		CFBundleIdentifier string `json:"CFBundleIdentifier"`
@@ -313,6 +319,7 @@ func (s *Session) ActiveAppsList() (appsList []WDAAppBaseInfo, err error) {
 	return
 }
 
+// TODO tap
 func tap(baseUrl *url.URL, x, y int) (err error) {
 	body := newWdaBody().setXY(x, y)
 	// /session/24B04022-9385-4764-9E00-D8F480B36CE9/element/20000000-0000-0000-010C-000000000000
@@ -395,20 +402,24 @@ func (s *Session) AppState(bundleId string) (appRunState WDAAppRunState, err err
 	return WDAAppRunState(wdaResp.getValue().Int()), nil
 }
 
-// TypeText
-//
-// static NSUInteger FBMaxTypingFrequency = 60;
-// `确定` 使用 `\n`
-func (s *Session) TypeText(text string, typingFrequency ...int) error {
+const WDATextBackspaceDeleteSequence = "\u0008\u007F"
+
+// sendKeys
+func sendKeys(url string, text string, typingFrequency ...int) (err error) {
 	body := newWdaBody().set("value", strings.Split(text, ""))
 	if len(typingFrequency) != 0 {
 		body.set("frequency", typingFrequency[0])
 	}
-	wdaResp, err := internalPost("TypeText", urlJoin(s.sessionURL, "/wda/keys"), body)
-	if err != nil {
-		return err
-	}
-	return wdaResp.getErrMsg()
+	_, err = internalPost("SendKeys", url, body)
+	return
+}
+
+// SendKeys
+//
+// static NSUInteger FBMaxTypingFrequency = 60;
+// `确定` 使用 `\n`
+func (s *Session) SendKeys(text string, typingFrequency ...int) error {
+	return sendKeys(urlJoin(s.sessionURL, "/wda/keys"), text, typingFrequency...)
 }
 
 // FindElements
@@ -425,8 +436,7 @@ func (s *Session) FindElements(wdaLocator WDALocator) (elements []*Element, err 
 	}
 	elements = make([]*Element, 0, len(results))
 	for _, res := range results {
-		elem := new(Element)
-		elem.elementURL, _ = url.Parse(urlJoin(s.sessionURL, "element", res.Get("ELEMENT").String()))
+		elem := newElement(s.sessionURL, res.Get("ELEMENT").String())
 		elements = append(elements, elem)
 	}
 	return
@@ -440,8 +450,7 @@ func (s *Session) FindElement(wdaLocator WDALocator) (element *Element, err erro
 	if wdaResp, err = internalPost("FindElement", urlJoin(s.sessionURL, "/element"), body); err != nil {
 		return nil, err
 	}
-	element = new(Element)
-	element.elementURL, _ = url.Parse(urlJoin(s.sessionURL, "element", wdaResp.getValue().Get("ELEMENT").String()))
+	element = newElement(s.sessionURL, wdaResp.getValue().Get("ELEMENT").String())
 	return
 }
 
@@ -453,8 +462,7 @@ func (s *Session) ActiveElement() (element *Element, err error) {
 	if wdaResp, err = internalGet("ActiveElement", urlJoin(s.sessionURL, "/element/active")); err != nil {
 		return nil, err
 	}
-	element = new(Element)
-	element.elementURL, _ = url.Parse(urlJoin(s.sessionURL, "element", wdaResp.getValue().Get("ELEMENT").String()))
+	element = newElement(s.sessionURL, wdaResp.getValue().Get("ELEMENT").String())
 	return
 }
 
@@ -599,18 +607,37 @@ func (s *Session) SiriOpenURL(url string) (err error) {
 }
 
 // Screenshot
-func (s *Session) Screenshot() (raw *bytes.Buffer, err error) {
-	return screenshot(s.sessionURL)
+//
+// OR takes a screenshot of the specified element
+func (s *Session) Screenshot(elemUID ...string) (raw *bytes.Buffer, err error) {
+	return screenshot(s.sessionURL, elemUID...)
 }
 
 // ScreenshotToDiskAsPng
 func (s *Session) ScreenshotToDiskAsPng(filename string) (err error) {
-	return screenshotToDiskAsPng(s.sessionURL, filename)
+	return screenshotToDisk(s.sessionURL, filename)
 }
 
 // ScreenshotToPng
 func (s *Session) ScreenshotToPng() (img image.Image, err error) {
 	return screenshotToPng(s.sessionURL)
+}
+
+// ScreenshotElement
+//
+// takes a screenshot of the specified element
+// func (s *Session) ScreenshotElement(elemUID string) (raw *bytes.Buffer, err error) {
+// 	return screenshot(s.sessionURL, elemUID)
+// }
+
+// ScreenshotElementToDiskAsJpeg
+func (s *Session) ScreenshotElementToDiskAsJpeg(elemUID string, filename string) (err error) {
+	return screenshotToDisk(s.sessionURL, filename, elemUID)
+}
+
+// ScreenshotElementToJpeg
+func (s *Session) ScreenshotElementToJpeg(elemUID string) (jpeg image.Image, err error) {
+	return screenshotToJpeg(s.sessionURL, elemUID)
 }
 
 // Source

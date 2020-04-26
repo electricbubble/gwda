@@ -5,7 +5,9 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"image"
+	"image/jpeg"
 	"image/png"
 	"io/ioutil"
 	"log"
@@ -45,10 +47,10 @@ func (c *Client) setAppiumSettings(settings map[string]interface{}, sid ...strin
 		}
 		sid = []string{wdaResponse(status).getValue().String()}
 	}
-	tmpSession := new(Session)
-	tmpSession.sessionURL, _ = url.Parse(urlJoin(c.deviceURL, "session", sid[0]))
-	_, err := tmpSession.SetAppiumSettings(settings)
-	if err != nil {
+	if _, err := newSession(c.deviceURL, sid[0]).SetAppiumSettings(settings); err != nil {
+		// TODO return err ?
+		//  [settings objectForKey:ACTIVE_APP_DETECTION_POINT]
+		//  [settings objectForKey:SCREENSHOT_ORIENTATION]
 		log.Printf("[ERROR]↩︎\n[setAppiumSettings] failed to set AppiumSettings %s\n", err.Error())
 	}
 }
@@ -176,13 +178,12 @@ func (c *Client) NewSession(capabilities ...WDASessionCapability) (s *Session, e
 	if wdaResp, err = internalPost("NewSession", urlJoin(c.deviceURL, "/session"), body); err != nil {
 		return nil, err
 	}
-	s = new(Session)
-	sid := ""
-	if sid = wdaResp.getByPath("sessionId").String(); sid == "" {
+	if sid := wdaResp.getByPath("sessionId").String(); sid == "" {
 		return nil, errors.New("not find sessionId")
+	} else {
+		// c.deviceURL 已在新建时校验过, 理论上此处不再出现错误
+		s = newSession(c.deviceURL, sid)
 	}
-	// c.deviceURL 已在新建时校验过, 理论上此处不再出现错误
-	s.sessionURL, _ = url.Parse(urlJoin(c.deviceURL, "session", sid))
 	return s, nil
 }
 
@@ -272,9 +273,20 @@ func (c *Client) Lock() (err error) {
 	return lock(c.deviceURL)
 }
 
-func screenshot(baseUrl *url.URL) (raw *bytes.Buffer, err error) {
+// screenshot
+//
+// [FBRoute GET:@"/screenshot"]					format: png
+// [FBRoute GET:@"/element/:uuid/screenshot"]	format: jpeg
+// [FBRoute GET:@"/screenshot/:uuid"]			format: jpeg
+func screenshot(baseUrl *url.URL, elemUID ...string) (raw *bytes.Buffer, err error) {
 	var wdaResp wdaResponse
-	if wdaResp, err = internalGet("Screenshot", urlJoin(baseUrl, "/screenshot")); err != nil {
+
+	tmpPath := "/screenshot"
+	if len(elemUID) != 0 && elemUID[0] != "" {
+		tmpPath += "/" + elemUID[0]
+	}
+
+	if wdaResp, err = internalGet("Screenshot", urlJoin(baseUrl, tmpPath)); err != nil {
 		return nil, err
 	}
 
@@ -286,9 +298,9 @@ func screenshot(baseUrl *url.URL) (raw *bytes.Buffer, err error) {
 	}
 }
 
-func screenshotToDiskAsPng(baseUrl *url.URL, filename string) (err error) {
+func screenshotToDisk(baseUrl *url.URL, filename string, elemUID ...string) (err error) {
 	var raw *bytes.Buffer
-	if raw, err = screenshot(baseUrl); err != nil {
+	if raw, err = screenshot(baseUrl, elemUID...); err != nil {
 		return err
 	}
 	err = ioutil.WriteFile(filename, raw.Bytes(), 0666)
@@ -304,17 +316,26 @@ func screenshotToPng(baseUrl *url.URL) (img image.Image, err error) {
 	}
 }
 
+func screenshotToJpeg(baseUrl *url.URL, elemUID string) (img image.Image, err error) {
+	if raw, err := screenshot(baseUrl, elemUID); err != nil {
+		return nil, err
+	} else {
+		img, err = jpeg.Decode(raw)
+		return img, err
+	}
+}
+
 // Screenshot
 func (c *Client) Screenshot() (raw *bytes.Buffer, err error) {
 	return screenshot(c.deviceURL)
 }
 
-// ScreenshotToDiskAsPng
+// ScreenshotToDiskAsJpeg
 func (c *Client) ScreenshotToDiskAsPng(filename string) (err error) {
-	return screenshotToDiskAsPng(c.deviceURL, filename)
+	return screenshotToDisk(c.deviceURL, filename)
 }
 
-// ScreenshotToPng
+// ScreenshotToJpeg
 func (c *Client) ScreenshotToPng() (img image.Image, err error) {
 	return screenshotToPng(c.deviceURL)
 }
@@ -441,7 +462,23 @@ func (c *Client) ActiveAppInfo() (wdaActiveAppInfo WDAActiveAppInfo, err error) 
 	return activeAppInfo(c.deviceURL)
 }
 
-// func (c *Client) tttTmp() {
-// 	bsJson, err := internalGet("tttTmp", urlJoin(c.deviceURL, "/wd/hub/source"))
-// 	fmt.Println(err, string(bsJson))
-// }
+func (c *Client) IsWdaHealth() (isHealth bool, err error) {
+	var wdaResp wdaResponse
+	if wdaResp, err = internalGet("IsWdaHealth", urlJoin(c.deviceURL, "/health")); err != nil {
+		return false, err
+	}
+	if wdaResp.String() != "I-AM-ALIVE" {
+		return false, nil
+	}
+	return true, nil
+}
+
+func (c *Client) WdaShutdown() (err error) {
+	_, err = internalGet("WdaShutdown", urlJoin(c.deviceURL, "/wda/shutdown"))
+	return
+}
+
+func (c *Client) tttTmp() {
+	wdaResp, err := internalGet("tttTmp", urlJoin(c.deviceURL, "/health"))
+	fmt.Println(err, wdaResp)
+}

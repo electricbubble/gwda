@@ -10,12 +10,12 @@ func TestElement_Click(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	bundleId := "com.apple.Preferences"
-	_ = bundleId
-	s, err := c.NewSession(NewWDASessionCapability(bundleId))
+	_ = c.Unlock()
+	s, err := c.NewSession()
 	if err != nil {
 		t.Fatal(err)
 	}
+	_ = s.AppLaunch(bundleId)
 	Debug = true
 	element, err := s.FindElement(WDALocator{LinkText: NewWDAElementAttribute().SetValue("通知")})
 	if err != nil {
@@ -25,6 +25,58 @@ func TestElement_Click(t *testing.T) {
 	t.Log(element)
 
 	err = element.Click()
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestElement_SendKeys(t *testing.T) {
+	c, err := NewClient(deviceURL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	_ = c.Unlock()
+	s, err := c.NewSession()
+	if err != nil {
+		t.Fatal(err)
+	}
+	_ = s.AppLaunch(bundleId)
+	Debug = true
+	element, err := s.FindElement(WDALocator{ClassName: WDAElementType{SearchField: true}})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = element.SendKeys(bundleId)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestElement_Clear(t *testing.T) {
+	c, err := NewClient(deviceURL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	_ = c.Unlock()
+	s, err := c.NewSession()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer s.DeleteSession()
+	_ = s.AppLaunch(bundleId)
+	Debug = true
+	element, err := s.FindElement(WDALocator{ClassName: WDAElementType{SearchField: true}})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = element.SendKeys(bundleId)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = element.Clear()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -126,6 +178,7 @@ func TestElement_IsSelected(t *testing.T) {
 		return
 	}
 
+	// iPad 左右分栏
 	element, err = s.FindElement(WDALocator{Predicate: "selected == true AND label == '通用'"})
 	if err != nil {
 		t.Fatal(err)
@@ -162,6 +215,7 @@ func TestElement_GetAttribute(t *testing.T) {
 	}
 
 	t.Log(attr.getAttributeName(), "=", value)
+	t.Log("element.UID", "=", element.UID)
 }
 
 func TestElement_Text(t *testing.T) {
@@ -219,7 +273,109 @@ func TestElement_Type(t *testing.T) {
 	t.Log(elemType == fmt.Sprintf("%s", WDAElementType{StaticText: true}))
 }
 
+func TestElement_Screenshot(t *testing.T) {
+	c, err := NewClient(deviceURL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	_ = c.Unlock()
+	s, err := c.NewSession()
+	if err != nil {
+		t.Fatal(err)
+	}
+	_ = s.AppLaunch(bundleId)
+	Debug = true
+	element, err := s.FindElement(WDALocator{Predicate: "type == 'XCUIElementTypeCell' AND name == '通知'"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log(element)
+
+	_, err = element.Screenshot()
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestElement_ScreenshotToJpeg(t *testing.T) {
+	c, err := NewClient(deviceURL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	_ = c.Unlock()
+	s, err := c.NewSession()
+	if err != nil {
+		t.Fatal(err)
+	}
+	_ = s.AppLaunch(bundleId)
+	Debug = true
+	// element, err := s.FindElement(WDALocator{LinkText: NewWDAElementAttribute().SetValue("通知")})
+	element, err := s.FindElement(WDALocator{Predicate: "type == 'XCUIElementTypeCell' AND name == '通知'"})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	toPng, err := element.ScreenshotToJpeg()
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log("元素图片的大小", toPng.Bounds().Size())
+	t.Log(element.Rect())
+}
+
+func TestElement_ScreenshotToDiskAsJpeg(t *testing.T) {
+	c, err := NewClient(deviceURL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	_ = c.Unlock()
+	s, err := c.NewSession()
+	if err != nil {
+		t.Fatal(err)
+	}
+	_ = s.AppLaunch(bundleId)
+	Debug = true
+	// element, err := s.FindElement(WDALocator{LinkText: NewWDAElementAttribute().SetValue("通知")})
+	element, err := s.FindElement(WDALocator{Predicate: "type == 'XCUIElementTypeCell' AND name == '通知'"})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = element.ScreenshotToDiskAsJpeg("/Users/hero/Desktop/e1.png")
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestElement_Tmp(t *testing.T) {
+
+	// parse, err2 := url.Parse("http://localhost:8100/session/1A742166-05E8-467D-8A6C-3C775FD9AEAD")
+	// if err2 != nil {
+	// 	t.Fatal(err2)
+	// }
+	// elem := newElement(parse, "21000000-0000-0000-960D-000000000000")
+	// // [FBRoute GET:@"/wda/element/:uuid/accessible"]
+	//
+	// fmt.Println(strings.Repeat("-", 100))
+	//
+	// fmt.Println(elem._withFormat("/accessible"))
+	// fmt.Println(urlJoin(elem.endpoint, elem._withFormat("/accessible")))
+	//
+	// fmt.Println(strings.Repeat("*", 50))
+	//
+	// tmp, _ := url.Parse(elem.endpoint.String())
+	// tmp.Path = path.Join(elem.endpoint.Path, "wda", elem._withFormat("/accessible"))
+	// fmt.Println(tmp.String())
+	//
+	// fmt.Println(strings.Repeat("*", 50))
+	//
+	// fmt.Println(urlJoin(elem.endpoint, elem._withFormat("/accessible"), true))
+	// fmt.Println(urlJoin(elem.endpoint, elem._withFormat("/accessible"), false))
+	//
+	// fmt.Println(strings.Repeat("-", 100))
+	//
+	// return
+
 	c, err := NewClient(deviceURL)
 	if err != nil {
 		t.Fatal(err)
@@ -236,6 +392,9 @@ func TestElement_Tmp(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
+	// addToRootWda(element.elementURL)
+	// return
 
 	element.tttTmp()
 	// t.Log(element.GetAttribute(NewWDAElementAttribute().SetUID("")))
