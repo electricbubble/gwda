@@ -319,15 +319,16 @@ func (s *Session) ActiveAppsList() (appsList []WDAAppBaseInfo, err error) {
 	return
 }
 
-// TODO tap
-func tap(baseUrl *url.URL, x, y int) (err error) {
+func tap(baseUrl *url.URL, x, y interface{}, elemUID ...string) (err error) {
 	body := newWdaBody().setXY(x, y)
-	// /session/24B04022-9385-4764-9E00-D8F480B36CE9/element/20000000-0000-0000-010C-000000000000
-	tmpUrlPath := "/wda/tap"
-	if len(strings.Split(baseUrl.Path, "/")) == 3 {
-		tmpUrlPath += "/0"
+	// [FBRoute POST:@"/wda/tap/:uuid"]
+	tmpPath := "/wda/tap"
+	if len(elemUID) == 0 {
+		tmpPath += "/0"
+	} else {
+		tmpPath += "/" + elemUID[0]
 	}
-	_, err = internalPost("Tap", urlJoin(baseUrl, tmpUrlPath), body)
+	_, err = internalPost("Tap", urlJoin(baseUrl, tmpPath), body)
 	return
 }
 
@@ -336,23 +337,69 @@ func (s *Session) Tap(x, y int) error {
 	return tap(s.sessionURL, x, y)
 }
 
-// DoubleTap double tap coordinate
-func (s *Session) DoubleTap(x, y int) (err error) {
-	body := newWdaBody().setXY(x, y)
-	_, err = internalPost("DoubleTap", urlJoin(s.sessionURL, "/wda/doubleTap"), body)
+// TapFloat
+func (s *Session) TapFloat(x, y float32) error {
+	return tap(s.sessionURL, x, y)
+}
+
+// doubleTap
+//
+// [FBRoute POST:@"/wda/doubleTap"]
+// [FBRoute POST:@"/wda/element/:uuid/doubleTap"]
+func doubleTap(baseUrl *url.URL, x, y interface{}, elemPrefixPath ...string) (err error) {
+	body := newWdaBody()
+	tmpPath := "/doubleTap"
+	if len(elemPrefixPath) == 0 {
+		body.setXY(x, y)
+	} else {
+		tmpPath = elemPrefixPath[0] + tmpPath
+	}
+	_, err = internalPost("DoubleTap", urlJoin(baseUrl, tmpPath, true), body)
 	return
 }
 
-// TouchAndHold touch and hold coordinate
-func (s *Session) TouchAndHold(x, y int, duration ...float32) (err error) {
-	body := newWdaBody().setXY(x, y)
-	if len(duration) == 0 {
-		body.set("duration", 1.0)
+// DoubleTap
+//
+// double tap coordinate
+func (s *Session) DoubleTap(x, y int) (err error) {
+	return doubleTap(s.sessionURL, x, y)
+}
+
+func (s *Session) DoubleTapFloat(x, y float32) (err error) {
+	return doubleTap(s.sessionURL, x, y)
+}
+
+// touchAndHold
+//
+// [FBRoute POST:@"/wda/touchAndHold"]
+// [FBRoute POST:@"/wda/element/:uuid/touchAndHold"]
+func touchAndHold(baseUrl *url.URL, x, y, duration interface{}, elemPrefixPath ...string) (err error) {
+	body := newWdaBody().set("duration", duration)
+	tmpPath := "/touchAndHold"
+	if len(elemPrefixPath) == 0 {
+		body.setXY(x, y)
 	} else {
-		body.set("duration", duration[0])
+		tmpPath = elemPrefixPath[0] + tmpPath
 	}
-	_, err = internalPost("TouchAndHold", urlJoin(s.sessionURL, "/wda/touchAndHold"), body)
+	_, err = internalPost("TouchAndHold", urlJoin(baseUrl, tmpPath, true), body)
 	return
+}
+
+// TouchAndHold
+//
+// touch and hold coordinate
+func (s *Session) TouchAndHold(x, y int, duration ...int) (err error) {
+	if len(duration) == 0 {
+		duration = []int{1}
+	}
+	return touchAndHold(s.sessionURL, x, y, duration[0])
+}
+
+func (s *Session) TouchAndHoldFloat(x, y float32, duration ...float32) (err error) {
+	if len(duration) == 0 {
+		duration = []float32{1.0}
+	}
+	return touchAndHold(s.sessionURL, x, y, duration[0])
 }
 
 // AppTerminate
@@ -417,40 +464,57 @@ func sendKeys(url string, text string, typingFrequency ...int) (err error) {
 // SendKeys
 //
 // static NSUInteger FBMaxTypingFrequency = 60;
-// `确定` 使用 `\n`
 func (s *Session) SendKeys(text string, typingFrequency ...int) error {
 	return sendKeys(urlJoin(s.sessionURL, "/wda/keys"), text, typingFrequency...)
 }
 
-// FindElements
-func (s *Session) FindElements(wdaLocator WDALocator) (elements []*Element, err error) {
+func findUidOfElement(baseUrl *url.URL, wdaLocator WDALocator) (elemUID string, err error) {
 	using, value := wdaLocator.getUsingAndValue()
 	body := newWdaBody().set("using", using).set("value", value)
 	var wdaResp wdaResponse
-	if wdaResp, err = internalPost("FindElements", urlJoin(s.sessionURL, "/elements"), body); err != nil {
+	if wdaResp, err = internalPost("FindElement", urlJoin(baseUrl, "/element"), body); err != nil {
+		return "", err
+	}
+	return wdaResp.getValue().Get("ELEMENT").String(), nil
+}
+
+// FindElement
+func (s *Session) FindElement(wdaLocator WDALocator) (element *Element, err error) {
+	var elemUID string
+	if elemUID, err = findUidOfElement(s.sessionURL, wdaLocator); err != nil {
+		return nil, err
+	}
+	return newElement(s.sessionURL, elemUID), nil
+}
+
+func findUidOfElements(baseUrl *url.URL, wdaLocator WDALocator) (elemUIDs []string, err error) {
+	using, value := wdaLocator.getUsingAndValue()
+	body := newWdaBody().set("using", using).set("value", value)
+	var wdaResp wdaResponse
+	if wdaResp, err = internalPost("FindElements", urlJoin(baseUrl, "/elements"), body); err != nil {
 		return nil, err
 	}
 	results := wdaResp.getValue().Array()
 	if len(results) == 0 {
 		return nil, errors.New(fmt.Sprintf("no such element: unable to find an element using '%s', value '%s'", using, value))
 	}
-	elements = make([]*Element, 0, len(results))
-	for _, res := range results {
-		elem := newElement(s.sessionURL, res.Get("ELEMENT").String())
-		elements = append(elements, elem)
+	elemUIDs = make([]string, len(results))
+	for i := range elemUIDs {
+		elemUIDs[i] = results[i].Get("ELEMENT").String()
 	}
 	return
 }
 
-// FindElement
-func (s *Session) FindElement(wdaLocator WDALocator) (element *Element, err error) {
-	using, value := wdaLocator.getUsingAndValue()
-	body := newWdaBody().set("using", using).set("value", value)
-	var wdaResp wdaResponse
-	if wdaResp, err = internalPost("FindElement", urlJoin(s.sessionURL, "/element"), body); err != nil {
+// FindElements
+func (s *Session) FindElements(wdaLocator WDALocator) (elements []*Element, err error) {
+	var elemUIDs []string
+	if elemUIDs, err = findUidOfElements(s.sessionURL, wdaLocator); err != nil {
 		return nil, err
 	}
-	element = newElement(s.sessionURL, wdaResp.getValue().Get("ELEMENT").String())
+	elements = make([]*Element, len(elemUIDs))
+	for i := range elements {
+		elements[i] = newElement(s.sessionURL, elemUIDs[i])
+	}
 	return
 }
 

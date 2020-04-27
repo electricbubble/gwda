@@ -248,6 +248,7 @@ func TestSession_TouchAndHold(t *testing.T) {
 	Debug = true
 	// err = s.TouchAndHold(210, 290)
 	err = s.TouchAndHold(230, 130)
+	// err = s.TouchAndHoldFloat(230, 130, 2.5)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -395,7 +396,8 @@ func TestSession_FindElements(t *testing.T) {
 	// elements, err := s.FindElements("class chain", "**/XCUIElementTypeButton[`label == '允许' OR label == '好' OR label == '仅在使用应用期间' OR label == '暂不'`]")
 	// elements, err := s.FindElements("class chain", "**/XCUIElementTypeButton[`label == '允许' OR label == '好' OR label == '仅在使用应用期间' OR label == '暂不'`]")
 	// elements, err := s.FindElements(WDALocator{Predicate: "label == 'Siri信息播报'"})
-	elements, err := s.FindElements(WDALocator{Predicate: "selected == true AND label == '通用'"})
+	// elements, err := s.FindElements(WDALocator{Predicate: "selected == true AND label == '通用'"})
+	elements, err := s.FindElements(WDALocator{Predicate: "label == '通用'"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -769,78 +771,6 @@ func TestSession_ScreenshotToImage(t *testing.T) {
 	t.Log("元素图片的大小:", img.Bounds().Size())
 	t.Log(element.Rect())
 }
-
-// func TestSession_ScreenshotElement(t *testing.T) {
-// 	c, err := NewClient(deviceURL)
-// 	if err != nil {
-// 		t.Fatal(err)
-// 	}
-// 	_ = c.Unlock()
-// 	s, err := c.NewSession()
-// 	if err != nil {
-// 		t.Fatal(err)
-// 	}
-// 	element, err := s.FindElement(WDALocator{Predicate: "type == 'XCUIElementTypeCell' AND name == '通知'"})
-// 	if err != nil {
-// 		t.Fatal(err)
-// 	}
-//
-// 	Debug = true
-// 	// _, err = s.ScreenshotElement(element.UID)
-// 	_, err = s.Screenshot(element.UID)
-// 	if err != nil {
-// 		t.Fatal(err)
-// 	}
-// }
-
-// func TestSession_ScreenshotElementToDisk(t *testing.T) {
-// 	c, err := NewClient(deviceURL)
-// 	if err != nil {
-// 		t.Fatal(err)
-// 	}
-// 	_ = c.Unlock()
-// 	s, err := c.NewSession()
-// 	if err != nil {
-// 		t.Fatal(err)
-// 	}
-// 	element, err := s.FindElement(WDALocator{Predicate: "type == 'XCUIElementTypeCell' AND name == '通知'"})
-// 	if err != nil {
-// 		t.Fatal(err)
-// 	}
-//
-// 	Debug = true
-// 	// err = s.ScreenshotElementToDiskAsJpeg(element.UID, "/Users/hero/Desktop/s2.jpeg")
-// 	err = s.ScreenshotToDisk(element.UID, "/Users/hero/Desktop/s2.jpeg")
-// 	if err != nil {
-// 		t.Fatal(err)
-// 	}
-// }
-
-// func TestSession_ScreenshotElementToPng(t *testing.T) {
-// 	c, err := NewClient(deviceURL)
-// 	if err != nil {
-// 		t.Fatal(err)
-// 	}
-// 	_ = c.Unlock()
-// 	s, err := c.NewSession()
-// 	if err != nil {
-// 		t.Fatal(err)
-// 	}
-// 	element, err := s.FindElement(WDALocator{Predicate: "type == 'XCUIElementTypeCell' AND name == '通知'"})
-// 	if err != nil {
-// 		t.Fatal(err)
-// 	}
-//
-// 	Debug = true
-// 	// toJpeg, err := s.ScreenshotElementToJpeg(element.UID)
-// 	img, format, err := s.ScreenshotToImage(element.UID)
-// 	if err != nil {
-// 		t.Fatal(err)
-// 	}
-// 	t.Log("元素图片的格式:", format)
-// 	t.Log("元素图片的大小:", img.Bounds().Size())
-// 	t.Log(element.Rect())
-// }
 
 func TestSession_Source(t *testing.T) {
 	c, err := NewClient(deviceURL)

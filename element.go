@@ -17,9 +17,9 @@ type Element struct {
 	UID      string
 }
 
-func newElement(sessionURL *url.URL, elemUID string) (elem *Element) {
+func newElement(endpoint *url.URL, elemUID string) (elem *Element) {
 	elem = new(Element)
-	elem.endpoint = sessionURL
+	elem.endpoint = endpoint
 	elem.UID = elemUID
 	return
 }
@@ -34,6 +34,33 @@ func (e *Element) _withFormatToUrl(elem ...string) *url.URL {
 	tmp, _ := url.Parse(urlJoin(e.endpoint, e._withFormat()))
 	path.Join(append([]string{"element", e.UID}, elem...)...)
 	return tmp
+}
+
+func (e *Element) Tap(x, y int) error {
+	return tap(e.endpoint, x, y, e.UID)
+}
+
+func (e *Element) TapFloat(x, y float32) error {
+	return tap(e.endpoint, x, y, e.UID)
+}
+
+func (e *Element) DoubleTap() error {
+	return doubleTap(e.endpoint, -1, -1, e._withFormat())
+}
+
+// TouchAndHold
+func (e *Element) TouchAndHold(duration ...int) (err error) {
+	if len(duration) == 0 {
+		duration = []int{1}
+	}
+	return touchAndHold(e.endpoint, -1, -1, duration[0], e._withFormat())
+}
+
+func (e *Element) TouchAndHoldFloat(duration ...float32) (err error) {
+	if len(duration) == 0 {
+		duration = []float32{1.0}
+	}
+	return touchAndHold(e.endpoint, -1, -1, duration[0], e._withFormat())
 }
 
 func (e *Element) Click() (err error) {
@@ -53,13 +80,13 @@ func (e *Element) Clear() (err error) {
 	return
 }
 
-type WDAPosition struct {
+type WDACoordinate struct {
 	X int `json:"x"`
 	Y int `json:"y"`
 }
 
 type WDARect struct {
-	WDAPosition
+	WDACoordinate
 	WDASize
 }
 
@@ -96,6 +123,24 @@ func (e *Element) IsSelected() (isSelected bool, err error) {
 	var wdaResp wdaResponse
 	// [FBRoute GET:@"/element/:uuid/selected"]
 	if wdaResp, err = internalGet("IsSelected", urlJoin(e.endpoint, e._withFormat("/selected"))); err != nil {
+		return false, err
+	}
+	return wdaResp.getValue().Bool(), nil
+}
+
+func (e *Element) IsAccessible() (isAccessible bool, err error) {
+	var wdaResp wdaResponse
+	// [FBRoute GET:@"/wda/element/:uuid/accessible"]
+	if wdaResp, err = internalGet("IsAccessible", urlJoin(e.endpoint, e._withFormat("/accessible"), true)); err != nil {
+		return false, err
+	}
+	return wdaResp.getValue().Bool(), nil
+}
+
+func (e *Element) IsAccessibilityContainer() (isAccessibilityContainer bool, err error) {
+	var wdaResp wdaResponse
+	// [FBRoute GET:@"/wda/element/:uuid/accessibilityContainer"]
+	if wdaResp, err = internalGet("IsAccessibilityContainer", urlJoin(e.endpoint, e._withFormat("/accessibilityContainer"), true)); err != nil {
 		return false, err
 	}
 	return wdaResp.getValue().Bool(), nil
@@ -140,6 +185,48 @@ func (e *Element) Type() (elemType string, err error) {
 	return wdaResp.getValue().String(), nil
 }
 
+// FindElement
+func (e *Element) FindElement(wdaLocator WDALocator) (element *Element, err error) {
+	var elemUID string
+	// [FBRoute POST:@"/element/:uuid/element"]
+	if elemUID, err = findUidOfElement(e._withFormatToUrl(), wdaLocator); err != nil {
+		return nil, err
+	}
+	return newElement(e.endpoint, elemUID), nil
+}
+
+// FindElements
+func (e *Element) FindElements(wdaLocator WDALocator) (elements []*Element, err error) {
+	var elemUIDs []string
+	// [FBRoute POST:@"/element/:uuid/elements"]
+	if elemUIDs, err = findUidOfElements(e._withFormatToUrl(), wdaLocator); err != nil {
+		return nil, err
+	}
+	elements = make([]*Element, len(elemUIDs))
+	for i := range elements {
+		elements[i] = newElement(e.endpoint, elemUIDs[i])
+	}
+	return
+}
+
+// FindVisibleCells
+func (e *Element) FindVisibleCells() (elements []*Element, err error) {
+	var wdaResp wdaResponse
+	// [FBRoute GET:@"/wda/element/:uuid/getVisibleCells"]
+	if wdaResp, err = internalGet("FindVisibleCells", urlJoin(e.endpoint, e._withFormat("/getVisibleCells"), true)); err != nil {
+		return nil, err
+	}
+	results := wdaResp.getValue().Array()
+	if len(results) == 0 {
+		return nil, errors.New(fmt.Sprintf("no such element: unable to find a cell element in this element"))
+	}
+	elements = make([]*Element, len(results))
+	for i := range elements {
+		elements[i] = newElement(e.endpoint, results[i].Get("ELEMENT").String())
+	}
+	return
+}
+
 // W3C element screenshot
 // [[FBRoute GET:@"/element/:uuid/screenshot"] respondWithTarget:self action:@selector(handleElementScreenshot:)],
 // JSONWP element screenshot
@@ -166,14 +253,11 @@ func (e *Element) ScreenshotToImage() (img image.Image, format string, err error
 // }
 
 func (e *Element) tttTmp() {
-	// TODO [[FBRoute POST:@"/element/:uuid/element"] respondWithTarget:self action:@selector(handleFindSubElement:)],
-	// TODO [[FBRoute POST:@"/element/:uuid/elements"] respondWithTarget:self action:@selector(handleFindSubElements:)],
-	// TODO [[FBRoute GET:@"/wda/element/:uuid/getVisibleCells"] respondWithTarget:self action:@selector(handleFindVisibleCells:)],
 	body := newWdaBody()
 	_ = body
 
-	// [FBRoute POST:@"/element/:uuid/element"]
-	wdaResp, err := internalGet("###############", urlJoin(e.endpoint, e._withFormat("/element")))
+	// [FBRoute GET:@"/wda/element/:uuid/getVisibleCells"]
+	wdaResp, err := internalGet("###############", urlJoin(e.endpoint, e._withFormat("/getVisibleCells"), true))
 	fmt.Println(err, wdaResp)
 }
 
@@ -191,7 +275,7 @@ type WDALocator struct {
 	PartialLinkText WDAElementAttribute `json:"partial link text"`
 	// partialSearch
 
-	Predicate string `json:"predicate string"`
+	Predicate string `json:"predicate string"` // TODO SetXXX AndXXX OrXXX
 
 	ClassChain string `json:"class chain"`
 

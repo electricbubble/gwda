@@ -115,7 +115,7 @@ func (wb wdaBody) setAppLaunchOption(opt WDAAppLaunchOption) (body wdaBody) {
 	}
 	return wb
 }
-func (wb wdaBody) setXY(x, y int) (body wdaBody) {
+func (wb wdaBody) setXY(x, y interface{}) (body wdaBody) {
 	return wb.set("x", x).set("y", y)
 }
 
