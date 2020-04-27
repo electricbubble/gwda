@@ -137,26 +137,29 @@ func TestClient_Screenshot(t *testing.T) {
 	}
 }
 
-func TestClient_ScreenshotToPng(t *testing.T) {
+func TestClient_ScreenshotToImage(t *testing.T) {
 	c, err := NewClient(deviceURL)
 	if err != nil {
 		t.Fatal(err)
 	}
 	Debug = true
-	toPng, err := c.ScreenshotToPng()
+	// toPng, err := c.ScreenshotToPng()
+	img, format, err := c.ScreenshotToImage()
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Log("图片大小", toPng.Bounds().Size())
+	t.Log("图片的格式:", format)
+	t.Log("图片的大小:", img.Bounds().Size())
 }
 
-func TestClient_ScreenshotToDiskAsPng(t *testing.T) {
+func TestClient_ScreenshotToDisk(t *testing.T) {
 	c, err := NewClient(deviceURL)
 	if err != nil {
 		t.Fatal(err)
 	}
 	Debug = true
-	err = c.ScreenshotToDiskAsPng("/Users/hero/Desktop/c1.png")
+	// err = c.ScreenshotToDiskAsPng("/Users/hero/Desktop/c1.png")
+	err = c.ScreenshotToDisk("/Users/hero/Desktop/c1.png")
 	if err != nil {
 		t.Fatal(err)
 	}

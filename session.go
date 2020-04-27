@@ -456,6 +456,8 @@ func (s *Session) FindElement(wdaLocator WDALocator) (element *Element, err erro
 
 // ActiveElement
 //
+// returns the currently active element
+//
 // [NSPredicate predicateWithFormat:@"hasKeyboardFocus == YES"]
 func (s *Session) ActiveElement() (element *Element, err error) {
 	var wdaResp wdaResponse
@@ -613,31 +615,14 @@ func (s *Session) Screenshot(elemUID ...string) (raw *bytes.Buffer, err error) {
 	return screenshot(s.sessionURL, elemUID...)
 }
 
-// ScreenshotToDiskAsPng
-func (s *Session) ScreenshotToDiskAsPng(filename string) (err error) {
-	return screenshotToDisk(s.sessionURL, filename)
+// ScreenshotToDisk
+func (s *Session) ScreenshotToDisk(filename string, elemUID ...string) (err error) {
+	return screenshotToDisk(s.sessionURL, filename, elemUID...)
 }
 
-// ScreenshotToPng
-func (s *Session) ScreenshotToPng() (img image.Image, err error) {
-	return screenshotToPng(s.sessionURL)
-}
-
-// ScreenshotElement
-//
-// takes a screenshot of the specified element
-// func (s *Session) ScreenshotElement(elemUID string) (raw *bytes.Buffer, err error) {
-// 	return screenshot(s.sessionURL, elemUID)
-// }
-
-// ScreenshotElementToDiskAsJpeg
-func (s *Session) ScreenshotElementToDiskAsJpeg(elemUID string, filename string) (err error) {
-	return screenshotToDisk(s.sessionURL, filename, elemUID)
-}
-
-// ScreenshotElementToJpeg
-func (s *Session) ScreenshotElementToJpeg(elemUID string) (jpeg image.Image, err error) {
-	return screenshotToJpeg(s.sessionURL, elemUID)
+// ScreenshotToImage
+func (s *Session) ScreenshotToImage(elemUID ...string) (img image.Image, format string, err error) {
+	return screenshotToImage(s.sessionURL, elemUID...)
 }
 
 // Source

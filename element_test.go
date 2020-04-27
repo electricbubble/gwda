@@ -297,7 +297,7 @@ func TestElement_Screenshot(t *testing.T) {
 	}
 }
 
-func TestElement_ScreenshotToJpeg(t *testing.T) {
+func TestElement_ScreenshotToImage(t *testing.T) {
 	c, err := NewClient(deviceURL)
 	if err != nil {
 		t.Fatal(err)
@@ -315,15 +315,17 @@ func TestElement_ScreenshotToJpeg(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	toPng, err := element.ScreenshotToJpeg()
+	// toPng, err := element.ScreenshotToJpeg()
+	img, format, err := element.ScreenshotToImage()
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Log("元素图片的大小", toPng.Bounds().Size())
+	t.Log("元素图片的格式:", format)
+	t.Log("元素图片的大小:", img.Bounds().Size())
 	t.Log(element.Rect())
 }
 
-func TestElement_ScreenshotToDiskAsJpeg(t *testing.T) {
+func TestElement_ScreenshotToDisk(t *testing.T) {
 	c, err := NewClient(deviceURL)
 	if err != nil {
 		t.Fatal(err)
@@ -341,41 +343,14 @@ func TestElement_ScreenshotToDiskAsJpeg(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	err = element.ScreenshotToDiskAsJpeg("/Users/hero/Desktop/e1.png")
+	// err = element.ScreenshotToDiskAsJpeg("/Users/hero/Desktop/e1.png")
+	err = element.ScreenshotToDisk("/Users/hero/Desktop/e1.png")
 	if err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestElement_Tmp(t *testing.T) {
-
-	// parse, err2 := url.Parse("http://localhost:8100/session/1A742166-05E8-467D-8A6C-3C775FD9AEAD")
-	// if err2 != nil {
-	// 	t.Fatal(err2)
-	// }
-	// elem := newElement(parse, "21000000-0000-0000-960D-000000000000")
-	// // [FBRoute GET:@"/wda/element/:uuid/accessible"]
-	//
-	// fmt.Println(strings.Repeat("-", 100))
-	//
-	// fmt.Println(elem._withFormat("/accessible"))
-	// fmt.Println(urlJoin(elem.endpoint, elem._withFormat("/accessible")))
-	//
-	// fmt.Println(strings.Repeat("*", 50))
-	//
-	// tmp, _ := url.Parse(elem.endpoint.String())
-	// tmp.Path = path.Join(elem.endpoint.Path, "wda", elem._withFormat("/accessible"))
-	// fmt.Println(tmp.String())
-	//
-	// fmt.Println(strings.Repeat("*", 50))
-	//
-	// fmt.Println(urlJoin(elem.endpoint, elem._withFormat("/accessible"), true))
-	// fmt.Println(urlJoin(elem.endpoint, elem._withFormat("/accessible"), false))
-	//
-	// fmt.Println(strings.Repeat("-", 100))
-	//
-	// return
-
 	c, err := NewClient(deviceURL)
 	if err != nil {
 		t.Fatal(err)

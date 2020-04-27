@@ -7,8 +7,8 @@ import (
 	"errors"
 	"fmt"
 	"image"
-	"image/jpeg"
-	"image/png"
+	_ "image/jpeg"
+	_ "image/png"
 	"io/ioutil"
 	"log"
 	"net/url"
@@ -275,9 +275,9 @@ func (c *Client) Lock() (err error) {
 
 // screenshot
 //
-// [FBRoute GET:@"/screenshot"]					format: png
-// [FBRoute GET:@"/element/:uuid/screenshot"]	format: jpeg
-// [FBRoute GET:@"/screenshot/:uuid"]			format: jpeg
+// [FBRoute GET:@"/screenshot"]
+// [FBRoute GET:@"/element/:uuid/screenshot"]
+// [FBRoute GET:@"/screenshot/:uuid"]
 func screenshot(baseUrl *url.URL, elemUID ...string) (raw *bytes.Buffer, err error) {
 	var wdaResp wdaResponse
 
@@ -307,21 +307,12 @@ func screenshotToDisk(baseUrl *url.URL, filename string, elemUID ...string) (err
 	return
 }
 
-func screenshotToPng(baseUrl *url.URL) (img image.Image, err error) {
-	if raw, err := screenshot(baseUrl); err != nil {
-		return nil, err
+func screenshotToImage(baseUrl *url.URL, elemUID ...string) (img image.Image, format string, err error) {
+	if raw, err := screenshot(baseUrl, elemUID...); err != nil {
+		return nil, "", err
 	} else {
-		img, err = png.Decode(raw)
-		return img, err
-	}
-}
-
-func screenshotToJpeg(baseUrl *url.URL, elemUID string) (img image.Image, err error) {
-	if raw, err := screenshot(baseUrl, elemUID); err != nil {
-		return nil, err
-	} else {
-		img, err = jpeg.Decode(raw)
-		return img, err
+		img, format, err := image.Decode(raw)
+		return img, format, err
 	}
 }
 
@@ -330,14 +321,14 @@ func (c *Client) Screenshot() (raw *bytes.Buffer, err error) {
 	return screenshot(c.deviceURL)
 }
 
-// ScreenshotToDiskAsJpeg
-func (c *Client) ScreenshotToDiskAsPng(filename string) (err error) {
+// ScreenshotToDisk
+func (c *Client) ScreenshotToDisk(filename string) (err error) {
 	return screenshotToDisk(c.deviceURL, filename)
 }
 
-// ScreenshotToJpeg
-func (c *Client) ScreenshotToPng() (img image.Image, err error) {
-	return screenshotToPng(c.deviceURL)
+// ScreenshotToImage
+func (c *Client) ScreenshotToImage() (img image.Image, format string, err error) {
+	return screenshotToImage(c.deviceURL)
 }
 
 type WDASourceOption wdaBody

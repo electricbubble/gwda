@@ -6,21 +6,6 @@ import (
 )
 
 func TestTmpGwda(t *testing.T) {
-	// ps := PredicateString{Enabled: true}
-	// fmt.Println(reflect.TypeOf(ps))
-	// fmt.Println(reflect.ValueOf(ps))
-	// v := reflect.ValueOf(ps)
-	// fmt.Println(v.Kind())
-	//
-	// fmt.Println(v.NumField())
-	// fmt.Println()
-	//
-	// myType := reflect.TypeOf(ps)
-	// fmt.Println(myType.NumField())
-	// for i := 0; i < myType.NumField(); i++ {
-	// 	fmt.Println(myType.Field(i).Name, myType.Field(i).Tag.Get("json"))
-	// }
-
 	// elemAttr := WDAElementAttribute{Label: "通知"}
 	// fmt.Println(elemAttr)
 	// fmt.Println(elemAttr.getMethodAndValue())

@@ -29,6 +29,13 @@ func (e *Element) _withFormat(elem ...string) string {
 	return path.Join(append([]string{"element", e.UID}, elem...)...)
 }
 
+// http://ip:port/session/:uuid/element/:uuid
+func (e *Element) _withFormatToUrl(elem ...string) *url.URL {
+	tmp, _ := url.Parse(urlJoin(e.endpoint, e._withFormat()))
+	path.Join(append([]string{"element", e.UID}, elem...)...)
+	return tmp
+}
+
 func (e *Element) Click() (err error) {
 	// [FBRoute POST:@"/element/:uuid/click"]
 	_, err = internalPost("Click", urlJoin(e.endpoint, e._withFormat("/click")), nil)
@@ -140,21 +147,18 @@ func (e *Element) Type() (elemType string, err error) {
 
 // Screenshot
 func (e *Element) Screenshot() (raw *bytes.Buffer, err error) {
-	tmp, _ := url.Parse(urlJoin(e.endpoint, e._withFormat()))
 	// [FBRoute GET:@"/element/:uuid/screenshot"]
-	return screenshot(tmp)
+	return screenshot(e._withFormatToUrl())
 }
 
-// ScreenshotToDiskAsJpeg
-func (e *Element) ScreenshotToDiskAsJpeg(filename string) (err error) {
-	tmp, _ := url.Parse(urlJoin(e.endpoint, e._withFormat()))
-	return screenshotToDisk(tmp, filename)
+// ScreenshotToDisk
+func (e *Element) ScreenshotToDisk(filename string) (err error) {
+	return screenshotToDisk(e._withFormatToUrl(), filename)
 }
 
-// ScreenshotToJpeg
-func (e *Element) ScreenshotToJpeg() (img image.Image, err error) {
-	tmp, _ := url.Parse(urlJoin(e.endpoint, e._withFormat()))
-	return screenshotToJpeg(tmp, "")
+// ScreenshotToImage
+func (e *Element) ScreenshotToImage() (img image.Image, format string, err error) {
+	return screenshotToImage(e._withFormatToUrl())
 }
 
 // func addToRootWda(baseUrl *url.URL) {
@@ -168,16 +172,8 @@ func (e *Element) tttTmp() {
 	body := newWdaBody()
 	_ = body
 
-	// attrName := "type"
-	// attrName = NewWDAElementAttribute().SetType(WDAElementType{}).GetAttributeName()
-	// attrName = WDAElementType{T}
-	// tmp, _ := url.Parse(urlJoin(e.elementURL, "/attribute"))
-	// q := tmp.Query()
-	// q.Set("name", attrName)
-	// tmp.RawQuery = q.Encode()
-	// wdaResp, err := internalGet("###############", tmp.String())
-
-	wdaResp, err := internalGet("###############", urlJoin(e.endpoint, e._withFormat("/name")))
+	// [FBRoute POST:@"/element/:uuid/element"]
+	wdaResp, err := internalGet("###############", urlJoin(e.endpoint, e._withFormat("/element")))
 	fmt.Println(err, wdaResp)
 }
 
@@ -240,15 +236,7 @@ func (ea WDAElementAttribute) String() string {
 }
 
 func (ea WDAElementAttribute) getAttributeName() string {
-	for k, _ := range ea {
-		// switch v.(type) {
-		// case bool:
-		// 	return k + "=" + strconv.FormatBool(v.(bool))
-		// case string:
-		// 	return k + "=" + v.(string)
-		// default:
-		// 	return k + "=" + fmt.Sprintf("%v", v)
-		// }
+	for k := range ea {
 		return k
 	}
 	return "UNKNOWN"
