@@ -91,6 +91,111 @@ func TestElement_TouchAndHold(t *testing.T) {
 	}
 }
 
+func TestElement_Drag(t *testing.T) {
+	c, err := NewClient(deviceURL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	_ = c.Unlock()
+	s, err := c.NewSession()
+	if err != nil {
+		t.Fatal(err)
+	}
+	// _ = c.Homescreen()
+	element, err := s.FindElement(WDALocator{Predicate: "type == 'XCUIElementTypeIcon' AND visible == true"})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	Debug = true
+	// err = element.Drag(230, 130, 230, 480, 2)
+	// err = element.Drag(230, 130, 230, 480)
+	// err = element.Drag(230, 130, 230, 30)
+	// err = element.Drag(230, 130, 130, 130)
+	err = element.Drag(230, 130, 330, 130)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestElement_Swipe(t *testing.T) {
+	c, err := NewClient(deviceURL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	_ = c.Unlock()
+	s, err := c.NewSession()
+	if err != nil {
+		t.Fatal(err)
+	}
+	// _ = c.Homescreen()
+	// element, err := s.FindElement(WDALocator{ClassName: WDAElementType{Table: true}})
+	// element, err := s.FindElement(WDALocator{ClassName: WDAElementType{PageIndicator: true}})
+	element, err := s.FindElement(WDALocator{ClassName: WDAElementType{Cell: true}})
+	// element, err := s.FindElement(WDALocator{Predicate: "type == 'XCUIElementTypeIcon' AND visible == true"})
+	// element, err := s.FindElement(WDALocator{Name: "自定手势作用区域"})
+	// element, err := s.FindElement(WDALocator{Name: "辅助功能"})
+	// element, err := s.FindElement(WDALocator{Name: "com.apple.mobilesafari"})
+	// element, err := s.FindElement(WDALocator{ClassName: WDAElementType{Image: true}})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// element.ScreenshotToDisk("/Users/hero/Desktop/e8.png")
+	// return
+	Debug = true
+	// rect, _ := element.Rect()
+	// 相对元素自身的坐标
+	// err = element.Swipe(rect.X, rect.Y+rect.Height/2, rect.X+rect.Width, rect.Y+rect.Height/2)
+	// err = element.SwipeDirection(WDASwipeDirectionRight)
+	// err = element.SwipeRight()
+	err = element.SwipeLeft()
+	// err = element.SwipeUp()
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestElement_Pinch(t *testing.T) {
+	c, err := NewClient(deviceURL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	_ = c.Unlock()
+	s, err := c.NewSession()
+	if err != nil {
+		t.Fatal(err)
+	}
+	// _ = c.Homescreen()
+	element, err := s.FindElement(WDALocator{ClassName: WDAElementType{Image: true}})
+	// element, err := s.FindElement(WDALocator{Name: "自定手势作用区域"})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	Debug = true
+	// - 放大的捏放在屏幕中心
+	// - 缩小是 左上角+右下角 向中心靠拢
+
+	// zoom in 放大
+	// err = element.Pinch(10, 20)
+	// err = element.Pinch(2, 32)
+	// err = element.Pinch(2, 8)
+	// err = element.Pinch(1.9, 3.6)
+	// err = element.Pinch(1.9, 3.6)
+	// err = element.PinchToZoomIn()
+	// zoom out 缩小
+	// - iPhoneX 测试结果无法缩小（相册照片），开启 引导式访问 也无效
+	// - iPad Pro 横屏会触发右上角的 控制中心（竖屏可成功触发缩小效果）
+	// err = element.Pinch(0.9, -0.9)
+	// err = element.Pinch(0.9, -3.6)
+	// err = element.Pinch(0.9, -14.4)
+	err = element.PinchToZoomOut()
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestElement_Click(t *testing.T) {
 	c, err := NewClient(deviceURL)
 	if err != nil {
@@ -604,7 +709,10 @@ func TestElement_Tmp(t *testing.T) {
 		t.Fatal(err)
 	}
 	Debug = true
-	element, err := s.FindElement(WDALocator{LinkText: NewWDAElementAttribute().SetLabel("通用")})
+	// element, err := s.FindElement(WDALocator{Name: "自定手势作用区域"})
+	element, err := s.FindElement(WDALocator{ClassName: WDAElementType{Image: true}})
+	// element, err := s.FindElement(WDALocator{Predicate: "type == 'XCUIElementTypeIcon' AND visible == true"})
+	// element, err := s.FindElement(WDALocator{LinkText: NewWDAElementAttribute().SetLabel("通用")})
 	// element, err := s.FindElement(WDALocator{ClassName: WDAElementType{Table: true}})
 	// element, err := s.FindElement(WDALocator{ClassName: WDAElementType{StatusBar: true}})
 	// element, err := s.FindElement(WDALocator{Predicate: "selected == true AND label == '通用'"})
@@ -613,15 +721,5 @@ func TestElement_Tmp(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// addToRootWda(element.elementURL)
-	// return
-
 	element.tttTmp()
-	// t.Log(element.GetAttribute(NewWDAElementAttribute().SetUID("")))
-
-	// for _, elem := range element {
-	// 	elem.tttTmp()
-	// 	t.Log(elem.GetAttribute(NewWDAElementAttribute().SetUID("")))
-	// }
-
 }

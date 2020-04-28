@@ -254,6 +254,42 @@ func TestSession_TouchAndHold(t *testing.T) {
 	}
 }
 
+func TestSession_Drag(t *testing.T) {
+	c, err := NewClient(deviceURL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	s, err := c.NewSession()
+	if err != nil {
+		t.Fatal(err)
+	}
+	Debug = true
+	// err = s.Drag(230, 130, 230, 480,2)
+	// err = s.Drag(230, 130, 230, 480)
+	err = s.Drag(230, 130, 230, 30)
+	// err = s.Drag(230, 130, 130, 130)
+	// err = s.Drag(230, 130, 330, 130)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestSession_Swipe(t *testing.T) {
+	c, err := NewClient(deviceURL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	s, err := c.NewSession()
+	if err != nil {
+		t.Fatal(err)
+	}
+	Debug = true
+	err = s.Swipe(230, 130, 230*2, 130*2)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestSession_AppLaunch(t *testing.T) {
 	Debug = true
 	c, err := NewClient(deviceURL)
@@ -777,8 +813,6 @@ func TestSession_Source(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	bundleId := "com.apple.Preferences"
-	_ = bundleId
 	s, err := c.NewSession()
 	if err != nil {
 		t.Fatal(err)

@@ -66,8 +66,8 @@ func (s *Session) GetActiveSession() (wdaSessionInfo WDASessionInfo, err error) 
 //
 // kill session (and App) associated with that request
 //
-// 1. alertsMonitor disable
-// 2. testedApplicationBundleId terminate
+//	1. alertsMonitor disable
+//	2. testedApplicationBundleId terminate
 func (s *Session) DeleteSession() (err error) {
 	_, err = internalDelete("DeleteSession", s.sessionURL.String())
 	return
@@ -108,8 +108,8 @@ func (alo WDAAppLaunchOption) SetEnvironment(env map[string]string) WDAAppLaunch
 //
 // Default wait for quiescence
 //
-// 1. registerApplicationWithBundleId
-// 2. launch OR activate
+//	1. registerApplicationWithBundleId
+//	2. launch OR activate
 func (s *Session) AppLaunch(bundleId string, opt ...WDAAppLaunchOption) (err error) {
 	// TODO BundleId is required 如果是不存在的 bundleId 会导致 wda 内部报错导致接下来的操作都无法接收处理
 	if len(opt) == 0 {
@@ -161,7 +161,7 @@ func (s *Session) DeviceInfo() (wdaDeviceInfo WDADeviceInfo, err error) {
 }
 
 type WDABatteryInfo struct {
-	Level   float32         `json:"level"` // Battery level in range [0.0, 1.0], where 1.0 means 100% charge.
+	Level   float64         `json:"level"` // Battery level in range [0.0, 1.0], where 1.0 means 100% charge.
 	State   WDABatteryState `json:"state"` // Battery state ( 1: on battery, discharging; 2: plugged in, less than 100%, 3: plugged in, at 100% )
 	_string string
 }
@@ -246,7 +246,7 @@ func (s WDASize) String() string {
 
 type WDAScreen struct {
 	StatusBarSize WDASize `json:"statusBarSize"`
-	Scale         float32 `json:"scale"`
+	Scale         float64 `json:"scale"`
 	_string       string
 }
 
@@ -277,7 +277,7 @@ func (s *Session) Screen() (wdaScreen WDAScreen, err error) {
 }
 
 // Scale
-func (s *Session) Scale() (scale float32, err error) {
+func (s *Session) Scale() (scale float64, err error) {
 	screen, err := s.Screen()
 	return screen.Scale, err
 }
@@ -320,7 +320,7 @@ func (s *Session) ActiveAppsList() (appsList []WDAAppBaseInfo, err error) {
 }
 
 func tap(baseUrl *url.URL, x, y interface{}, elemUID ...string) (err error) {
-	body := newWdaBody().setXY(x, y)
+	body := newWdaBody().set("x", x).set("y", y)
 	// [FBRoute POST:@"/wda/tap/:uuid"]
 	tmpPath := "/wda/tap"
 	if len(elemUID) == 0 {
@@ -338,7 +338,7 @@ func (s *Session) Tap(x, y int) error {
 }
 
 // TapFloat
-func (s *Session) TapFloat(x, y float32) error {
+func (s *Session) TapFloat(x, y float64) error {
 	return tap(s.sessionURL, x, y)
 }
 
@@ -350,7 +350,7 @@ func doubleTap(baseUrl *url.URL, x, y interface{}, elemPrefixPath ...string) (er
 	body := newWdaBody()
 	tmpPath := "/doubleTap"
 	if len(elemPrefixPath) == 0 {
-		body.setXY(x, y)
+		body.set("x", x).set("y", y)
 	} else {
 		tmpPath = elemPrefixPath[0] + tmpPath
 	}
@@ -365,7 +365,7 @@ func (s *Session) DoubleTap(x, y int) (err error) {
 	return doubleTap(s.sessionURL, x, y)
 }
 
-func (s *Session) DoubleTapFloat(x, y float32) (err error) {
+func (s *Session) DoubleTapFloat(x, y float64) (err error) {
 	return doubleTap(s.sessionURL, x, y)
 }
 
@@ -377,7 +377,7 @@ func touchAndHold(baseUrl *url.URL, x, y, duration interface{}, elemPrefixPath .
 	body := newWdaBody().set("duration", duration)
 	tmpPath := "/touchAndHold"
 	if len(elemPrefixPath) == 0 {
-		body.setXY(x, y)
+		body.set("x", x).set("y", y)
 	} else {
 		tmpPath = elemPrefixPath[0] + tmpPath
 	}
@@ -395,18 +395,61 @@ func (s *Session) TouchAndHold(x, y int, duration ...int) (err error) {
 	return touchAndHold(s.sessionURL, x, y, duration[0])
 }
 
-func (s *Session) TouchAndHoldFloat(x, y float32, duration ...float32) (err error) {
+func (s *Session) TouchAndHoldFloat(x, y float64, duration ...float64) (err error) {
 	if len(duration) == 0 {
-		duration = []float32{1.0}
+		duration = []float64{1.0}
 	}
 	return touchAndHold(s.sessionURL, x, y, duration[0])
 }
+
+// drag
+//
+// [FBRoute POST:@"/wda/dragfromtoforduration"]
+// [FBRoute POST:@"/wda/element/:uuid/dragfromtoforduration"]
+func drag(baseUrl *url.URL, fromX, fromY, toX, toY, pressForDuration interface{}, elemPrefixPath ...string) (err error) {
+	body := newWdaBody().set("duration", pressForDuration)
+	body.set("fromX", fromX).set("fromY", fromY)
+	body.set("toX", toX).set("toY", toY)
+	tmpPath := "/dragfromtoforduration"
+	if len(elemPrefixPath) != 0 {
+		tmpPath = elemPrefixPath[0] + tmpPath
+	}
+	_, err = internalPost("Drag", urlJoin(baseUrl, tmpPath, true), body)
+	return
+}
+
+// Drag
+//
+// Clicks and holds for a specified duration (generally long enough to start a drag operation) then drags to the other coordinate.
+func (s *Session) Drag(fromX, fromY, toX, toY int, pressForDuration ...int) (err error) {
+	if len(pressForDuration) == 0 {
+		pressForDuration = []int{1}
+	}
+	return drag(s.sessionURL, fromX, fromY, toX, toY, pressForDuration[0])
+}
+
+func (s *Session) DragFloat(fromX, fromY, toX, toY float64, pressForDuration ...float64) (err error) {
+	if len(pressForDuration) == 0 {
+		pressForDuration = []float64{1}
+	}
+	return drag(s.sessionURL, fromX, fromY, toX, toY, pressForDuration[0])
+}
+
+func (s *Session) Swipe(fromX, fromY, toX, toY int) (err error) {
+	return drag(s.sessionURL, fromX, fromY, toX, toY, 0)
+}
+
+func (s *Session) SwipeFloat(fromX, fromY, toX, toY float64) (err error) {
+	return drag(s.sessionURL, fromX, fromY, toX, toY, 0)
+}
+
+// TODO SwipeDirection
 
 // AppTerminate
 //
 // Close the application by bundleId
 //
-// 1. unregisterApplicationWithBundleId
+//	1. unregisterApplicationWithBundleId
 func (s *Session) AppTerminate(bundleId string) (err error) {
 	body := newWdaBody().setBundleID(bundleId)
 	_, err = internalPost("AppTerminate", urlJoin(s.sessionURL, "/wda/apps/terminate"), body)
@@ -569,7 +612,7 @@ func (s *Session) AppActivate(bundleId string) (err error) {
 // AppDeactivate
 //
 // Deactivates application for given time and then activate it again
-func (s *Session) AppDeactivate(seconds ...float32) (err error) {
+func (s *Session) AppDeactivate(seconds ...float64) (err error) {
 	body := newWdaBody()
 	if len(seconds) != 0 {
 		body.set("duration", seconds[0])

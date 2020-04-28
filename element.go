@@ -40,15 +40,20 @@ func (e *Element) Tap(x, y int) error {
 	return tap(e.endpoint, x, y, e.UID)
 }
 
-func (e *Element) TapFloat(x, y float32) error {
+func (e *Element) TapFloat(x, y float64) error {
 	return tap(e.endpoint, x, y, e.UID)
 }
 
+// DoubleTap
+//
+// Sends a double tap event to a hittable point computed for the element.
 func (e *Element) DoubleTap() error {
 	return doubleTap(e.endpoint, -1, -1, e._withFormat())
 }
 
 // TouchAndHold
+//
+// Sends a long press gesture to a hittable point computed for the element, holding for the specified duration.
 func (e *Element) TouchAndHold(duration ...int) (err error) {
 	if len(duration) == 0 {
 		duration = []int{1}
@@ -56,11 +61,132 @@ func (e *Element) TouchAndHold(duration ...int) (err error) {
 	return touchAndHold(e.endpoint, -1, -1, duration[0], e._withFormat())
 }
 
-func (e *Element) TouchAndHoldFloat(duration ...float32) (err error) {
+func (e *Element) TouchAndHoldFloat(duration ...float64) (err error) {
 	if len(duration) == 0 {
-		duration = []float32{1.0}
+		duration = []float64{1.0}
 	}
 	return touchAndHold(e.endpoint, -1, -1, duration[0], e._withFormat())
+}
+
+// Drag
+//
+// Clicks and holds for a specified duration (generally long enough to start a drag operation) then drags to the other coordinate.
+func (e *Element) Drag(fromX, fromY, toX, toY int, pressForDuration ...int) (err error) {
+	if len(pressForDuration) == 0 {
+		pressForDuration = []int{1}
+	}
+	return drag(e.endpoint, fromX, fromY, toX, toY, pressForDuration[0], e._withFormat())
+}
+
+func (e *Element) DragFloat(fromX, fromY, toX, toY float64, pressForDuration ...float64) (err error) {
+	if len(pressForDuration) == 0 {
+		pressForDuration = []float64{1}
+	}
+	return drag(e.endpoint, fromX, fromY, toX, toY, pressForDuration[0], e._withFormat())
+}
+
+type WDASwipeDirection string
+
+const (
+	WDASwipeDirectionUp    WDASwipeDirection = "up"
+	WDASwipeDirectionDown  WDASwipeDirection = "down"
+	WDASwipeDirectionLeft  WDASwipeDirection = "left"
+	WDASwipeDirectionRight WDASwipeDirection = "right"
+)
+
+// Swipe
+//
+//	element.frame.origin.x + [request.arguments[@"fromX"] doubleValue]
+// 	element.frame.origin.y + [request.arguments[@"fromY"] doubleValue]
+// 	element.frame.origin.x + [request.arguments[@"toX"] doubleValue]
+//	element.frame.origin.y + [request.arguments[@"toY"] doubleValue]
+func (e *Element) Swipe(fromX, fromY, toX, toY int) (err error) {
+	return drag(e.endpoint, fromX, fromY, toX, toY, 0, e._withFormat())
+}
+
+func (e *Element) SwipeFloat(fromX, fromY, toX, toY float64) (err error) {
+	return drag(e.endpoint, fromX, fromY, toX, toY, 0, e._withFormat())
+}
+
+// SwipeDirection
+//
+// Sends a swipe gesture in the specified direction.
+func (e *Element) SwipeDirection(direction WDASwipeDirection) (err error) {
+	body := newWdaBody().set("direction", direction)
+	// [FBRoute POST:@"/wda/element/:uuid/swipe"]
+	_, err = internalPost("SwipeDirection", urlJoin(e.endpoint, e._withFormat("/swipe"), true), body)
+	return
+}
+
+// SwipeUp
+//
+// Sends a swipe-up gesture.
+func (e *Element) SwipeUp() (err error) {
+	return e.SwipeDirection(WDASwipeDirectionUp)
+}
+
+// SwipeDown
+//
+// Sends a swipe-down gesture.
+func (e *Element) SwipeDown() (err error) {
+	return e.SwipeDirection(WDASwipeDirectionDown)
+}
+
+// SwipeLeft
+//
+// Sends a swipe-left gesture.
+func (e *Element) SwipeLeft() (err error) {
+	return e.SwipeDirection(WDASwipeDirectionLeft)
+}
+
+// SwipeRight
+//
+// Sends a swipe-right gesture.
+func (e *Element) SwipeRight() (err error) {
+	return e.SwipeDirection(WDASwipeDirectionRight)
+}
+
+// Pinch
+//
+// Sends a pinching gesture with two touches.
+//
+// The system makes a best effort to synthesize the requested scale and velocity: absolute accuracy is not guaranteed.
+// Some values may not be possible based on the size of the element's frame - these will result in test failures.
+//
+// @param scale
+// The scale of the pinch gesture.  Use a scale between 0 and 1 to "pinch close" or zoom out and a scale greater than 1 to "pinch open" or zoom in.
+//
+// @param velocity
+// The velocity of the pinch in scale factor per second.
+func (e *Element) Pinch(scale, velocity float64) (err error) {
+	if scale <= 0 {
+		return errors.New("'scale' must be greater than zero")
+	}
+	if scale == 1 {
+		return errors.New("'scale' must be greater or less than 1")
+	}
+	if scale < 1 && velocity > 0 {
+		return errors.New("'velocity' must be less than zero when 'scale' is less than 1")
+	}
+	if scale > 1 && velocity <= 0 {
+		return errors.New("'velocity' must be greater than zero when 'scale' is greater than 1")
+	}
+	body := newWdaBody().set("scale", scale).set("velocity", velocity)
+	// [FBRoute POST:@"/wda/element/:uuid/pinch"]
+	_, err = internalPost("Pinch", urlJoin(e.endpoint, e._withFormat("/pinch"), true), body)
+	return
+}
+
+// PinchToZoomIn
+//
+// scale, velocity = x, x
+func (e *Element) PinchToZoomIn() (err error) {
+	return e.Pinch(2, 10)
+}
+
+// PinchToZoomOut
+func (e *Element) PinchToZoomOut() (err error) {
+	return e.Pinch(0.9, -4.5)
 }
 
 func (e *Element) Click() (err error) {
@@ -253,11 +379,41 @@ func (e *Element) ScreenshotToImage() (img image.Image, format string, err error
 // }
 
 func (e *Element) tttTmp() {
-	body := newWdaBody()
-	_ = body
+	// TODO [FBRoute POST:@"/wda/element/:uuid/rotate"]
+	// TODO [FBRoute POST:@"/wda/element/:uuid/twoFingerTap"]
+	// TODO [FBRoute POST:@"/wda/element/:uuid/tapWithNumberOfTaps"]
+	// TODO [FBRoute POST:@"/wda/element/:uuid/scroll"]
+	// TODO [FBRoute POST:@"/wda/pickerwheel/:uuid/select"]
+	// TODO [FBRoute POST:@"/wda/element/:uuid/forceTouch"]
 
-	// [FBRoute GET:@"/wda/element/:uuid/getVisibleCells"]
-	wdaResp, err := internalGet("###############", urlJoin(e.endpoint, e._withFormat("/getVisibleCells"), true))
+	var err error
+	// body := newWdaBody()
+	// _ = body
+
+	// Sends a pinching gesture with two touches.
+	//
+	// The system makes a best effort to synthesize the requested scale and velocity: absolute accuracy is not guaranteed.
+	// Some values may not be possible based on the size of the element's frame - these will result in test failures.
+	//
+	// @param scale
+	// The scale of the pinch gesture.  Use a scale between 0 and 1 to "pinch close" or zoom out and a scale greater than 1 to "pinch open" or zoom in.
+	//
+	// @param velocity
+	// The velocity of the pinch in scale factor per second.
+
+	// scale must be greater than zero		scale > 0
+	// 缩放手势。使用0到1之间的刻度来“关闭”或“缩小”，使用大于1的刻度来“打开”或“放大”。
+	//
+	// velocity must be less than zero when scale is less than 1		scale < 1	->	velocity < 0
+	// 当比例小于1时，速度必须小于零
+	//
+	// velocity must be greater than zero when scale is greater than 1
+	// 当比例大于1时，速度必须大于0
+	body := newWdaBody().set("scale", -5.5).set("velocity", -6)
+	fmt.Println("#######", e.Pinch(-5.5, -6))
+	var wdaResp wdaResponse
+	// [FBRoute POST:@"/wda/element/:uuid/pinch"]
+	wdaResp, err = internalPost("###############", urlJoin(e.endpoint, e._withFormat("/pinch"), true), body)
 	fmt.Println(err, wdaResp)
 }
 
@@ -400,6 +556,17 @@ func (ea WDAElementAttribute) SetVisible(b bool) WDAElementAttribute {
 	return WDAElementAttribute(wdaBody(ea).set("visible", b))
 }
 
+func (et WDAElementType) String() string {
+	vBy := reflect.ValueOf(et)
+	tBy := reflect.TypeOf(et)
+	for i := 0; i < vBy.NumField(); i++ {
+		if vBy.Field(i).Bool() {
+			return tBy.Field(i).Tag.Get("json")
+		}
+	}
+	return "UNKNOWN"
+}
+
 // WDAElementType
 // !!! This mapping should be updated if there are changes after each new XCTest release"`
 type WDAElementType struct {
@@ -486,15 +653,4 @@ type WDAElementType struct {
 	Tab                bool `json:"XCUIElementTypeTab"`
 	TouchBar           bool `json:"XCUIElementTypeTouchBar"`
 	StatusItem         bool `json:"XCUIElementTypeStatusItem"`
-}
-
-func (et WDAElementType) String() string {
-	vBy := reflect.ValueOf(et)
-	tBy := reflect.TypeOf(et)
-	for i := 0; i < vBy.NumField(); i++ {
-		if vBy.Field(i).Bool() {
-			return tBy.Field(i).Tag.Get("json")
-		}
-	}
-	return "UNKNOWN"
 }

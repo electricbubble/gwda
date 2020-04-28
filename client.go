@@ -213,8 +213,8 @@ func (c *Client) Status() (sJson string, err error) {
 //
 // Forces the device under test to switch to the home screen
 //
-// 1. pressButton
-// 2. WaitUntilApplicationBoardIsVisible
+//	1. pressButton
+//	2. WaitUntilApplicationBoardIsVisible
 func (c *Client) Homescreen() (err error) {
 	_, err = internalPost("Homescreen", urlJoin(c.deviceURL, "/wda/homescreen"), nil)
 	return
@@ -223,8 +223,8 @@ func (c *Client) Homescreen() (err error) {
 // HealthCheck
 //
 // Checks health of XCTest by:
-// 1) Querying application for some elements,
-// 2) Triggering some device events.
+//	1. Querying application for some elements,
+//	2. Triggering some device events.
 //
 // !!! Health check might modify simulator state so it should only be called in-between testing sessions
 func (c *Client) HealthCheck() (err error) {
