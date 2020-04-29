@@ -125,6 +125,20 @@ func TestClient_Lock(t *testing.T) {
 	}
 }
 
+func TestClient_DeviceInfo(t *testing.T) {
+	c, err := NewClient(deviceURL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	Debug = true
+	deviceInfo, err := c.DeviceInfo()
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log(deviceInfo.Name)
+	t.Log(deviceInfo.TimeZone)
+}
+
 func TestClient_Screenshot(t *testing.T) {
 	c, err := NewClient(deviceURL)
 	if err != nil {

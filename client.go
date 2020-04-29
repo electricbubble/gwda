@@ -273,6 +273,33 @@ func (c *Client) Lock() (err error) {
 	return lock(c.deviceURL)
 }
 
+func deviceInfo(baseUrl *url.URL) (wdaDeviceInfo WDADeviceInfo, err error) {
+	var wdaResp wdaResponse
+	if wdaResp, err = internalGet("DeviceInfo", urlJoin(baseUrl, "/wda/device/info")); err != nil {
+		return WDADeviceInfo{}, err
+	}
+	wdaDeviceInfo._string = wdaResp.getValue().String()
+	// wdaDeviceInfo.TimeZone = wdaResp.getValue().Get("timeZone").String()
+	err = json.Unmarshal([]byte(wdaDeviceInfo._string), &wdaDeviceInfo)
+	return
+}
+
+// DeviceInfo
+//
+// {
+//    "timeZone" : "Asia\/Shanghai",
+//    "currentLocale" : "zh_CN",
+//    "model" : "iPhone",
+//    "uuid" : "x-x-x-x-x",
+//    "userInterfaceIdiom" : 0,
+//    "userInterfaceStyle" : "unsupported",
+//    "name" : "TEST’s iPhone",
+//    "isSimulator" : false
+//  }
+func (c *Client) DeviceInfo() (wdaDeviceInfo WDADeviceInfo, err error) {
+	return deviceInfo(c.deviceURL)
+}
+
 // screenshot
 //
 // [FBRoute GET:@"/screenshot"]

@@ -75,7 +75,7 @@ func TestSession_DeviceInfo(t *testing.T) {
 	}
 	t.Log(dInfo)
 	t.Log(dInfo.Name)
-	t.Log(dInfo.UserInterfaceStyle)
+	t.Log(dInfo.CurrentLocale)
 }
 
 func TestSession_BatteryInfo(t *testing.T) {
@@ -711,7 +711,7 @@ func TestSession_SiriOpenURL(t *testing.T) {
 		t.Fatal(err)
 	}
 	Debug = true
-	err = s.SiriOpenURL("weixin://")
+	err = s.SiriOpenURL("https://apple.com")
 	if err != nil {
 		t.Fatal(err)
 	}

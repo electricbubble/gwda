@@ -140,24 +140,17 @@ func (di WDADeviceInfo) String() string {
 // DeviceInfo
 //
 // {
-//    "timeZone": "GMT+0800",
-//    "currentLocale": "zh_CN",
-//    "model": "iPhone",
-//    "uuid": "x-x-x-x-x",
-//    "userInterfaceIdiom": 0,
-//    "isSimulator": false,
-//    "name": "x’s iPhone X"
-// }
+//    "timeZone" : "Asia\/Shanghai",
+//    "currentLocale" : "zh_CN",
+//    "model" : "iPhone",
+//    "uuid" : "x-x-x-x-x",
+//    "userInterfaceIdiom" : 0,
+//    "userInterfaceStyle" : "unsupported",
+//    "name" : "TEST’s iPhone",
+//    "isSimulator" : false
+//  }
 func (s *Session) DeviceInfo() (wdaDeviceInfo WDADeviceInfo, err error) {
-	var wdaResp wdaResponse
-	if wdaResp, err = internalGet("DeviceInfo", urlJoin(s.sessionURL, "/wda/device/info")); err != nil {
-		return
-	}
-
-	wdaDeviceInfo._string = wdaResp.getValue().String()
-	err = json.Unmarshal([]byte(wdaDeviceInfo._string), &wdaDeviceInfo)
-	// err = json.Unmarshal(wdaResp.getValue2Bytes(), &wdaDeviceInfo)
-	return
+	return deviceInfo(s.sessionURL)
 }
 
 type WDABatteryInfo struct {
