@@ -51,6 +51,37 @@ func (e *Element) DoubleTap() error {
 	return doubleTap(e.endpoint, -1, -1, e._withFormat())
 }
 
+// TwoFingerTap
+//
+// Sends a two finger tap event to a hittable point computed for the element.
+func (e *Element) TwoFingerTap() (err error) {
+	// [FBRoute POST:@"/wda/element/:uuid/twoFingerTap"]
+	_, err = internalPost("TwoFingerTap", urlJoin(e.endpoint, e._withFormat("/twoFingerTap"), true), nil)
+	return
+}
+
+// TapWithNumberOfTaps
+//
+// Sends one or more taps with one of more touch points.
+func (e *Element) TapWithNumberOfTaps(numberOfTaps, numberOfTouches int) (err error) {
+	if numberOfTouches <= 0 {
+		return errors.New("'numberOfTouches' must be greater than zero")
+	}
+	if numberOfTouches > 5 {
+		return errors.New("'numberOfTouches' cannot be greater than 5")
+	}
+	if numberOfTaps <= 0 {
+		return errors.New("'numberOfTaps' must be greater than zero")
+	}
+	if numberOfTaps > 10 {
+		return errors.New("'numberOfTaps' cannot be greater than 10")
+	}
+	body := newWdaBody().set("numberOfTaps", numberOfTaps).set("numberOfTouches", numberOfTouches)
+	// [FBRoute POST:@"/wda/element/:uuid/tapWithNumberOfTaps"]
+	_, err = internalPost("TapWithNumberOfTaps", urlJoin(e.endpoint, e._withFormat("/tapWithNumberOfTaps"), true), body)
+	return
+}
+
 // TouchAndHold
 //
 // Sends a long press gesture to a hittable point computed for the element, holding for the specified duration.
@@ -67,6 +98,51 @@ func (e *Element) TouchAndHoldFloat(duration ...float64) (err error) {
 	}
 	return touchAndHold(e.endpoint, -1, -1, duration[0], e._withFormat())
 }
+
+func (e *Element) _forceTouch(wdaCoordinate WDACoordinate, pressure float64, duration ...float64) (err error) {
+	body := newWdaBody()
+	if wdaCoordinate.X != -1 && wdaCoordinate.Y != -1 {
+		body.set("x", wdaCoordinate.X).set("y", wdaCoordinate.Y)
+	}
+	body.set("pressure", pressure)
+	if len(duration) == 0 {
+		duration = []float64{1.0}
+	}
+	body.set("duration", duration[0])
+	// [FBRoute POST:@"/wda/element/:uuid/forceTouch"]
+	_, err = internalPost("ForceTouch", urlJoin(e.endpoint, e._withFormat("/forceTouch"), true), body)
+	return
+}
+
+// ForceTouch
+//
+// 3D Touch
+func (e *Element) ForceTouch(pressure float64, duration ...float64) (err error) {
+	return e._forceTouch(WDACoordinate{X: -1, Y: -1}, pressure, duration...)
+}
+
+func (e *Element) ForceTouchCoordinate(wdaCoordinate WDACoordinate, pressure float64, duration ...float64) (err error) {
+	return e._forceTouch(wdaCoordinate, pressure, duration...)
+}
+
+// WDATouchSensitivity [Light, Medium, Firm]
+//  reveal content previews, actions,	[peek] 轻瞄
+//  contextual menus				[pop] 突显
+//  显示内容预览、操作和上下文菜单
+
+// func (e *Element) ForceTouchPeek() (err error) {
+// 	// return e.ForceTouch(0.5) // Light
+// 	return e.ForceTouch(0.68) // Medium
+// 	// return e.ForceTouch(0.68) // Firm
+// }
+//
+// func (e *Element) ForceTouchPop() (err error) {
+// 	// return e.ForceTouch(2.3, 1.2) // Light
+// 	return e.ForceTouch(5, 0.5) // Light
+//
+// 	// return e.ForceTouch(0.xx) // Medium
+// 	// return e.ForceTouch(0.xx) // Firm
+// }
 
 // Drag
 //
@@ -179,12 +255,14 @@ func (e *Element) Pinch(scale, velocity float64) (err error) {
 
 // PinchToZoomIn
 //
-// scale, velocity = x, x
+// scale, velocity = 2, 10
 func (e *Element) PinchToZoomIn() (err error) {
 	return e.Pinch(2, 10)
 }
 
 // PinchToZoomOut
+//
+// scale, velocity = 0.9, -4.5
 func (e *Element) PinchToZoomOut() (err error) {
 	return e.Pinch(0.9, -4.5)
 }
@@ -273,7 +351,7 @@ func (e *Element) IsAccessibilityContainer() (isAccessibilityContainer bool, err
 }
 
 // GetAttribute
-// 
+//
 // Returns value of given property specified in WebDriver Spec
 // Check the FBElement protocol to get list of supported attributes.
 // This method also supports shortcuts, like wdName == name, wdValue == value.
@@ -380,41 +458,27 @@ func (e *Element) ScreenshotToImage() (img image.Image, format string, err error
 
 func (e *Element) tttTmp() {
 	// TODO [FBRoute POST:@"/wda/element/:uuid/rotate"]
-	// TODO [FBRoute POST:@"/wda/element/:uuid/twoFingerTap"]
-	// TODO [FBRoute POST:@"/wda/element/:uuid/tapWithNumberOfTaps"]
 	// TODO [FBRoute POST:@"/wda/element/:uuid/scroll"]
 	// TODO [FBRoute POST:@"/wda/pickerwheel/:uuid/select"]
-	// TODO [FBRoute POST:@"/wda/element/:uuid/forceTouch"]
 
 	var err error
 	// body := newWdaBody()
 	// _ = body
 
-	// Sends a pinching gesture with two touches.
-	//
-	// The system makes a best effort to synthesize the requested scale and velocity: absolute accuracy is not guaranteed.
-	// Some values may not be possible based on the size of the element's frame - these will result in test failures.
-	//
-	// @param scale
-	// The scale of the pinch gesture.  Use a scale between 0 and 1 to "pinch close" or zoom out and a scale greater than 1 to "pinch open" or zoom in.
-	//
-	// @param velocity
-	// The velocity of the pinch in scale factor per second.
-
-	// scale must be greater than zero		scale > 0
-	// 缩放手势。使用0到1之间的刻度来“关闭”或“缩小”，使用大于1的刻度来“打开”或“放大”。
-	//
-	// velocity must be less than zero when scale is less than 1		scale < 1	->	velocity < 0
-	// 当比例小于1时，速度必须小于零
-	//
-	// velocity must be greater than zero when scale is greater than 1
-	// 当比例大于1时，速度必须大于0
-	body := newWdaBody().set("scale", -5.5).set("velocity", -6)
-	fmt.Println("#######", e.Pinch(-5.5, -6))
+	// numberOfTaps must be greater than zero
+	// numberOfTouches must be greater than zero
+	// numberOfTaps cannot be greater than 10
+	// numberOfTouches cannot be greater than 5
+	// err = e.TapWithNumberOfTaps(0, 5)
+	// fmt.Println(strings.Repeat("#", 20), err)
+	body := newWdaBody().set("numberOfTaps", 0).set("numberOfTouches", 5)
+	// Sends one or more taps with one of more touch points.
 	var wdaResp wdaResponse
-	// [FBRoute POST:@"/wda/element/:uuid/pinch"]
-	wdaResp, err = internalPost("###############", urlJoin(e.endpoint, e._withFormat("/pinch"), true), body)
-	fmt.Println(err, wdaResp)
+	// TODO [FBRoute POST:@"/wda/element/:uuid/tapWithNumberOfTaps"]
+	wdaResp, err = internalPost("###############", urlJoin(e.endpoint, e._withFormat("/tapWithNumberOfTaps"), true), body)
+	_ = wdaResp
+	_ = err
+	// fmt.Println(err, wdaResp)
 }
 
 type WDALocator struct {

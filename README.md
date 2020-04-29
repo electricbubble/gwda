@@ -101,7 +101,7 @@ func main() {
 	// if err != nil {
 	// 	log.Fatalln("获取 状态栏大小 和 缩放倍率 失败", err)
 	// }
-	fmt.Printf("渲染后的屏幕分辨率 宽: %.2f\t高: %.2f\n", float32(wSize.Width)*scale, float32(wSize.Height)*scale)
+	fmt.Printf("渲染后的屏幕分辨率 宽: %.2f\t高: %.2f\n", float64(wSize.Width)*scale, float64(wSize.Height)*scale)
 
 	appRunState, err := s.AppState(bundleId)
 	if err != nil {

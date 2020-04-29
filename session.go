@@ -335,6 +335,11 @@ func (s *Session) TapFloat(x, y float64) error {
 	return tap(s.sessionURL, x, y)
 }
 
+// WDACoordinate
+func (s *Session) TapCoordinate(wdaCoordinate WDACoordinate) error {
+	return tap(s.sessionURL, wdaCoordinate.X, wdaCoordinate.Y)
+}
+
 // doubleTap
 //
 // [FBRoute POST:@"/wda/doubleTap"]
@@ -436,7 +441,65 @@ func (s *Session) SwipeFloat(fromX, fromY, toX, toY float64) (err error) {
 	return drag(s.sessionURL, fromX, fromY, toX, toY, 0)
 }
 
-// TODO SwipeDirection
+func (s *Session) SwipeCoordinate(fromCoordinate, toCoordinate WDACoordinate) (err error) {
+	return drag(s.sessionURL, fromCoordinate.X, fromCoordinate.Y, toCoordinate.X, toCoordinate.Y, 0)
+}
+
+// SwipeUp
+func (s *Session) SwipeUp() (err error) {
+	var fromCoordinate, toCoordinate WDACoordinate
+	if windowSize, err := s.WindowSize(); err != nil {
+		return err
+	} else {
+		center := WDACoordinate{X: windowSize.Width / 2, Y: windowSize.Height / 2}
+		fromCoordinate, toCoordinate = center, center
+	}
+	fromCoordinate.Y += 100
+	toCoordinate.Y -= 100
+	return s.SwipeCoordinate(fromCoordinate, toCoordinate)
+}
+
+// SwipeDown
+func (s *Session) SwipeDown() (err error) {
+	var fromCoordinate, toCoordinate WDACoordinate
+	if windowSize, err := s.WindowSize(); err != nil {
+		return err
+	} else {
+		center := WDACoordinate{X: windowSize.Width / 2, Y: windowSize.Height / 2}
+		fromCoordinate, toCoordinate = center, center
+	}
+	fromCoordinate.Y -= 100
+	toCoordinate.Y += 100
+	return s.SwipeCoordinate(fromCoordinate, toCoordinate)
+}
+
+// SwipeLeft
+func (s *Session) SwipeLeft() (err error) {
+	var fromCoordinate, toCoordinate WDACoordinate
+	if windowSize, err := s.WindowSize(); err != nil {
+		return err
+	} else {
+		center := WDACoordinate{X: windowSize.Width / 2, Y: windowSize.Height / 2}
+		fromCoordinate, toCoordinate = center, center
+	}
+	fromCoordinate.X += 100
+	toCoordinate.X -= 100
+	return s.SwipeCoordinate(fromCoordinate, toCoordinate)
+}
+
+// SwipeRight
+func (s *Session) SwipeRight() (err error) {
+	var fromCoordinate, toCoordinate WDACoordinate
+	if windowSize, err := s.WindowSize(); err != nil {
+		return err
+	} else {
+		center := WDACoordinate{X: windowSize.Width / 2, Y: windowSize.Height / 2}
+		fromCoordinate, toCoordinate = center, center
+	}
+	fromCoordinate.X -= 100
+	toCoordinate.X += 100
+	return s.SwipeCoordinate(fromCoordinate, toCoordinate)
+}
 
 // AppTerminate
 //

@@ -290,6 +290,25 @@ func TestSession_Swipe(t *testing.T) {
 	}
 }
 
+func TestSession_SwipeSwipeDirection(t *testing.T) {
+	c, err := NewClient(deviceURL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	s, err := c.NewSession()
+	if err != nil {
+		t.Fatal(err)
+	}
+	Debug = true
+	// err = s.SwipeUp()
+	// err = s.SwipeDown()
+	// err = s.SwipeLeft()
+	err = s.SwipeRight()
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestSession_AppLaunch(t *testing.T) {
 	Debug = true
 	c, err := NewClient(deviceURL)

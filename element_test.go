@@ -67,6 +67,50 @@ func TestElement_DoubleTap(t *testing.T) {
 	}
 }
 
+func TestElement_TwoFingerTap(t *testing.T) {
+	c, err := NewClient(deviceURL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	_ = c.Unlock()
+	s, err := c.NewSession()
+	if err != nil {
+		t.Fatal(err)
+	}
+	Debug = true
+	element, err := s.FindElement(WDALocator{Name: "自定手势作用区域"})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = element.TwoFingerTap()
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestElement_TapWithNumberOfTaps(t *testing.T) {
+	c, err := NewClient(deviceURL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	_ = c.Unlock()
+	s, err := c.NewSession()
+	if err != nil {
+		t.Fatal(err)
+	}
+	Debug = true
+	element, err := s.FindElement(WDALocator{Name: "自定手势作用区域"})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = element.TapWithNumberOfTaps(3, 3)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestElement_TouchAndHold(t *testing.T) {
 	c, err := NewClient(deviceURL)
 	if err != nil {
@@ -89,6 +133,58 @@ func TestElement_TouchAndHold(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+}
+
+func TestElement_ForceTouch(t *testing.T) {
+	c, err := NewClient(deviceURL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	_ = c.Unlock()
+	s, err := c.NewSession()
+	if err != nil {
+		t.Fatal(err)
+	}
+	// launchOpt := NewWDAAppLaunchOption().SetShouldWaitForQuiescence(true).SetArguments([]string{"-AppleLanguages", "(en-US)"})
+	// s.AppLaunch(bundleId, launchOpt)
+	// return
+	Debug = true
+	// element, err := s.FindElement(WDALocator{Predicate: "type == 'XCUIElementTypeCell' AND name == '灵敏度评估'"})
+	// element, err := s.FindElement(WDALocator{Predicate: "type == 'XCUIElementTypeIcon' AND visible == true"})
+	// element, err := s.FindElement(WDALocator{ClassName: WDAElementType{Cell: true}})
+	element, err := s.FindElement(WDALocator{Name: "自定手势作用区域"})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// element.TouchAndHold()
+	// fmt.Println(element.GetAttribute(NewWDAElementAttribute().SetName("")))
+	// err = element.ForceTouch(0.67)
+	// err = element.ForceTouch(0.67, 3)
+	// err = element.ForceTouch(2.2, 1.0)
+	// err = element.ForceTouch(2.2, 0.5)
+	// err = element.ForceTouch(1, 1.0)
+	err = element.ForceTouch(1)
+	// err = element.ForceTouchCoordinate(WDACoordinate{100, 100}, 2)
+
+	// err = element.ForceTouchPeek()
+	// err = element.ForceTouchPop()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// body := newWdaBody().set("pressure", 2.0).set("duration", 1.0)
+	// 弱
+	// body := newWdaBody().set("pressure", 0.52).set("duration", 6.0) // 预览	pressure > 0.51 && duration < 6.0
+	// body := newWdaBody().set("pressure", 0.72).set("duration", 1.97) // 打开?	pressure > 0.71 && duration > 1.98
+	// body := newWdaBody().set("pressure", 2.0).set("duration", 1.0)
+	// 中 > 0.66
+	// body := newWdaBody().set("pressure", 0.66).set("duration", 1.0)
+	// body := newWdaBody().set("pressure", 0.67).set("duration", 1.0) // 预览 pressure > 0.66
+	// body := newWdaBody().set("pressure", 2.20).set("duration", 1.0) // 打开? pressure > 2.1
+	// 强 > 0.66
+	// body := newWdaBody().set("pressure", 0.67).set("duration", 1.0) // 预览 pressure > 0.66
+	// body := newWdaBody().set("pressure", 2.20).set("duration", 1.0) // 打开? pressure > 2.1
 }
 
 func TestElement_Drag(t *testing.T) {
@@ -131,9 +227,9 @@ func TestElement_Swipe(t *testing.T) {
 	// _ = c.Homescreen()
 	// element, err := s.FindElement(WDALocator{ClassName: WDAElementType{Table: true}})
 	// element, err := s.FindElement(WDALocator{ClassName: WDAElementType{PageIndicator: true}})
-	element, err := s.FindElement(WDALocator{ClassName: WDAElementType{Cell: true}})
+	// element, err := s.FindElement(WDALocator{ClassName: WDAElementType{Cell: true}})
 	// element, err := s.FindElement(WDALocator{Predicate: "type == 'XCUIElementTypeIcon' AND visible == true"})
-	// element, err := s.FindElement(WDALocator{Name: "自定手势作用区域"})
+	element, err := s.FindElement(WDALocator{Name: "自定手势作用区域"})
 	// element, err := s.FindElement(WDALocator{Name: "辅助功能"})
 	// element, err := s.FindElement(WDALocator{Name: "com.apple.mobilesafari"})
 	// element, err := s.FindElement(WDALocator{ClassName: WDAElementType{Image: true}})
@@ -148,8 +244,8 @@ func TestElement_Swipe(t *testing.T) {
 	// 相对元素自身的坐标
 	// err = element.Swipe(rect.X, rect.Y+rect.Height/2, rect.X+rect.Width, rect.Y+rect.Height/2)
 	// err = element.SwipeDirection(WDASwipeDirectionRight)
-	// err = element.SwipeRight()
-	err = element.SwipeLeft()
+	err = element.SwipeRight()
+	// err = element.SwipeLeft()
 	// err = element.SwipeUp()
 	if err != nil {
 		t.Fatal(err)
@@ -709,9 +805,10 @@ func TestElement_Tmp(t *testing.T) {
 		t.Fatal(err)
 	}
 	Debug = true
-	// element, err := s.FindElement(WDALocator{Name: "自定手势作用区域"})
-	element, err := s.FindElement(WDALocator{ClassName: WDAElementType{Image: true}})
+	element, err := s.FindElement(WDALocator{Name: "自定手势作用区域"})
+	// element, err := s.FindElement(WDALocator{ClassName: WDAElementType{Image: true}})
 	// element, err := s.FindElement(WDALocator{Predicate: "type == 'XCUIElementTypeIcon' AND visible == true"})
+	// element, err := s.FindElement(WDALocator{Predicate: "type == 'XCUIElementTypeCell' AND name == '灵敏度评估'"})
 	// element, err := s.FindElement(WDALocator{LinkText: NewWDAElementAttribute().SetLabel("通用")})
 	// element, err := s.FindElement(WDALocator{ClassName: WDAElementType{Table: true}})
 	// element, err := s.FindElement(WDALocator{ClassName: WDAElementType{StatusBar: true}})
@@ -721,5 +818,7 @@ func TestElement_Tmp(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	// element.TouchAndHold()
+	// fmt.Println(element.GetAttribute(NewWDAElementAttribute().SetName("")))
 	element.tttTmp()
 }
