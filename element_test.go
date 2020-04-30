@@ -2,6 +2,7 @@ package gwda
 
 import (
 	"fmt"
+	"math"
 	"strconv"
 	"testing"
 )
@@ -287,6 +288,86 @@ func TestElement_Pinch(t *testing.T) {
 	// err = element.Pinch(0.9, -3.6)
 	// err = element.Pinch(0.9, -14.4)
 	err = element.PinchToZoomOut()
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestElement_Rotate(t *testing.T) {
+	c, err := NewClient(deviceURL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	_ = c.Unlock()
+	s, err := c.NewSession()
+	if err != nil {
+		t.Fatal(err)
+	}
+	element, err := s.FindElement(WDALocator{Name: "自定手势作用区域"})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	Debug = true
+	// 顺时针 90度
+	err = element.Rotate(math.Pi / 2)
+	// 逆时针 180度
+	// err = element.Rotate(math.Pi * -2)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestElement_Scroll(t *testing.T) {
+	c, err := NewClient(deviceURL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	_ = c.Unlock()
+	s, err := c.NewSession()
+	if err != nil {
+		t.Fatal(err)
+	}
+	element, err := s.FindElement(WDALocator{ClassName: WDAElementType{Table: true}})
+	// element, err := s.FindElement(WDALocator{Predicate: "type == 'XCUIElementTypeCell' AND name == '手机淘宝'"})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	Debug = true
+	// err = element.ScrollUp()
+	// err = element.ScrollDown()
+	// err = element.ScrollLeft()
+	// err = element.ScrollRight()
+	// err = element.ScrollToVisible()
+	err = element.ScrollElementByPredicate("type == 'XCUIElementTypeCell' AND name LIKE '*Keynote*'")
+
+	// It's not working
+	// err = element.ScrollElementByName("音乐")
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestElement_PickerWheelSelect(t *testing.T) {
+	c, err := NewClient(deviceURL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	_ = c.Unlock()
+	s, err := c.NewSession()
+	if err != nil {
+		t.Fatal(err)
+	}
+	element, err := s.FindElement(WDALocator{ClassName: WDAElementType{PickerWheel: true}})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	Debug = true
+	err = element.PickerWheelSelect(WDAPickerWheelSelectOrderNext, 3)
+	err = element.PickerWheelSelectNext()
+	err = element.PickerWheelSelectPrevious(3)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -805,7 +886,10 @@ func TestElement_Tmp(t *testing.T) {
 		t.Fatal(err)
 	}
 	Debug = true
-	element, err := s.FindElement(WDALocator{Name: "自定手势作用区域"})
+	element, err := s.FindElement(WDALocator{ClassName: WDAElementType{PickerWheel: true}})
+	// element, err := s.FindElement(WDALocator{ClassName: WDAElementType{Table: true}})
+	// element, err := s.FindElement(WDALocator{Predicate: "type == 'XCUIElementTypeCell' AND name == '手机淘宝'"})
+	// element, err := s.FindElement(WDALocator{Name: "自定手势作用区域"})
 	// element, err := s.FindElement(WDALocator{ClassName: WDAElementType{Image: true}})
 	// element, err := s.FindElement(WDALocator{Predicate: "type == 'XCUIElementTypeIcon' AND visible == true"})
 	// element, err := s.FindElement(WDALocator{Predicate: "type == 'XCUIElementTypeCell' AND name == '灵敏度评估'"})
@@ -818,7 +902,13 @@ func TestElement_Tmp(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// element.TouchAndHold()
-	// fmt.Println(element.GetAttribute(NewWDAElementAttribute().SetName("")))
+	// elemType, err := element.Type()
+	// fmt.Println(err, elemType)
+	// text, _ := element.Text()
+	// t.Log(text)
+	// element.ScrollUp(10)
+	// return
 	element.tttTmp()
+	// text, _ = element.Text()
+	// t.Log(text)
 }

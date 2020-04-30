@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"image"
+	"math"
 	"net/url"
 	"path"
 	"reflect"
@@ -267,6 +268,116 @@ func (e *Element) PinchToZoomOut() (err error) {
 	return e.Pinch(0.9, -4.5)
 }
 
+// Rotate
+//
+// Sends a rotation gesture with two touches.
+//
+// The system makes a best effort to synthesize the requested rotation and velocity: absolute accuracy is not guaranteed.
+// Some values may not be possible based on the size of the element's frame - these will result in test failures.
+//
+// @param rotation
+// The rotation of the gesture in radians.
+//
+// @param velocity
+// The velocity of the rotation gesture in radians per second.
+func (e *Element) Rotate(rotation float64, velocity ...float64) (err error) {
+	if rotation > math.Pi*2 || rotation < math.Pi*-2 {
+		return errors.New("'rotation' must not be more than 2π or less than -2π")
+	}
+	if len(velocity) == 0 || velocity[0] == 0 {
+		velocity = []float64{rotation}
+	}
+	if rotation > 0 && velocity[0] < 0 || rotation < 0 && velocity[0] > 0 {
+		return errors.New("'rotation' and 'velocity' must have the same sign")
+	}
+	body := newWdaBody().set("rotation", rotation).set("velocity", velocity[0])
+	// [FBRoute POST:@"/wda/element/:uuid/rotate"]
+	_, err = internalPost("Rotate", urlJoin(e.endpoint, e._withFormat("/rotate"), true), body)
+	return
+}
+
+func (e *Element) _scroll(body wdaBody) (err error) {
+	// ? 只允许父元素类型为 XCUIElementTypeScrollView XCUIElementTypeCollectionView XCUIElementTypeTable XCUIElementTypeWebView
+
+	// 子元素的文本内容，测试无效，怀疑与 [[element.fb_query descendantsMatchingType:XCUIElementTypeAny] matchingIdentifier:name] 这搜索匹配有关
+	// body.set("name", "音乐")
+
+	// [FBRoute POST:@"/wda/element/:uuid/scroll"]
+	_, err = internalPost("Scroll", urlJoin(e.endpoint, e._withFormat("/scroll"), true), body)
+	return
+}
+
+// It's not working
+// ScrollElementByName
+// func (e *Element) ScrollElementByName(name string) (err error) {
+// 	return e._scroll(newWdaBody().set("name", name))
+// }
+
+func (e *Element) ScrollElementByPredicate(predicate string) (err error) {
+	return e._scroll(newWdaBody().set("predicateString", predicate))
+}
+
+func (e *Element) ScrollToVisible() (err error) {
+	return e._scroll(newWdaBody().set("toVisible", true))
+}
+
+func (e *Element) _scrollDirection(direction WDASwipeDirection, distance ...float64) (err error) {
+	if len(distance) == 0 {
+		distance = []float64{0.5}
+	}
+	body := newWdaBody().set("direction", direction).set("distance", distance[0])
+	return e._scroll(body)
+}
+
+func (e *Element) ScrollUp(distance ...float64) (err error) {
+	return e._scrollDirection(WDASwipeDirectionUp, distance...)
+}
+
+func (e *Element) ScrollDown(distance ...float64) (err error) {
+	return e._scrollDirection(WDASwipeDirectionDown, distance...)
+}
+
+func (e *Element) ScrollLeft(distance ...float64) (err error) {
+	return e._scrollDirection(WDASwipeDirectionLeft, distance...)
+}
+
+func (e *Element) ScrollRight(distance ...float64) (err error) {
+	return e._scrollDirection(WDASwipeDirectionRight, distance...)
+}
+
+type WDAPickerWheelSelectOrder string
+
+const (
+	WDAPickerWheelSelectOrderNext     WDAPickerWheelSelectOrder = "next"
+	WDAPickerWheelSelectOrderPrevious WDAPickerWheelSelectOrder = "previous"
+)
+
+func (e *Element) PickerWheelSelect(order WDAPickerWheelSelectOrder, offset ...int) (err error) {
+	if len(offset) == 0 {
+		offset = []int{2}
+	} else if offset[0] <= 0 || offset[0] > 5 {
+		return errors.New(fmt.Sprintf("'offset' value is expected to be in range (0, 5]. '%d' was given instead", offset[0]))
+	}
+	body := newWdaBody().set("order", order).set("offset", float64(offset[0])*0.1)
+	// [FBRoute POST:@"/wda/pickerwheel/:uuid/select"]
+	_, err = internalPost("PickerWheelSelect", urlJoin(e.endpoint, path.Join("/pickerwheel", e.UID, "/select"), true), body)
+	return
+}
+
+func (e *Element) PickerWheelSelectNext(offset ...int) (err error) {
+	if len(offset) == 0 {
+		offset = []int{1}
+	}
+	return e.PickerWheelSelect(WDAPickerWheelSelectOrderNext, offset...)
+}
+
+func (e *Element) PickerWheelSelectPrevious(offset ...int) (err error) {
+	if len(offset) == 0 {
+		offset = []int{1}
+	}
+	return e.PickerWheelSelect(WDAPickerWheelSelectOrderPrevious, offset...)
+}
+
 func (e *Element) Click() (err error) {
 	// [FBRoute POST:@"/element/:uuid/click"]
 	_, err = internalPost("Click", urlJoin(e.endpoint, e._withFormat("/click")), nil)
@@ -457,25 +568,27 @@ func (e *Element) ScreenshotToImage() (img image.Image, format string, err error
 // }
 
 func (e *Element) tttTmp() {
-	// TODO [FBRoute POST:@"/wda/element/:uuid/rotate"]
-	// TODO [FBRoute POST:@"/wda/element/:uuid/scroll"]
-	// TODO [FBRoute POST:@"/wda/pickerwheel/:uuid/select"]
 
 	var err error
 	// body := newWdaBody()
 	// _ = body
 
-	// numberOfTaps must be greater than zero
-	// numberOfTouches must be greater than zero
-	// numberOfTaps cannot be greater than 10
-	// numberOfTouches cannot be greater than 5
-	// err = e.TapWithNumberOfTaps(0, 5)
-	// fmt.Println(strings.Repeat("#", 20), err)
-	body := newWdaBody().set("numberOfTaps", 0).set("numberOfTouches", 5)
-	// Sends one or more taps with one of more touch points.
+	body := newWdaBody()
+
+	// element, _ := e.FindElement(WDALocator{Predicate: "type == 'XCUIElementTypeCell' AND name == '音乐'"})
+	// attribute, _ := element.GetAttribute(NewWDAElementAttribute().SetUID(""))
+	// fmt.Println("###", attribute)
+
+	// (0.0, 0.5]
+	// 'offset' value is expected to be in range (0.0, 0.5]. '0.0' was given instead
+	body.set("offset", 0.3)
+
+	body.set("order", "next")
+	body.set("order", "previous")
+
 	var wdaResp wdaResponse
-	// TODO [FBRoute POST:@"/wda/element/:uuid/tapWithNumberOfTaps"]
-	wdaResp, err = internalPost("###############", urlJoin(e.endpoint, e._withFormat("/tapWithNumberOfTaps"), true), body)
+	// [FBRoute POST:@"/wda/pickerwheel/:uuid/select"]
+	wdaResp, err = internalPost("###############", urlJoin(e.endpoint, path.Join("/pickerwheel", e.UID, "/select"), true), body)
 	_ = wdaResp
 	_ = err
 	// fmt.Println(err, wdaResp)
