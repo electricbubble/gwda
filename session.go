@@ -522,6 +522,109 @@ func (s *Session) ActiveElement() (element *Element, err error) {
 	return
 }
 
+func (s *Session) AlertSendKeys(text string) (err error) {
+	// [FBRoute POST:@"/alert/text"]
+	return sendKeys(urlJoin(s.sessionURL, "/alert/text"), text)
+}
+
+func (s *Session) AlertAccept(label ...string) (err error) {
+	return alertAccept(s.sessionURL, label...)
+}
+
+func (s *Session) AlertDismiss(label ...string) (err error) {
+	return alertDismiss(s.sessionURL, label...)
+}
+
+func (s *Session) AlertText() (text string, err error) {
+	return alertText(s.sessionURL)
+}
+
+func (s *Session) AlertButtons() (buttons []string, err error) {
+	var wdaResp wdaResponse
+	// [FBRoute GET:@"/wda/alert/buttons"]
+	if wdaResp, err = internalGet("AlertButtons", urlJoin(s.sessionURL, "/wda/alert/buttons")); err != nil {
+		return nil, err
+	}
+	results := wdaResp.getValue().Array()
+	buttons = make([]string, len(results))
+	for i := range buttons {
+		buttons[i] = results[i].String()
+	}
+	return
+}
+
+type WDAOrientation string
+
+const (
+	WDAOrientationPortrait           WDAOrientation = "PORTRAIT"                                   // Device oriented vertically, home button on the bottom
+	WDAOrientationPortraitUpsideDown WDAOrientation = "UIA_DEVICE_ORIENTATION_PORTRAIT_UPSIDEDOWN" // Device oriented vertically, home button on the top
+	WDAOrientationLandscapeLeft      WDAOrientation = "LANDSCAPE"                                  // Device oriented horizontally, home button on the right
+	WDAOrientationLandscapeRight     WDAOrientation = "UIA_DEVICE_ORIENTATION_LANDSCAPERIGHT"      // Device oriented horizontally, home button on the left
+)
+
+func (v WDAOrientation) String() string {
+	switch v {
+	case WDAOrientationPortrait:
+		return "Device oriented vertically, home button on the bottom"
+	case WDAOrientationPortraitUpsideDown:
+		return "Device oriented vertically, home button on the top"
+	case WDAOrientationLandscapeLeft:
+		return "Device oriented horizontally, home button on the right"
+	case WDAOrientationLandscapeRight:
+		return "Device oriented horizontally, home button on the left"
+	default:
+		return "UNKNOWN"
+	}
+}
+
+func (s *Session) Orientation() (orientation WDAOrientation, err error) {
+	var wdaResp wdaResponse
+	// [FBRoute GET:@"/orientation"]
+	if wdaResp, err = internalGet("Orientation", urlJoin(s.sessionURL, "/orientation")); err != nil {
+		return "", err
+	}
+	return WDAOrientation(wdaResp.getValue().String()), nil
+}
+
+func (s *Session) SetOrientation(orientation WDAOrientation) (err error) {
+	body := newWdaBody().set("orientation", orientation)
+	// [FBRoute POST:@"/orientation"]
+	_, err = internalPost("SetOrientation", urlJoin(s.sessionURL, "/orientation"), body)
+	return
+}
+
+type WDARotation struct {
+	X       int `json:"x"`
+	Y       int `json:"y"`
+	Z       int `json:"z"`
+	_string string
+}
+
+func (r WDARotation) String() string {
+	return r._string
+}
+
+func (s *Session) Rotation() (wdaRotation WDARotation, err error) {
+	var wdaResp wdaResponse
+	// [FBRoute GET:@"/rotation"]
+	if wdaResp, err = internalGet("Rotation", urlJoin(s.sessionURL, "/rotation")); err != nil {
+		return WDARotation{}, err
+	}
+	wdaRotation._string = wdaResp.getValue().String()
+	err = json.Unmarshal([]byte(wdaRotation._string), &wdaRotation)
+	return
+}
+
+func (s *Session) SetRotation(wdaRotation WDARotation) (err error) {
+	body := newWdaBody()
+	body.set("x", wdaRotation.X)
+	body.set("y", wdaRotation.Y)
+	body.set("z", wdaRotation.Z)
+	// [FBRoute POST:@"/rotation"]
+	_, err = internalPost("SetRotation", urlJoin(s.sessionURL, "/rotation"), body)
+	return
+}
+
 // ActiveAppInfo
 //
 // get current active application
@@ -826,12 +929,25 @@ func (s *Session) SetAppiumSettings(settings map[string]interface{}) (sJson stri
 // /timeouts
 // /wda/keyboard/dismiss
 // /wda/getPasteboard
+// /wda/touch_id
 
 func (s *Session) tttTmp() {
 	body := newWdaBody()
 	_ = body
 
-	// [NSPredicate predicateWithFormat:@"hasKeyboardFocus == YES"]
-	wdaResp, err := internalGet("###############", urlJoin(s.sessionURL, "/element/active"))
+	actions := newWdaBody()
+	actions.set("action", "press")
+	actions.set("options", newWdaBody().set("pressure", 2))
+
+	actions.set("action", "wait")
+	actions.set("options", newWdaBody().set("ms", 2*1000))
+
+	actions.set("action", "release")
+
+	body.set("actions", actions)
+
+	// [FBRoute POST:@"/wda/touch/perform"]
+	// [FBRoute POST:@"/wda/touch/multi/perform"]
+	wdaResp, err := internalPost("###############", urlJoin(s.sessionURL, "/wda/touch/perform"), body)
 	fmt.Println(err, wdaResp)
 }

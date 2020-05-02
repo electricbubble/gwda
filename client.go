@@ -220,6 +220,47 @@ func (c *Client) Homescreen() (err error) {
 	return
 }
 
+func alertAccept(baseUrl *url.URL, label ...string) (err error) {
+	body := newWdaBody()
+	if len(label) != 0 && label[0] != "" {
+		body.set("name", label[0])
+	}
+	// [FBRoute POST:@"/alert/accept"]
+	_, err = internalPost("AlertAccept", urlJoin(baseUrl, "/alert/accept"), body)
+	return
+}
+
+func alertDismiss(baseUrl *url.URL, label ...string) (err error) {
+	body := newWdaBody()
+	if len(label) != 0 && label[0] != "" {
+		body.set("name", label[0])
+	}
+	// [FBRoute POST:@"/alert/dismiss"]
+	_, err = internalPost("AlertDismiss", urlJoin(baseUrl, "/alert/dismiss"), body)
+	return
+}
+
+func (c *Client) AlertAccept(label ...string) (err error) {
+	return alertAccept(c.deviceURL, label...)
+}
+
+func (c *Client) AlertDismiss(label ...string) (err error) {
+	return alertDismiss(c.deviceURL, label...)
+}
+
+func alertText(baseUrl *url.URL) (text string, err error) {
+	var wdaResp wdaResponse
+	// [FBRoute GET:@"/alert/text"]
+	if wdaResp, err = internalGet("AlertText", urlJoin(baseUrl, "/alert/text")); err != nil {
+		return "", err
+	}
+	return wdaResp.getValue().String(), nil
+}
+
+func (c *Client) AlertText() (text string, err error) {
+	return alertText(c.deviceURL)
+}
+
 func isLocked(baseUrl *url.URL) (isLocked bool, err error) {
 	var wdaResp wdaResponse
 	if wdaResp, err = internalGet("Locked", urlJoin(baseUrl, "/wda/locked")); err != nil {
@@ -497,6 +538,7 @@ func (c *Client) WdaShutdown() (err error) {
 }
 
 func (c *Client) tttTmp() {
-	wdaResp, err := internalGet("tttTmp", urlJoin(c.deviceURL, "/health"))
-	fmt.Println(err, wdaResp)
+	body := newWdaBody()
+	wdaResp, err := internalPost("tttTmp", urlJoin(c.deviceURL, "/alert/accept"), body)
+	fmt.Println(err, "\n", wdaResp)
 }

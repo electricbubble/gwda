@@ -485,6 +485,157 @@ func TestSession_ActiveElement(t *testing.T) {
 	t.Log(element.Rect())
 }
 
+func TestSession_AlertSendKeys(t *testing.T) {
+	c, err := NewClient(deviceURL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	s, err := c.NewSession()
+	if err != nil {
+		t.Fatal(err)
+	}
+	Debug = true
+	err = s.AlertSendKeys("test")
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestSession_AlertAccept(t *testing.T) {
+	c, err := NewClient(deviceURL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	s, err := c.NewSession()
+	if err != nil {
+		t.Fatal(err)
+	}
+	Debug = true
+	// err = s.AlertAccept()
+	// err = s.AlertAccept("好")
+	err = s.AlertAccept("允许")
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestSession_AlertDismiss(t *testing.T) {
+	c, err := NewClient(deviceURL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	s, err := c.NewSession()
+	if err != nil {
+		t.Fatal(err)
+	}
+	Debug = true
+	// err = s.AlertDismiss()
+	err = s.AlertDismiss("不允许")
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestSession_AlertText(t *testing.T) {
+	c, err := NewClient(deviceURL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	s, err := c.NewSession()
+	if err != nil {
+		t.Fatal(err)
+	}
+	Debug = true
+	text, err := s.AlertText()
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log(text)
+}
+
+func TestSession_AlertButtons(t *testing.T) {
+	c, err := NewClient(deviceURL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	s, err := c.NewSession()
+	if err != nil {
+		t.Fatal(err)
+	}
+	Debug = true
+	buttons, err := s.AlertButtons()
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log(buttons)
+}
+
+func TestSession_Orientation(t *testing.T) {
+	c, err := NewClient(deviceURL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	s, err := c.NewSession()
+	if err != nil {
+		t.Fatal(err)
+	}
+	Debug = true
+	orientation, err := s.Orientation()
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log(orientation)
+}
+
+func TestSession_SetOrientation(t *testing.T) {
+	c, err := NewClient(deviceURL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	s, err := c.NewSession()
+	if err != nil {
+		t.Fatal(err)
+	}
+	Debug = true
+	err = s.SetOrientation(WDAOrientationPortraitUpsideDown)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestSession_Rotation(t *testing.T) {
+	c, err := NewClient(deviceURL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	s, err := c.NewSession()
+	if err != nil {
+		t.Fatal(err)
+	}
+	Debug = true
+	rotation, err := s.Rotation()
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log(rotation)
+}
+
+func TestSession_SetRotation(t *testing.T) {
+	c, err := NewClient(deviceURL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	s, err := c.NewSession()
+	if err != nil {
+		t.Fatal(err)
+	}
+	Debug = true
+	err = s.SetRotation(WDARotation{X: 0, Y: 0, Z: 270})
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestSession_IsLocked(t *testing.T) {
 	c, err := NewClient(deviceURL)
 	if err != nil {
@@ -893,6 +1044,8 @@ func TestTmpSession(t *testing.T) {
 		t.Fatal(err)
 	}
 	Debug = true
+
+	// s.SetOrientation(WDAOrientationLandscapeRight)
 	s.tttTmp()
 	// _ = s
 }

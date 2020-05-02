@@ -84,6 +84,45 @@ func TestClient_Homescreen(t *testing.T) {
 	}
 }
 
+func TestClient_AlertAccept(t *testing.T) {
+	c, err := NewClient(deviceURL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	Debug = true
+	// err = c.AlertAccept()
+	err = c.AlertAccept("始终允许")
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestClient_AlertDismiss(t *testing.T) {
+	c, err := NewClient(deviceURL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	Debug = true
+	// err = c.AlertDismiss()
+	err = c.AlertDismiss("不允许")
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestClient_AlertText(t *testing.T) {
+	c, err := NewClient(deviceURL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	Debug = true
+	text, err := c.AlertText()
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log(text)
+}
+
 func TestClient_IsLocked(t *testing.T) {
 	c, err := NewClient(deviceURL)
 	if err != nil {
