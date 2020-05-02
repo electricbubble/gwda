@@ -301,9 +301,9 @@ func TestSession_SwipeSwipeDirection(t *testing.T) {
 	}
 	Debug = true
 	// err = s.SwipeUp()
-	// err = s.SwipeDown()
+	err = s.SwipeDown()
 	// err = s.SwipeLeft()
-	err = s.SwipeRight()
+	// err = s.SwipeRight()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -607,7 +607,7 @@ func TestSession_SetPasteboardForImage(t *testing.T) {
 		t.Fatal(err)
 	}
 	Debug = true
-	err = s.SetPasteboardForImage("~/Documents/leixipaopao/IMG_5246.JPG")
+	err = s.SetPasteboardForImage("/Users/hero/Documents/leixipaopao/IMG_5246.JPG")
 	if err != nil {
 		t.Fatal(err)
 	}

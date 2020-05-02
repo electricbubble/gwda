@@ -9,7 +9,6 @@ import (
 	"image"
 	"io/ioutil"
 	"net/url"
-	"os"
 	"strings"
 )
 
@@ -111,7 +110,7 @@ func (alo WDAAppLaunchOption) SetEnvironment(env map[string]string) WDAAppLaunch
 //	1. registerApplicationWithBundleId
 //	2. launch OR activate
 func (s *Session) AppLaunch(bundleId string, opt ...WDAAppLaunchOption) (err error) {
-	// TODO BundleId is required 如果是不存在的 bundleId 会导致 wda 内部报错导致接下来的操作都无法接收处理
+	// BundleId is required 如果是不存在的 bundleId 会导致 wda 内部报错导致接下来的操作都无法接收处理
 	if len(opt) == 0 {
 		opt = []WDAAppLaunchOption{NewWDAAppLaunchOption().SetShouldWaitForQuiescence(true)}
 	}
@@ -119,6 +118,473 @@ func (s *Session) AppLaunch(bundleId string, opt ...WDAAppLaunchOption) (err err
 	body.setAppLaunchOption(opt[0])
 	_, err = internalPost("AppLaunch", urlJoin(s.sessionURL, "/wda/apps/launch"), body)
 	return
+}
+
+// AppTerminate
+//
+// Close the application by bundleId
+//
+//	1. unregisterApplicationWithBundleId
+func (s *Session) AppTerminate(bundleId string) (err error) {
+	body := newWdaBody().setBundleID(bundleId)
+	_, err = internalPost("AppTerminate", urlJoin(s.sessionURL, "/wda/apps/terminate"), body)
+	// "value" : true,
+	// "value" : false,
+	return
+}
+
+// AppActivate
+//
+// Activate the application by restoring it from the background.
+// Nothing will happen if the application is already in foreground.
+// This method is only supported since Xcode9.
+func (s *Session) AppActivate(bundleId string) (err error) {
+	body := newWdaBody().setBundleID(bundleId)
+	_, err = internalPost("AppActivate", urlJoin(s.sessionURL, "/wda/apps/activate"), body)
+	return
+}
+
+// AppDeactivate
+//
+// Deactivates application for given time and then activate it again
+func (s *Session) AppDeactivate(seconds ...float64) (err error) {
+	body := newWdaBody()
+	if len(seconds) != 0 {
+		body.set("duration", seconds[0])
+	}
+	wdaResp, err := internalPost("AppDeactivate", urlJoin(s.sessionURL, "/wda/deactivateApp"), body)
+	if err != nil {
+		return err
+	}
+	return wdaResp.getErrMsg()
+}
+
+const WDATextBackspaceDeleteSequence = "\u0008\u007F"
+
+// sendKeys
+func sendKeys(url string, text string, typingFrequency ...int) (err error) {
+	body := newWdaBody().set("value", strings.Split(text, ""))
+	if len(typingFrequency) != 0 {
+		body.set("frequency", typingFrequency[0])
+	}
+	_, err = internalPost("SendKeys", url, body)
+	return
+}
+
+// SendKeys
+//
+// static NSUInteger FBMaxTypingFrequency = 60;
+func (s *Session) SendKeys(text string, typingFrequency ...int) error {
+	return sendKeys(urlJoin(s.sessionURL, "/wda/keys"), text, typingFrequency...)
+}
+
+func tap(baseUrl *url.URL, x, y interface{}, elemUID ...string) (err error) {
+	body := newWdaBody().set("x", x).set("y", y)
+	// [FBRoute POST:@"/wda/tap/:uuid"]
+	tmpPath := "/wda/tap"
+	if len(elemUID) == 0 {
+		tmpPath += "/0"
+	} else {
+		tmpPath += "/" + elemUID[0]
+	}
+	_, err = internalPost("Tap", urlJoin(baseUrl, tmpPath), body)
+	return
+}
+
+// Tap
+func (s *Session) Tap(x, y int) error {
+	return tap(s.sessionURL, x, y)
+}
+
+// TapFloat
+func (s *Session) TapFloat(x, y float64) error {
+	return tap(s.sessionURL, x, y)
+}
+
+// TapCoordinate
+func (s *Session) TapCoordinate(wdaCoordinate WDACoordinate) error {
+	return tap(s.sessionURL, wdaCoordinate.X, wdaCoordinate.Y)
+}
+
+// doubleTap
+//
+// [FBRoute POST:@"/wda/doubleTap"]
+// [FBRoute POST:@"/wda/element/:uuid/doubleTap"]
+func doubleTap(baseUrl *url.URL, x, y interface{}, elemPrefixPath ...string) (err error) {
+	body := newWdaBody()
+	tmpPath := "/doubleTap"
+	if len(elemPrefixPath) == 0 {
+		body.set("x", x).set("y", y)
+	} else {
+		tmpPath = elemPrefixPath[0] + tmpPath
+	}
+	_, err = internalPost("DoubleTap", urlJoin(baseUrl, tmpPath, true), body)
+	return
+}
+
+// DoubleTap
+//
+// double tap coordinate
+func (s *Session) DoubleTap(x, y int) (err error) {
+	return doubleTap(s.sessionURL, x, y)
+}
+
+func (s *Session) DoubleTapFloat(x, y float64) (err error) {
+	return doubleTap(s.sessionURL, x, y)
+}
+
+// touchAndHold
+//
+// [FBRoute POST:@"/wda/touchAndHold"]
+// [FBRoute POST:@"/wda/element/:uuid/touchAndHold"]
+func touchAndHold(baseUrl *url.URL, x, y, duration interface{}, elemPrefixPath ...string) (err error) {
+	body := newWdaBody().set("duration", duration)
+	tmpPath := "/touchAndHold"
+	if len(elemPrefixPath) == 0 {
+		body.set("x", x).set("y", y)
+	} else {
+		tmpPath = elemPrefixPath[0] + tmpPath
+	}
+	_, err = internalPost("TouchAndHold", urlJoin(baseUrl, tmpPath, true), body)
+	return
+}
+
+// TouchAndHold
+//
+// touch and hold coordinate
+func (s *Session) TouchAndHold(x, y int, duration ...int) (err error) {
+	if len(duration) == 0 {
+		duration = []int{1}
+	}
+	return touchAndHold(s.sessionURL, x, y, duration[0])
+}
+
+func (s *Session) TouchAndHoldFloat(x, y float64, duration ...float64) (err error) {
+	if len(duration) == 0 {
+		duration = []float64{1.0}
+	}
+	return touchAndHold(s.sessionURL, x, y, duration[0])
+}
+
+// drag
+//
+// [FBRoute POST:@"/wda/dragfromtoforduration"]
+// [FBRoute POST:@"/wda/element/:uuid/dragfromtoforduration"]
+func drag(baseUrl *url.URL, fromX, fromY, toX, toY, pressForDuration interface{}, elemPrefixPath ...string) (err error) {
+	body := newWdaBody().set("duration", pressForDuration)
+	body.set("fromX", fromX).set("fromY", fromY)
+	body.set("toX", toX).set("toY", toY)
+	tmpPath := "/dragfromtoforduration"
+	if len(elemPrefixPath) != 0 {
+		tmpPath = elemPrefixPath[0] + tmpPath
+	}
+	_, err = internalPost("Drag", urlJoin(baseUrl, tmpPath, true), body)
+	return
+}
+
+// Drag
+//
+// Clicks and holds for a specified duration (generally long enough to start a drag operation) then drags to the other coordinate.
+func (s *Session) Drag(fromX, fromY, toX, toY int, pressForDuration ...int) (err error) {
+	if len(pressForDuration) == 0 {
+		pressForDuration = []int{1}
+	}
+	return drag(s.sessionURL, fromX, fromY, toX, toY, pressForDuration[0])
+}
+
+func (s *Session) DragFloat(fromX, fromY, toX, toY float64, pressForDuration ...float64) (err error) {
+	if len(pressForDuration) == 0 {
+		pressForDuration = []float64{1}
+	}
+	return drag(s.sessionURL, fromX, fromY, toX, toY, pressForDuration[0])
+}
+
+func (s *Session) Swipe(fromX, fromY, toX, toY int) (err error) {
+	return drag(s.sessionURL, fromX, fromY, toX, toY, 0)
+}
+
+func (s *Session) SwipeFloat(fromX, fromY, toX, toY float64) (err error) {
+	return drag(s.sessionURL, fromX, fromY, toX, toY, 0)
+}
+
+func (s *Session) SwipeCoordinate(fromCoordinate, toCoordinate WDACoordinate) (err error) {
+	return drag(s.sessionURL, fromCoordinate.X, fromCoordinate.Y, toCoordinate.X, toCoordinate.Y, 0)
+}
+
+func (s *Session) _getCenterCoordinates() (c WDACoordinate, err error) {
+	if windowSize, err := s.WindowSize(); err != nil {
+		return WDACoordinate{}, err
+	} else {
+		c = WDACoordinate{X: windowSize.Width / 2, Y: windowSize.Height / 2}
+	}
+	return
+}
+
+// SwipeUp
+func (s *Session) SwipeUp() (err error) {
+	var fromCoordinate, toCoordinate WDACoordinate
+	if c, err := s._getCenterCoordinates(); err != nil {
+		return err
+	} else {
+		fromCoordinate, toCoordinate = c, c
+	}
+	fromCoordinate.Y += 100
+	toCoordinate.Y -= 100
+	return s.SwipeCoordinate(fromCoordinate, toCoordinate)
+}
+
+// SwipeDown
+func (s *Session) SwipeDown() (err error) {
+	var fromCoordinate, toCoordinate WDACoordinate
+	if c, err := s._getCenterCoordinates(); err != nil {
+		return err
+	} else {
+		fromCoordinate, toCoordinate = c, c
+	}
+	fromCoordinate.Y -= 100
+	toCoordinate.Y += 100
+	return s.SwipeCoordinate(fromCoordinate, toCoordinate)
+}
+
+// SwipeLeft
+func (s *Session) SwipeLeft() (err error) {
+	var fromCoordinate, toCoordinate WDACoordinate
+	if c, err := s._getCenterCoordinates(); err != nil {
+		return err
+	} else {
+		fromCoordinate, toCoordinate = c, c
+	}
+	fromCoordinate.X += 100
+	toCoordinate.X -= 100
+	return s.SwipeCoordinate(fromCoordinate, toCoordinate)
+}
+
+// SwipeRight
+func (s *Session) SwipeRight() (err error) {
+	var fromCoordinate, toCoordinate WDACoordinate
+	if c, err := s._getCenterCoordinates(); err != nil {
+		return err
+	} else {
+		fromCoordinate, toCoordinate = c, c
+	}
+	fromCoordinate.X -= 100
+	toCoordinate.X += 100
+	return s.SwipeCoordinate(fromCoordinate, toCoordinate)
+}
+
+type WDAContentType string
+
+const (
+	WDAContentTypePlaintext WDAContentType = "plaintext"
+	WDAContentTypeImage     WDAContentType = "image"
+	WDAContentTypeUrl       WDAContentType = "url"
+)
+
+// SetPasteboard Sets data to the general pasteboard
+func (s *Session) SetPasteboard(contentType WDAContentType, encodedContent string) (err error) {
+	body := newWdaBody()
+	body.set("contentType", contentType)
+	body.set("content", encodedContent)
+
+	_, err = internalPost("SetPasteboard", urlJoin(s.sessionURL, "/wda/setPasteboard"), body)
+	return
+}
+
+// SetPasteboardForType
+func (s *Session) SetPasteboardForPlaintext(content string) (err error) {
+	encodedContent := base64.StdEncoding.EncodeToString([]byte(content))
+	return s.SetPasteboard(WDAContentTypePlaintext, encodedContent)
+}
+
+// SetPasteboardForImage
+func (s *Session) SetPasteboardForImage(filename string) (err error) {
+	var content []byte
+	if content, err = ioutil.ReadFile(filename); err != nil {
+		return err
+	}
+	encodedContent := base64.StdEncoding.EncodeToString(content)
+	return s.SetPasteboard(WDAContentTypeImage, encodedContent)
+}
+
+// SetPasteboardForUrl
+func (s *Session) SetPasteboardForUrl(url string) (err error) {
+	encodedContent := base64.StdEncoding.EncodeToString([]byte(url))
+	return s.SetPasteboard(WDAContentTypeUrl, encodedContent)
+}
+
+type WDADeviceButtonName string
+
+const (
+	WDADeviceButtonHome       WDADeviceButtonName = "home"
+	WDADeviceButtonVolumeUp   WDADeviceButtonName = "volumeUp"
+	WDADeviceButtonVolumeDown WDADeviceButtonName = "volumeDown"
+)
+
+// PressButton Presses the corresponding hardware button on the device
+//
+// !!! not a synchronous action
+func (s *Session) PressButton(wdaDeviceButton WDADeviceButtonName) (err error) {
+	body := newWdaBody().set("name", wdaDeviceButton)
+	_, err = internalPost("PressButton", urlJoin(s.sessionURL, "/wda/pressButton"), body)
+	return
+}
+
+func (s *Session) PressHomeButton() (err error) {
+	return s.PressButton(WDADeviceButtonHome)
+}
+
+func (s *Session) PressVolumeUpButton() (err error) {
+	return s.PressButton(WDADeviceButtonVolumeUp)
+}
+
+func (s *Session) PressVolumeDownButton() (err error) {
+	return s.PressButton(WDADeviceButtonVolumeDown)
+}
+
+// SiriActivate
+//
+// Activates Siri service voice recognition with the given text to parse
+func (s *Session) SiriActivate(text string) (err error) {
+	body := newWdaBody().set("text", text)
+	_, err = internalPost("SiriActivate", urlJoin(s.sessionURL, "/wda/siri/activate"), body)
+	return
+}
+
+// SiriOpenURL Open {%@}
+// It doesn't actually work, right?
+func (s *Session) SiriOpenURL(url string) (err error) {
+	body := newWdaBody().set("url", url)
+	_, err = internalPost("SiriOpenURL", urlJoin(s.sessionURL, "/url"), body)
+	return
+}
+
+func findUidOfElement(baseUrl *url.URL, wdaLocator WDALocator) (elemUID string, err error) {
+	using, value := wdaLocator.getUsingAndValue()
+	body := newWdaBody().set("using", using).set("value", value)
+	var wdaResp wdaResponse
+	if wdaResp, err = internalPost("FindElement", urlJoin(baseUrl, "/element"), body); err != nil {
+		return "", err
+	}
+	return wdaResp.getValue().Get("ELEMENT").String(), nil
+}
+
+// FindElement
+func (s *Session) FindElement(wdaLocator WDALocator) (element *Element, err error) {
+	var elemUID string
+	if elemUID, err = findUidOfElement(s.sessionURL, wdaLocator); err != nil {
+		return nil, err
+	}
+	return newElement(s.sessionURL, elemUID), nil
+}
+
+func findUidOfElements(baseUrl *url.URL, wdaLocator WDALocator) (elemUIDs []string, err error) {
+	using, value := wdaLocator.getUsingAndValue()
+	body := newWdaBody().set("using", using).set("value", value)
+	var wdaResp wdaResponse
+	if wdaResp, err = internalPost("FindElements", urlJoin(baseUrl, "/elements"), body); err != nil {
+		return nil, err
+	}
+	results := wdaResp.getValue().Array()
+	if len(results) == 0 {
+		return nil, errors.New(fmt.Sprintf("no such element: unable to find an element using '%s', value '%s'", using, value))
+	}
+	elemUIDs = make([]string, len(results))
+	for i := range elemUIDs {
+		elemUIDs[i] = results[i].Get("ELEMENT").String()
+	}
+	return
+}
+
+// FindElements
+func (s *Session) FindElements(wdaLocator WDALocator) (elements []*Element, err error) {
+	var elemUIDs []string
+	if elemUIDs, err = findUidOfElements(s.sessionURL, wdaLocator); err != nil {
+		return nil, err
+	}
+	elements = make([]*Element, len(elemUIDs))
+	for i := range elements {
+		elements[i] = newElement(s.sessionURL, elemUIDs[i])
+	}
+	return
+}
+
+// ActiveElement
+//
+// returns the currently active element
+//
+// [NSPredicate predicateWithFormat:@"hasKeyboardFocus == YES"]
+func (s *Session) ActiveElement() (element *Element, err error) {
+	var wdaResp wdaResponse
+	if wdaResp, err = internalGet("ActiveElement", urlJoin(s.sessionURL, "/element/active")); err != nil {
+		return nil, err
+	}
+	element = newElement(s.sessionURL, wdaResp.getValue().Get("ELEMENT").String())
+	return
+}
+
+// ActiveAppInfo
+//
+// get current active application
+func (s *Session) ActiveAppInfo() (wdaActiveAppInfo WDAActiveAppInfo, err error) {
+	return activeAppInfo(s.sessionURL)
+}
+
+// ActiveAppsList
+//
+// use multitasking on iPad
+//
+// [
+//    {
+//      "pid" : 3573,
+//      "bundleId" : "com.apple.DocumentsApp"
+//    },
+//    {
+//      "pid" : 3311,
+//      "bundleId" : "com.apple.reminders"
+//    }
+//  ]
+func (s *Session) ActiveAppsList() (appsList []WDAAppBaseInfo, err error) {
+	var wdaResp wdaResponse
+	if wdaResp, err = internalGet("ActiveAppsList", urlJoin(s.sessionURL, "/wda/apps/list")); err != nil {
+		return nil, err
+	}
+	appsList = make([]WDAAppBaseInfo, 0)
+	err = json.Unmarshal([]byte(wdaResp.getValue().String()), &appsList)
+	return
+}
+
+type WDAAppRunState int
+
+const (
+	WDAAppNotRunning WDAAppRunState = 1 << iota
+	WDAAppRunningBack
+	WDAAppRunningFront
+)
+
+func (v WDAAppRunState) String() string {
+	switch v {
+	case WDAAppNotRunning:
+		return "Not Running"
+	case WDAAppRunningBack:
+		return "Running (Back)"
+	case WDAAppRunningFront:
+		return "Running (Front)"
+	default:
+		return "UNKNOWN"
+	}
+}
+
+// AppState
+//
+// Get the state of the particular application in scope of the current session.
+// !This method is only returning reliable results since Xcode9 SDK
+func (s *Session) AppState(bundleId string) (appRunState WDAAppRunState, err error) {
+	body := newWdaBody().setBundleID(bundleId)
+	var wdaResp wdaResponse
+	if wdaResp, err = internalPost("AppState", urlJoin(s.sessionURL, "/wda/apps/state"), body); err != nil {
+		return -1, err
+	}
+	return WDAAppRunState(wdaResp.getValue().Int()), nil
 }
 
 type WDADeviceInfo struct {
@@ -281,356 +747,6 @@ func (s *Session) StatusBarSize() (wdaStatusBarSize WDASize, err error) {
 	return screen.StatusBarSize, err
 }
 
-// ActiveAppInfo
-//
-// get current active application
-func (s *Session) ActiveAppInfo() (wdaActiveAppInfo WDAActiveAppInfo, err error) {
-	return activeAppInfo(s.sessionURL)
-}
-
-// ActiveAppsList
-//
-// use multitasking on iPad
-//
-// [
-//    {
-//      "pid" : 3573,
-//      "bundleId" : "com.apple.DocumentsApp"
-//    },
-//    {
-//      "pid" : 3311,
-//      "bundleId" : "com.apple.reminders"
-//    }
-//  ]
-func (s *Session) ActiveAppsList() (appsList []WDAAppBaseInfo, err error) {
-	var wdaResp wdaResponse
-	if wdaResp, err = internalGet("ActiveAppsList", urlJoin(s.sessionURL, "/wda/apps/list")); err != nil {
-		return nil, err
-	}
-	appsList = make([]WDAAppBaseInfo, 0)
-	err = json.Unmarshal([]byte(wdaResp.getValue().String()), &appsList)
-	return
-}
-
-func tap(baseUrl *url.URL, x, y interface{}, elemUID ...string) (err error) {
-	body := newWdaBody().set("x", x).set("y", y)
-	// [FBRoute POST:@"/wda/tap/:uuid"]
-	tmpPath := "/wda/tap"
-	if len(elemUID) == 0 {
-		tmpPath += "/0"
-	} else {
-		tmpPath += "/" + elemUID[0]
-	}
-	_, err = internalPost("Tap", urlJoin(baseUrl, tmpPath), body)
-	return
-}
-
-// Tap
-func (s *Session) Tap(x, y int) error {
-	return tap(s.sessionURL, x, y)
-}
-
-// TapFloat
-func (s *Session) TapFloat(x, y float64) error {
-	return tap(s.sessionURL, x, y)
-}
-
-// WDACoordinate
-func (s *Session) TapCoordinate(wdaCoordinate WDACoordinate) error {
-	return tap(s.sessionURL, wdaCoordinate.X, wdaCoordinate.Y)
-}
-
-// doubleTap
-//
-// [FBRoute POST:@"/wda/doubleTap"]
-// [FBRoute POST:@"/wda/element/:uuid/doubleTap"]
-func doubleTap(baseUrl *url.URL, x, y interface{}, elemPrefixPath ...string) (err error) {
-	body := newWdaBody()
-	tmpPath := "/doubleTap"
-	if len(elemPrefixPath) == 0 {
-		body.set("x", x).set("y", y)
-	} else {
-		tmpPath = elemPrefixPath[0] + tmpPath
-	}
-	_, err = internalPost("DoubleTap", urlJoin(baseUrl, tmpPath, true), body)
-	return
-}
-
-// DoubleTap
-//
-// double tap coordinate
-func (s *Session) DoubleTap(x, y int) (err error) {
-	return doubleTap(s.sessionURL, x, y)
-}
-
-func (s *Session) DoubleTapFloat(x, y float64) (err error) {
-	return doubleTap(s.sessionURL, x, y)
-}
-
-// touchAndHold
-//
-// [FBRoute POST:@"/wda/touchAndHold"]
-// [FBRoute POST:@"/wda/element/:uuid/touchAndHold"]
-func touchAndHold(baseUrl *url.URL, x, y, duration interface{}, elemPrefixPath ...string) (err error) {
-	body := newWdaBody().set("duration", duration)
-	tmpPath := "/touchAndHold"
-	if len(elemPrefixPath) == 0 {
-		body.set("x", x).set("y", y)
-	} else {
-		tmpPath = elemPrefixPath[0] + tmpPath
-	}
-	_, err = internalPost("TouchAndHold", urlJoin(baseUrl, tmpPath, true), body)
-	return
-}
-
-// TouchAndHold
-//
-// touch and hold coordinate
-func (s *Session) TouchAndHold(x, y int, duration ...int) (err error) {
-	if len(duration) == 0 {
-		duration = []int{1}
-	}
-	return touchAndHold(s.sessionURL, x, y, duration[0])
-}
-
-func (s *Session) TouchAndHoldFloat(x, y float64, duration ...float64) (err error) {
-	if len(duration) == 0 {
-		duration = []float64{1.0}
-	}
-	return touchAndHold(s.sessionURL, x, y, duration[0])
-}
-
-// drag
-//
-// [FBRoute POST:@"/wda/dragfromtoforduration"]
-// [FBRoute POST:@"/wda/element/:uuid/dragfromtoforduration"]
-func drag(baseUrl *url.URL, fromX, fromY, toX, toY, pressForDuration interface{}, elemPrefixPath ...string) (err error) {
-	body := newWdaBody().set("duration", pressForDuration)
-	body.set("fromX", fromX).set("fromY", fromY)
-	body.set("toX", toX).set("toY", toY)
-	tmpPath := "/dragfromtoforduration"
-	if len(elemPrefixPath) != 0 {
-		tmpPath = elemPrefixPath[0] + tmpPath
-	}
-	_, err = internalPost("Drag", urlJoin(baseUrl, tmpPath, true), body)
-	return
-}
-
-// Drag
-//
-// Clicks and holds for a specified duration (generally long enough to start a drag operation) then drags to the other coordinate.
-func (s *Session) Drag(fromX, fromY, toX, toY int, pressForDuration ...int) (err error) {
-	if len(pressForDuration) == 0 {
-		pressForDuration = []int{1}
-	}
-	return drag(s.sessionURL, fromX, fromY, toX, toY, pressForDuration[0])
-}
-
-func (s *Session) DragFloat(fromX, fromY, toX, toY float64, pressForDuration ...float64) (err error) {
-	if len(pressForDuration) == 0 {
-		pressForDuration = []float64{1}
-	}
-	return drag(s.sessionURL, fromX, fromY, toX, toY, pressForDuration[0])
-}
-
-func (s *Session) Swipe(fromX, fromY, toX, toY int) (err error) {
-	return drag(s.sessionURL, fromX, fromY, toX, toY, 0)
-}
-
-func (s *Session) SwipeFloat(fromX, fromY, toX, toY float64) (err error) {
-	return drag(s.sessionURL, fromX, fromY, toX, toY, 0)
-}
-
-func (s *Session) SwipeCoordinate(fromCoordinate, toCoordinate WDACoordinate) (err error) {
-	return drag(s.sessionURL, fromCoordinate.X, fromCoordinate.Y, toCoordinate.X, toCoordinate.Y, 0)
-}
-
-// SwipeUp
-func (s *Session) SwipeUp() (err error) {
-	var fromCoordinate, toCoordinate WDACoordinate
-	if windowSize, err := s.WindowSize(); err != nil {
-		return err
-	} else {
-		center := WDACoordinate{X: windowSize.Width / 2, Y: windowSize.Height / 2}
-		fromCoordinate, toCoordinate = center, center
-	}
-	fromCoordinate.Y += 100
-	toCoordinate.Y -= 100
-	return s.SwipeCoordinate(fromCoordinate, toCoordinate)
-}
-
-// SwipeDown
-func (s *Session) SwipeDown() (err error) {
-	var fromCoordinate, toCoordinate WDACoordinate
-	if windowSize, err := s.WindowSize(); err != nil {
-		return err
-	} else {
-		center := WDACoordinate{X: windowSize.Width / 2, Y: windowSize.Height / 2}
-		fromCoordinate, toCoordinate = center, center
-	}
-	fromCoordinate.Y -= 100
-	toCoordinate.Y += 100
-	return s.SwipeCoordinate(fromCoordinate, toCoordinate)
-}
-
-// SwipeLeft
-func (s *Session) SwipeLeft() (err error) {
-	var fromCoordinate, toCoordinate WDACoordinate
-	if windowSize, err := s.WindowSize(); err != nil {
-		return err
-	} else {
-		center := WDACoordinate{X: windowSize.Width / 2, Y: windowSize.Height / 2}
-		fromCoordinate, toCoordinate = center, center
-	}
-	fromCoordinate.X += 100
-	toCoordinate.X -= 100
-	return s.SwipeCoordinate(fromCoordinate, toCoordinate)
-}
-
-// SwipeRight
-func (s *Session) SwipeRight() (err error) {
-	var fromCoordinate, toCoordinate WDACoordinate
-	if windowSize, err := s.WindowSize(); err != nil {
-		return err
-	} else {
-		center := WDACoordinate{X: windowSize.Width / 2, Y: windowSize.Height / 2}
-		fromCoordinate, toCoordinate = center, center
-	}
-	fromCoordinate.X -= 100
-	toCoordinate.X += 100
-	return s.SwipeCoordinate(fromCoordinate, toCoordinate)
-}
-
-// AppTerminate
-//
-// Close the application by bundleId
-//
-//	1. unregisterApplicationWithBundleId
-func (s *Session) AppTerminate(bundleId string) (err error) {
-	body := newWdaBody().setBundleID(bundleId)
-	_, err = internalPost("AppTerminate", urlJoin(s.sessionURL, "/wda/apps/terminate"), body)
-	// "value" : true,
-	// "value" : false,
-	return
-}
-
-type WDAAppRunState int
-
-const (
-	WDAAppNotRunning WDAAppRunState = 1 << iota
-	WDAAppRunningBack
-	WDAAppRunningFront
-)
-
-func (v WDAAppRunState) String() string {
-	switch v {
-	case WDAAppNotRunning:
-		return "Not Running"
-	case WDAAppRunningBack:
-		return "Running (Back)"
-	case WDAAppRunningFront:
-		return "Running (Front)"
-	default:
-		return "UNKNOWN"
-	}
-}
-
-// AppState
-//
-// Get the state of the particular application in scope of the current session.
-// !This method is only returning reliable results since Xcode9 SDK
-func (s *Session) AppState(bundleId string) (appRunState WDAAppRunState, err error) {
-	body := newWdaBody().setBundleID(bundleId)
-	var wdaResp wdaResponse
-	if wdaResp, err = internalPost("AppState", urlJoin(s.sessionURL, "/wda/apps/state"), body); err != nil {
-		return -1, err
-	}
-	return WDAAppRunState(wdaResp.getValue().Int()), nil
-}
-
-const WDATextBackspaceDeleteSequence = "\u0008\u007F"
-
-// sendKeys
-func sendKeys(url string, text string, typingFrequency ...int) (err error) {
-	body := newWdaBody().set("value", strings.Split(text, ""))
-	if len(typingFrequency) != 0 {
-		body.set("frequency", typingFrequency[0])
-	}
-	_, err = internalPost("SendKeys", url, body)
-	return
-}
-
-// SendKeys
-//
-// static NSUInteger FBMaxTypingFrequency = 60;
-func (s *Session) SendKeys(text string, typingFrequency ...int) error {
-	return sendKeys(urlJoin(s.sessionURL, "/wda/keys"), text, typingFrequency...)
-}
-
-func findUidOfElement(baseUrl *url.URL, wdaLocator WDALocator) (elemUID string, err error) {
-	using, value := wdaLocator.getUsingAndValue()
-	body := newWdaBody().set("using", using).set("value", value)
-	var wdaResp wdaResponse
-	if wdaResp, err = internalPost("FindElement", urlJoin(baseUrl, "/element"), body); err != nil {
-		return "", err
-	}
-	return wdaResp.getValue().Get("ELEMENT").String(), nil
-}
-
-// FindElement
-func (s *Session) FindElement(wdaLocator WDALocator) (element *Element, err error) {
-	var elemUID string
-	if elemUID, err = findUidOfElement(s.sessionURL, wdaLocator); err != nil {
-		return nil, err
-	}
-	return newElement(s.sessionURL, elemUID), nil
-}
-
-func findUidOfElements(baseUrl *url.URL, wdaLocator WDALocator) (elemUIDs []string, err error) {
-	using, value := wdaLocator.getUsingAndValue()
-	body := newWdaBody().set("using", using).set("value", value)
-	var wdaResp wdaResponse
-	if wdaResp, err = internalPost("FindElements", urlJoin(baseUrl, "/elements"), body); err != nil {
-		return nil, err
-	}
-	results := wdaResp.getValue().Array()
-	if len(results) == 0 {
-		return nil, errors.New(fmt.Sprintf("no such element: unable to find an element using '%s', value '%s'", using, value))
-	}
-	elemUIDs = make([]string, len(results))
-	for i := range elemUIDs {
-		elemUIDs[i] = results[i].Get("ELEMENT").String()
-	}
-	return
-}
-
-// FindElements
-func (s *Session) FindElements(wdaLocator WDALocator) (elements []*Element, err error) {
-	var elemUIDs []string
-	if elemUIDs, err = findUidOfElements(s.sessionURL, wdaLocator); err != nil {
-		return nil, err
-	}
-	elements = make([]*Element, len(elemUIDs))
-	for i := range elements {
-		elements[i] = newElement(s.sessionURL, elemUIDs[i])
-	}
-	return
-}
-
-// ActiveElement
-//
-// returns the currently active element
-//
-// [NSPredicate predicateWithFormat:@"hasKeyboardFocus == YES"]
-func (s *Session) ActiveElement() (element *Element, err error) {
-	var wdaResp wdaResponse
-	if wdaResp, err = internalGet("ActiveElement", urlJoin(s.sessionURL, "/element/active")); err != nil {
-		return nil, err
-	}
-	element = newElement(s.sessionURL, wdaResp.getValue().Get("ELEMENT").String())
-	return
-}
-
 // IsLocked
 //
 // Checks if the screen is locked or not.
@@ -652,123 +768,6 @@ func (s *Session) Unlock() (err error) {
 // An immediate return will happen if the device is already locked and an error is going to be thrown if the screen has not been locked after the timeout.
 func (s *Session) Lock() (err error) {
 	return lock(s.sessionURL)
-}
-
-// AppActivate
-//
-// Activate the application by restoring it from the background.
-// Nothing will happen if the application is already in foreground.
-// This method is only supported since Xcode9.
-func (s *Session) AppActivate(bundleId string) (err error) {
-	body := newWdaBody().setBundleID(bundleId)
-	_, err = internalPost("AppActivate", urlJoin(s.sessionURL, "/wda/apps/activate"), body)
-	return
-}
-
-// AppDeactivate
-//
-// Deactivates application for given time and then activate it again
-func (s *Session) AppDeactivate(seconds ...float64) (err error) {
-	body := newWdaBody()
-	if len(seconds) != 0 {
-		body.set("duration", seconds[0])
-	}
-	wdaResp, err := internalPost("AppDeactivate", urlJoin(s.sessionURL, "/wda/deactivateApp"), body)
-	if err != nil {
-		return err
-	}
-	return wdaResp.getErrMsg()
-}
-
-type WDAContentType string
-
-const (
-	WDAContentTypePlaintext WDAContentType = "plaintext"
-	WDAContentTypeImage     WDAContentType = "image"
-	WDAContentTypeUrl       WDAContentType = "url"
-)
-
-// SetPasteboardForType
-func (s *Session) SetPasteboardForPlaintext(content string) (err error) {
-	encodedContent := base64.StdEncoding.EncodeToString([]byte(content))
-	return s.SetPasteboard(WDAContentTypePlaintext, encodedContent)
-}
-
-// SetPasteboardForImage
-func (s *Session) SetPasteboardForImage(filename string) (err error) {
-	imgFile, err := os.Open(filename)
-	if err != nil {
-		return err
-	}
-	defer imgFile.Close()
-	all, err := ioutil.ReadAll(imgFile)
-	if err != nil {
-		return err
-	}
-	encodedContent := base64.StdEncoding.EncodeToString(all)
-	return s.SetPasteboard(WDAContentTypeImage, encodedContent)
-}
-
-// SetPasteboardForUrl
-func (s *Session) SetPasteboardForUrl(url string) (err error) {
-	encodedContent := base64.URLEncoding.EncodeToString([]byte(url))
-	return s.SetPasteboard(WDAContentTypeUrl, encodedContent)
-}
-
-// SetPasteboard Sets data to the general pasteboard
-func (s *Session) SetPasteboard(contentType WDAContentType, encodedContent string) (err error) {
-	body := newWdaBody()
-	body.set("contentType", contentType)
-	body.set("content", encodedContent)
-
-	_, err = internalPost("SetPasteboard", urlJoin(s.sessionURL, "/wda/setPasteboard"), body)
-	return
-}
-
-type WDADeviceButtonName string
-
-const (
-	WDADeviceButtonHome       WDADeviceButtonName = "home"
-	WDADeviceButtonVolumeUp   WDADeviceButtonName = "volumeUp"
-	WDADeviceButtonVolumeDown WDADeviceButtonName = "volumeDown"
-)
-
-func (s *Session) PressHomeButton() (err error) {
-	return s.PressButton(WDADeviceButtonHome)
-}
-
-func (s *Session) PressVolumeUpButton() (err error) {
-	return s.PressButton(WDADeviceButtonVolumeUp)
-}
-
-func (s *Session) PressVolumeDownButton() (err error) {
-	return s.PressButton(WDADeviceButtonVolumeDown)
-}
-
-// PressButton Presses the corresponding hardware button on the device
-//
-// !!! not a synchronous action
-func (s *Session) PressButton(wdaDeviceButton WDADeviceButtonName) (err error) {
-	body := newWdaBody().set("name", wdaDeviceButton)
-	_, err = internalPost("PressButton", urlJoin(s.sessionURL, "/wda/pressButton"), body)
-	return
-}
-
-// SiriActivate
-//
-// Activates Siri service voice recognition with the given text to parse
-func (s *Session) SiriActivate(text string) (err error) {
-	body := newWdaBody().set("text", text)
-	_, err = internalPost("SiriActivate", urlJoin(s.sessionURL, "/wda/siri/activate"), body)
-	return
-}
-
-// SiriOpenURL Open {%@}
-// It doesn't actually work, right?
-func (s *Session) SiriOpenURL(url string) (err error) {
-	body := newWdaBody().set("url", url)
-	_, err = internalPost("SiriOpenURL", urlJoin(s.sessionURL, "/url"), body)
-	return
 }
 
 // Screenshot

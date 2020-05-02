@@ -167,7 +167,7 @@ func (sc WDASessionCapability) SetEventloopIdleDelaySec(seconds int) WDASessionC
 //
 // Creates and saves new session for application
 func (c *Client) NewSession(capabilities ...WDASessionCapability) (s *Session, err error) {
-	// TODO BundleId is required 如果是不存在的 bundleId 会导致 wda 内部报错导致接下来的操作都无法接收处理
+	// BundleId is required 如果是不存在的 bundleId 会导致 wda 内部报错导致接下来的操作都无法接收处理
 	body := newWdaBody()
 	if len(capabilities) != 0 {
 		body.set("capabilities", newWdaBody().set("alwaysMatch", capabilities[0]))
@@ -187,17 +187,6 @@ func (c *Client) NewSession(capabilities ...WDASessionCapability) (s *Session, e
 	return s, nil
 }
 
-// AppLaunchUnattached
-//
-// Launch the app with the specified bundle ID
-//
-// shouldWaitForQuiescence: false
-func (c *Client) AppLaunchUnattached(bundleId string) (err error) {
-	body := newWdaBody().setBundleID(bundleId)
-	_, err = internalPost("AppLaunchUnattached", urlJoin(c.deviceURL, "/wda/apps/launchUnattached"), body)
-	return
-}
-
 // Status
 //
 // Checking service status
@@ -207,6 +196,17 @@ func (c *Client) Status() (sJson string, err error) {
 		return "", err
 	}
 	return wdaResp.String(), nil
+}
+
+// AppLaunchUnattached
+//
+// Launch the app with the specified bundle ID
+//
+// shouldWaitForQuiescence: false
+func (c *Client) AppLaunchUnattached(bundleId string) (err error) {
+	body := newWdaBody().setBundleID(bundleId)
+	_, err = internalPost("AppLaunchUnattached", urlJoin(c.deviceURL, "/wda/apps/launchUnattached"), body)
+	return
 }
 
 // Homescreen
@@ -220,24 +220,22 @@ func (c *Client) Homescreen() (err error) {
 	return
 }
 
-// HealthCheck
-//
-// Checks health of XCTest by:
-//	1. Querying application for some elements,
-//	2. Triggering some device events.
-//
-// !!! Health check might modify simulator state so it should only be called in-between testing sessions
-func (c *Client) HealthCheck() (err error) {
-	_, err = internalGet("HealthCheck", urlJoin(c.deviceURL, "/wda/healthcheck"))
-	return
-}
-
 func isLocked(baseUrl *url.URL) (isLocked bool, err error) {
 	var wdaResp wdaResponse
 	if wdaResp, err = internalGet("Locked", urlJoin(baseUrl, "/wda/locked")); err != nil {
 		return false, err
 	}
 	return wdaResp.getValue().Bool(), nil
+}
+
+func unlock(baseUrl *url.URL) (err error) {
+	_, err = internalPost("Unlock", urlJoin(baseUrl, "/wda/unlock"), nil)
+	return
+}
+
+func lock(baseUrl *url.URL) (err error) {
+	_, err = internalPost("Lock", urlJoin(baseUrl, "/wda/lock"), nil)
+	return
 }
 
 // IsLocked
@@ -247,22 +245,12 @@ func (c *Client) IsLocked() (bool, error) {
 	return isLocked(c.deviceURL)
 }
 
-func unlock(baseUrl *url.URL) (err error) {
-	_, err = internalPost("Unlock", urlJoin(baseUrl, "/wda/unlock"), nil)
-	return
-}
-
 // Unlock
 //
 // Forces the device under test to unlock.
 // An immediate return will happen if the device is already unlocked and an error is going to be thrown if the screen has not been unlocked after the timeout.
 func (c *Client) Unlock() (err error) {
 	return unlock(c.deviceURL)
-}
-
-func lock(baseUrl *url.URL) (err error) {
-	_, err = internalPost("Lock", urlJoin(baseUrl, "/wda/lock"), nil)
-	return
 }
 
 // Lock
@@ -298,6 +286,55 @@ func deviceInfo(baseUrl *url.URL) (wdaDeviceInfo WDADeviceInfo, err error) {
 //  }
 func (c *Client) DeviceInfo() (wdaDeviceInfo WDADeviceInfo, err error) {
 	return deviceInfo(c.deviceURL)
+}
+
+type WDAActiveAppInfo struct {
+	ProcessArguments struct {
+		Env  interface{}   `json:"env"`
+		Args []interface{} `json:"args"`
+	} `json:"processArguments"`
+	Name string `json:"name"`
+	WDAAppBaseInfo
+	_string string
+}
+
+func (aai WDAActiveAppInfo) String() string {
+	return aai._string
+}
+
+type WDAAppBaseInfo struct {
+	Pid      int    `json:"pid"`
+	BundleID string `json:"bundleId"`
+}
+
+// activeAppInfo
+//
+// {
+//    "processArguments": {
+//        "env": {},
+//        "args": []
+//    },
+//    "name": "",
+//    "pid": 57,
+//    "bundleId": "com.apple.springboard"
+// }
+func activeAppInfo(baseUrl *url.URL) (wdaActiveAppInfo WDAActiveAppInfo, err error) {
+	var wdaResp wdaResponse
+	if wdaResp, err = internalGet("ActiveAppInfo", urlJoin(baseUrl, "/wda/activeAppInfo")); err != nil {
+		return WDAActiveAppInfo{}, err
+	}
+
+	wdaActiveAppInfo._string = wdaResp.getValue().String()
+	err = json.Unmarshal([]byte(wdaActiveAppInfo._string), &wdaActiveAppInfo)
+	// err = json.Unmarshal(wdaResp.getValue2Bytes(), &wdaActiveAppInfo)
+	return
+}
+
+// ActiveAppInfo
+//
+// get current active application
+func (c *Client) ActiveAppInfo() (wdaActiveAppInfo WDAActiveAppInfo, err error) {
+	return activeAppInfo(c.deviceURL)
 }
 
 // screenshot
@@ -431,53 +468,16 @@ func (c *Client) AccessibleSource() (sJson string, err error) {
 	return accessibleSource(c.deviceURL)
 }
 
-type WDAActiveAppInfo struct {
-	ProcessArguments struct {
-		Env  interface{}   `json:"env"`
-		Args []interface{} `json:"args"`
-	} `json:"processArguments"`
-	Name string `json:"name"`
-	WDAAppBaseInfo
-	_string string
-}
-
-func (aai WDAActiveAppInfo) String() string {
-	return aai._string
-}
-
-type WDAAppBaseInfo struct {
-	Pid      int    `json:"pid"`
-	BundleID string `json:"bundleId"`
-}
-
-// activeAppInfo
+// HealthCheck
 //
-// {
-//    "processArguments": {
-//        "env": {},
-//        "args": []
-//    },
-//    "name": "",
-//    "pid": 57,
-//    "bundleId": "com.apple.springboard"
-// }
-func activeAppInfo(baseUrl *url.URL) (wdaActiveAppInfo WDAActiveAppInfo, err error) {
-	var wdaResp wdaResponse
-	if wdaResp, err = internalGet("ActiveAppInfo", urlJoin(baseUrl, "/wda/activeAppInfo")); err != nil {
-		return WDAActiveAppInfo{}, err
-	}
-
-	wdaActiveAppInfo._string = wdaResp.getValue().String()
-	err = json.Unmarshal([]byte(wdaActiveAppInfo._string), &wdaActiveAppInfo)
-	// err = json.Unmarshal(wdaResp.getValue2Bytes(), &wdaActiveAppInfo)
+// Checks health of XCTest by:
+//	1. Querying application for some elements,
+//	2. Triggering some device events.
+//
+// !!! Health check might modify simulator state so it should only be called in-between testing sessions
+func (c *Client) HealthCheck() (err error) {
+	_, err = internalGet("HealthCheck", urlJoin(c.deviceURL, "/wda/healthcheck"))
 	return
-}
-
-// ActiveAppInfo
-//
-// get current active application
-func (c *Client) ActiveAppInfo() (wdaActiveAppInfo WDAActiveAppInfo, err error) {
-	return activeAppInfo(c.deviceURL)
 }
 
 func (c *Client) IsWdaHealth() (isHealth bool, err error) {
