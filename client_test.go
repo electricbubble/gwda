@@ -73,11 +73,12 @@ func TestClient_Status(t *testing.T) {
 }
 
 func TestClient_Homescreen(t *testing.T) {
+	Debug = true
 	c, err := NewClient(deviceURL)
+	// c, err := NewClient(deviceURL, true)
 	if err != nil {
 		t.Fatal(err)
 	}
-	Debug = true
 	err = c.Homescreen()
 	if err != nil {
 		t.Fatal(err)

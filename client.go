@@ -19,35 +19,32 @@ type Client struct {
 	deviceURL *url.URL
 }
 
-func NewClient(deviceURL string) (c *Client, err error) {
+// NewClient
+//
+// when `isInitializesAlertButtonSelector` is `true`
+// 	AcceptAlertButtonSelector: **/XCUIElementTypeButton[`label IN {'允许','好','仅在使用应用期间','暂不'}`]
+// 	DismissAlertButtonSelector: **/XCUIElementTypeButton[`label IN {'不允许','暂不'}`]
+func NewClient(deviceURL string, isInitializesAlertButtonSelector ...bool) (c *Client, err error) {
 	c = &Client{}
 	if c.deviceURL, err = url.Parse(deviceURL); err != nil {
 		return nil, err
 	}
-	sJson, err := c.Status()
-	if err != nil {
-		return nil, err
-	}
-	// ready: always true
-	if !wdaResponse(sJson).getByPath("value.ready").Bool() {
-		return nil, errors.New("device is not ready")
-	}
 
-	settings := newWdaBody().set("acceptAlertButtonSelector", _acceptAlertButtonSelector).set("dismissAlertButtonSelector", _dismissAlertButtonSelector)
-	c.setAppiumSettings(settings, wdaResponse(sJson).getByPath("sessionId").String())
+	if len(isInitializesAlertButtonSelector) != 0 && isInitializesAlertButtonSelector[0] {
+		settings := newWdaBody().set("acceptAlertButtonSelector", _acceptAlertButtonSelector).set("dismissAlertButtonSelector", _dismissAlertButtonSelector)
+		c.setAppiumSettings(settings)
+	}
 	return c, nil
 }
 
-func (c *Client) setAppiumSettings(settings map[string]interface{}, sid ...string) {
-	if len(sid) == 0 {
-		status, err := c.Status()
-		if err != nil {
-			log.Printf("[ERROR]↩︎\n[setAppiumSettings] failed to get status %s\n", err.Error())
-			return
-		}
-		sid = []string{wdaResponse(status).getValue().String()}
+func (c *Client) setAppiumSettings(settings map[string]interface{}) {
+	var tmpSession *Session
+	var err error
+	if tmpSession, err = c.NewSession(); err != nil {
+		log.Printf("[ERROR]↩︎\n[setAppiumSettings] failed to create session %s\n", err.Error())
+		return
 	}
-	if _, err := newSession(c.deviceURL, sid[0]).SetAppiumSettings(settings); err != nil {
+	if _, err = tmpSession.SetAppiumSettings(settings); err != nil {
 		// TODO return err ?
 		//  [settings objectForKey:ACTIVE_APP_DETECTION_POINT]
 		//  [settings objectForKey:SCREENSHOT_ORIENTATION]
@@ -55,23 +52,19 @@ func (c *Client) setAppiumSettings(settings map[string]interface{}, sid ...strin
 	}
 }
 
-const _acceptAlertButtonSelector = "**/XCUIElementTypeButton[`label == '允许' OR label == '好' OR label == '仅在使用应用期间' OR label == '暂不'`]"
-const _dismissAlertButtonSelector = "**/XCUIElementTypeButton[`label == '不允许' OR label == '暂不'`]"
+const _acceptAlertButtonSelector = "**/XCUIElementTypeButton[`label IN {'允许','好','仅在使用应用期间','暂不'}`]"
+const _dismissAlertButtonSelector = "**/XCUIElementTypeButton[`label IN {'不允许','暂不'}`]"
 
 // SetAcceptAlertButtonSelector
 //
 // Sets custom class chain locators for accept/dismiss alert buttons location.
 //
 // This might be useful if the default buttons detection algorithm fails to determine alert buttons properly when defaultAlertAction is set.
-//
-// Default: **/XCUIElementTypeButton[`label == '允许' OR label == '好' OR label == '仅在使用应用期间' OR label == '暂不'`]
 func (c *Client) SetAcceptAlertButtonSelector(classChainSelector string) {
 	c.setAppiumSettings(map[string]interface{}{"acceptAlertButtonSelector": classChainSelector})
 }
 
 // SetDismissAlertButtonSelector
-//
-// Default: **/XCUIElementTypeButton[`label == '不允许' OR label == '暂不'`]
 func (c *Client) SetDismissAlertButtonSelector(classChainSelector string) {
 	c.setAppiumSettings(map[string]interface{}{"dismissAlertButtonSelector": classChainSelector})
 }
