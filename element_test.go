@@ -340,7 +340,10 @@ func TestElement_Scroll(t *testing.T) {
 	// err = element.ScrollLeft()
 	// err = element.ScrollRight()
 	// err = element.ScrollToVisible()
-	err = element.ScrollElementByPredicate("type == 'XCUIElementTypeCell' AND name LIKE '*Keynote*'")
+	// err = element.ScrollElementByPredicate("type == 'XCUIElementTypeCell' AND name LIKE '*Keynote*'")
+	err = element.ScrollElementByPredicate("type == 'XCUIElementTypeCell' AND name == '音乐'")
+	// err = element.ScrollElementByName("其他")
+	// err = element.ScrollElementByName("iCloud 帐户")
 
 	// It's not working
 	// err = element.ScrollElementByName("音乐")

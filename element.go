@@ -297,21 +297,15 @@ func (e *Element) Rotate(rotation float64, velocity ...float64) (err error) {
 }
 
 func (e *Element) _scroll(body wdaBody) (err error) {
-	// ? 只允许父元素类型为 XCUIElementTypeScrollView XCUIElementTypeCollectionView XCUIElementTypeTable XCUIElementTypeWebView
-
-	// 子元素的文本内容，测试无效，怀疑与 [[element.fb_query descendantsMatchingType:XCUIElementTypeAny] matchingIdentifier:name] 这搜索匹配有关
-	// body.set("name", "音乐")
-
 	// [FBRoute POST:@"/wda/element/:uuid/scroll"]
 	_, err = internalPost("Scroll", urlJoin(e.endpoint, e._withFormat("/scroll"), true), body)
 	return
 }
 
-// It's not working
 // ScrollElementByName
-// func (e *Element) ScrollElementByName(name string) (err error) {
-// 	return e._scroll(newWdaBody().set("name", name))
-// }
+func (e *Element) ScrollElementByName(name string) (err error) {
+	return e._scroll(newWdaBody().set("name", name))
+}
 
 func (e *Element) ScrollElementByPredicate(predicate string) (err error) {
 	return e._scroll(newWdaBody().set("predicateString", predicate))
@@ -608,7 +602,7 @@ type WDALocator struct {
 	PartialLinkText WDAElementAttribute `json:"partial link text"`
 	// partialSearch
 
-	Predicate string `json:"predicate string"` // TODO SetXXX AndXXX OrXXX
+	Predicate string `json:"predicate string"`
 
 	ClassChain string `json:"class chain"`
 
