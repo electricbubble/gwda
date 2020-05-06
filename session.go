@@ -179,7 +179,7 @@ func (s *Session) SendKeys(text string, typingFrequency ...int) error {
 }
 
 func tap(baseUrl *url.URL, x, y interface{}, elemUID ...string) (err error) {
-	body := newWdaBody().set("x", x).set("y", y)
+	body := newWdaBody().setXY(x, y)
 	// [FBRoute POST:@"/wda/tap/:uuid"]
 	tmpPath := "/wda/tap"
 	if len(elemUID) == 0 {
@@ -214,7 +214,7 @@ func doubleTap(baseUrl *url.URL, x, y interface{}, elemPrefixPath ...string) (er
 	body := newWdaBody()
 	tmpPath := "/doubleTap"
 	if len(elemPrefixPath) == 0 {
-		body.set("x", x).set("y", y)
+		body.setXY(x, y)
 	} else {
 		tmpPath = elemPrefixPath[0] + tmpPath
 	}
@@ -241,7 +241,7 @@ func touchAndHold(baseUrl *url.URL, x, y, duration interface{}, elemPrefixPath .
 	body := newWdaBody().set("duration", duration)
 	tmpPath := "/touchAndHold"
 	if len(elemPrefixPath) == 0 {
-		body.set("x", x).set("y", y)
+		body.setXY(x, y)
 	} else {
 		tmpPath = elemPrefixPath[0] + tmpPath
 	}
@@ -617,12 +617,141 @@ func (s *Session) Rotation() (wdaRotation WDARotation, err error) {
 
 func (s *Session) SetRotation(wdaRotation WDARotation) (err error) {
 	body := newWdaBody()
-	body.set("x", wdaRotation.X)
-	body.set("y", wdaRotation.Y)
+	body.setXY(wdaRotation.X, wdaRotation.Y)
 	body.set("z", wdaRotation.Z)
 	// [FBRoute POST:@"/rotation"]
 	_, err = internalPost("SetRotation", urlJoin(s.sessionURL, "/rotation"), body)
 	return
+}
+
+type WDATouchActions []wdaBody
+
+func NewWDATouchActions(cap ...int) *WDATouchActions {
+	if len(cap) == 0 || cap[0] <= 0 {
+		cap = []int{8}
+	}
+	tmp := make(WDATouchActions, 0, cap[0])
+	return &tmp
+}
+
+func (s *Session) PerformTouchActions(touchActions *WDATouchActions) (err error) {
+	body := newWdaBody().set("actions", touchActions)
+	// [FBRoute POST:@"/wda/touch/perform"]
+	// [FBRoute POST:@"/wda/touch/multi/perform"]
+	_, err = internalPost("PerformTouchActions", urlJoin(s.sessionURL, "/wda/touch/multi/perform"), body)
+	return
+}
+
+type WDATouchActionOptionTap wdaBody
+
+func NewWDATouchActionOptionTap() WDATouchActionOptionTap {
+	return make(WDATouchActionOptionTap)
+}
+func (tao WDATouchActionOptionTap) SetXY(x, y int) WDATouchActionOptionTap {
+	return WDATouchActionOptionTap(wdaBody(tao).setXY(x, y))
+}
+func (tao WDATouchActionOptionTap) SetXYFloat(x, y float64) WDATouchActionOptionTap {
+	return WDATouchActionOptionTap(wdaBody(tao).setXY(x, y))
+}
+func (tao WDATouchActionOptionTap) SetElement(element *Element) WDATouchActionOptionTap {
+	return WDATouchActionOptionTap(wdaBody(tao).set("element", element.UID))
+}
+func (tao WDATouchActionOptionTap) SetCount(count int) WDATouchActionOptionTap {
+	return WDATouchActionOptionTap(wdaBody(tao).set("count", count))
+}
+func (ta *WDATouchActions) Tap(optTap WDATouchActionOptionTap) *WDATouchActions {
+	tmp := newWdaBody().set("action", "tap")
+	tmp.set("options", optTap)
+	*ta = append(*ta, tmp)
+	return ta
+}
+
+type WDATouchActionOptionLongPress wdaBody
+
+func NewWDATouchActionOptionLongPress() WDATouchActionOptionLongPress {
+	return make(WDATouchActionOptionLongPress)
+}
+func (tao WDATouchActionOptionLongPress) SetXY(x, y int) WDATouchActionOptionLongPress {
+	return WDATouchActionOptionLongPress(wdaBody(tao).setXY(x, y))
+}
+func (tao WDATouchActionOptionLongPress) SetXYFloat(x, y float64) WDATouchActionOptionLongPress {
+	return WDATouchActionOptionLongPress(wdaBody(tao).setXY(x, y))
+}
+func (tao WDATouchActionOptionLongPress) SetElement(element *Element) WDATouchActionOptionLongPress {
+	return WDATouchActionOptionLongPress(wdaBody(tao).set("element", element.UID))
+}
+func (ta *WDATouchActions) LongPress(optLongPress WDATouchActionOptionLongPress) *WDATouchActions {
+	tmp := newWdaBody().set("action", "longPress")
+	tmp.set("options", optLongPress)
+	*ta = append(*ta, tmp)
+	return ta
+}
+
+type WDATouchActionOptionPress wdaBody
+
+func NewWDATouchActionOptionPress() WDATouchActionOptionPress {
+	return make(WDATouchActionOptionPress)
+}
+func (tao WDATouchActionOptionPress) SetXY(x, y int) WDATouchActionOptionPress {
+	return WDATouchActionOptionPress(wdaBody(tao).setXY(x, y))
+}
+func (tao WDATouchActionOptionPress) SetXYFloat(x, y float64) WDATouchActionOptionPress {
+	return WDATouchActionOptionPress(wdaBody(tao).setXY(x, y))
+}
+func (tao WDATouchActionOptionPress) SetElement(element *Element) WDATouchActionOptionPress {
+	return WDATouchActionOptionPress(wdaBody(tao).set("element", element.UID))
+}
+func (tao WDATouchActionOptionPress) SetPressure(pressure float64) WDATouchActionOptionPress {
+	return WDATouchActionOptionPress(wdaBody(tao).set("pressure", pressure))
+}
+func (ta *WDATouchActions) Press(optPress WDATouchActionOptionPress) *WDATouchActions {
+	tmp := newWdaBody().set("action", "press")
+	tmp.set("options", optPress)
+	*ta = append(*ta, tmp)
+	return ta
+}
+
+func (ta *WDATouchActions) Release() *WDATouchActions {
+	tmp := newWdaBody().set("action", "release")
+	*ta = append(*ta, tmp)
+	return ta
+}
+
+type WDATouchActionOptionMoveTo wdaBody
+
+func NewWDATouchActionOptionMoveTo() WDATouchActionOptionMoveTo {
+	return make(WDATouchActionOptionMoveTo)
+}
+func (tao WDATouchActionOptionMoveTo) SetXY(x, y int) WDATouchActionOptionMoveTo {
+	return WDATouchActionOptionMoveTo(wdaBody(tao).setXY(x, y))
+}
+func (tao WDATouchActionOptionMoveTo) SetXYFloat(x, y float64) WDATouchActionOptionMoveTo {
+	return WDATouchActionOptionMoveTo(wdaBody(tao).setXY(x, y))
+}
+func (tao WDATouchActionOptionMoveTo) SetElement(element *Element) WDATouchActionOptionMoveTo {
+	return WDATouchActionOptionMoveTo(wdaBody(tao).set("element", element.UID))
+}
+func (ta *WDATouchActions) MoveTo(optMoveTo WDATouchActionOptionMoveTo) *WDATouchActions {
+	tmp := newWdaBody().set("action", "moveTo")
+	tmp.set("options", optMoveTo)
+	*ta = append(*ta, tmp)
+	return ta
+}
+
+func (ta *WDATouchActions) Wait(duration ...float64) *WDATouchActions {
+	tmp := newWdaBody().set("action", "wait")
+	if len(duration) == 0 {
+		duration = []float64{1.0}
+	}
+	tmp.set("options", newWdaBody().set("ms", duration[0]*1000))
+	*ta = append(*ta, tmp)
+	return ta
+}
+
+func (ta *WDATouchActions) Cancel() *WDATouchActions {
+	tmp := newWdaBody().set("action", "cancel")
+	*ta = append(*ta, tmp)
+	return ta
 }
 
 // ActiveAppInfo
@@ -935,19 +1064,32 @@ func (s *Session) tttTmp() {
 	body := newWdaBody()
 	_ = body
 
-	actions := newWdaBody()
-	actions.set("action", "press")
-	actions.set("options", newWdaBody().set("pressure", 2))
+	touchAction := NewWDATouchActions()
 
-	actions.set("action", "wait")
-	actions.set("options", newWdaBody().set("ms", 2*1000))
+	// element, err := s.FindElement(WDALocator{ClassName: WDAElementType{ScrollView: true}})
+	element, err := s.FindElement(WDALocator{Name: "自定手势作用区域"})
+	_, _ = element, err
 
-	actions.set("action", "release")
+	touchAction.
+		Press(NewWDATouchActionOptionPress().SetElement(element).SetXY(200, 200).SetPressure(1)).
+		// LongPress(NewWDATouchActionOptionLongPress().SetElement(element).SetXY(200, 200)).
+		Wait(0.2).
+		MoveTo(NewWDATouchActionOptionMoveTo().SetElement(element).SetXY(300, 200)).
+		Wait(0.2).
+		MoveTo(NewWDATouchActionOptionMoveTo().SetElement(element).SetXY(200, 400)).
+		Wait(0.2).
+		MoveTo(NewWDATouchActionOptionMoveTo().SetElement(element).SetXY(300, 400)).
+		Release()
 
-	body.set("actions", actions)
+	body.set("actions", touchAction)
+	// return
 
 	// [FBRoute POST:@"/wda/touch/perform"]
 	// [FBRoute POST:@"/wda/touch/multi/perform"]
-	wdaResp, err := internalPost("###############", urlJoin(s.sessionURL, "/wda/touch/perform"), body)
+	wdaResp, err := internalPost("###############", urlJoin(s.sessionURL, "/wda/touch/multi/perform"), body)
+
+	// performW3CActions
+	// [FBRoute POST:@"/actions"]
+	// wdaResp, err := internalPost("###############", urlJoin(s.sessionURL, "/actions"), body)
 	fmt.Println(err, wdaResp)
 }

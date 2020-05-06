@@ -108,6 +108,9 @@ func (wb wdaBody) set(k string, v interface{}) (body wdaBody) {
 func (wb wdaBody) setBundleID(bundleId string) (body wdaBody) {
 	return wb.set("bundleId", bundleId)
 }
+func (wb wdaBody) setXY(x, y interface{}) (body wdaBody) {
+	return wb.set("x", x).set("y", y)
+}
 
 func (wb wdaBody) setAppLaunchOption(opt WDAAppLaunchOption) (body wdaBody) {
 	for k, v := range opt {
@@ -115,9 +118,6 @@ func (wb wdaBody) setAppLaunchOption(opt WDAAppLaunchOption) (body wdaBody) {
 	}
 	return wb
 }
-// func (wb wdaBody) setXY(x, y interface{}) (body wdaBody) {
-// 	return wb.set("x", x).set("y", y)
-// }
 
 // func (wb wdaBody) setTextToType(text string) (body wdaBody) {
 // 	return wb.set("value", strings.Split(text, ""))

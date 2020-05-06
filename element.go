@@ -103,7 +103,7 @@ func (e *Element) TouchAndHoldFloat(duration ...float64) (err error) {
 func (e *Element) _forceTouch(wdaCoordinate WDACoordinate, pressure float64, duration ...float64) (err error) {
 	body := newWdaBody()
 	if wdaCoordinate.X != -1 && wdaCoordinate.Y != -1 {
-		body.set("x", wdaCoordinate.X).set("y", wdaCoordinate.Y)
+		body.setXY(wdaCoordinate.X, wdaCoordinate.Y)
 	}
 	body.set("pressure", pressure)
 	if len(duration) == 0 {

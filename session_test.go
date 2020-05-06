@@ -636,6 +636,38 @@ func TestSession_SetRotation(t *testing.T) {
 	}
 }
 
+func TestSession_PerformAppiumTouchActions(t *testing.T) {
+	c, err := NewClient(deviceURL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	s, err := c.NewSession()
+	if err != nil {
+		t.Fatal(err)
+	}
+	element, err := s.FindElement(WDALocator{Name: "自定手势作用区域"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	Debug = true
+
+	touchActions := NewWDATouchActions().
+		Press(NewWDATouchActionOptionPress().SetElement(element).SetXY(200, 200).SetPressure(0.8)).
+		// LongPress(NewWDATouchActionOptionLongPress().SetElement(element).SetXY(200, 200)).
+		Wait(0.2).
+		MoveTo(NewWDATouchActionOptionMoveTo().SetXY(300, 200)).
+		Wait(0.2).
+		MoveTo(NewWDATouchActionOptionMoveTo().SetElement(element)).
+		Wait(0.2).
+		MoveTo(NewWDATouchActionOptionMoveTo().SetElement(element).SetXY(300, 400)).
+		Release()
+
+	err = s.PerformTouchActions(touchActions)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestSession_IsLocked(t *testing.T) {
 	c, err := NewClient(deviceURL)
 	if err != nil {
