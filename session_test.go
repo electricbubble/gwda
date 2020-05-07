@@ -1,7 +1,6 @@
 package gwda
 
 import (
-	"encoding/base64"
 	"io/ioutil"
 	"strings"
 	"testing"
@@ -668,6 +667,50 @@ func TestSession_PerformAppiumTouchActions(t *testing.T) {
 	}
 }
 
+func TestSession_PerformActions(t *testing.T) {
+	c, err := NewClient(deviceURL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	s, err := c.NewSession()
+	if err != nil {
+		t.Fatal(err)
+	}
+	element, err := s.FindElement(WDALocator{Name: "自定手势作用区域"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	actOptFingerLeft := NewWDAActionOptionFinger().
+		Move(NewWWDAActionOptionFingerMove().SetXY(-75, -185).SetOrigin(element)).
+		Down().
+		Pause(0.25).
+		Move(NewWWDAActionOptionFingerMove().SetOrigin(element)).
+		Pause(0.25).
+		Up()
+	actOptFingerRight := NewWDAActionOptionFinger().
+		Move(NewWWDAActionOptionFingerMove().SetXY(75, 185).SetOrigin(element)).
+		Down().
+		Pause(0.25).
+		Move(NewWWDAActionOptionFingerMove().SetOrigin(element)).
+		Pause(0.25).
+		Up()
+	_, _, _ = element, actOptFingerLeft, actOptFingerRight
+	Debug = true
+
+	// actions := NewWDAActions().FingerTap(80, 100)
+	// actions := NewWDAActions().FingerTap(50, 0, element)
+	// actions := NewWDAActions().FingerPress(50, 0, 3, element)
+	// actions := NewWDAActions().FingerDoubleTap(0, 50, element)
+	// actions := NewWDAActions().FingerSwipe(-75, -185, 0, 0, element)
+	// actions := NewWDAActions().FingerSwipe(-75, -185, 0, 0, element).FingerSwipe(75, 185, 0, 0, element)
+	actions := NewWDAActions().FingerActionOption(actOptFingerLeft).FingerActionOption(actOptFingerRight)
+
+	err = s.PerformActions(actions)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestSession_IsLocked(t *testing.T) {
 	c, err := NewClient(deviceURL)
 	if err != nil {
@@ -778,7 +821,7 @@ func TestSession_SetPasteboardForPlaintext(t *testing.T) {
 	}
 }
 
-func TestSession_SetPasteboardForImage(t *testing.T) {
+func TestSession_SetPasteboardForImageFromFile(t *testing.T) {
 	c, err := NewClient(deviceURL)
 	if err != nil {
 		t.Fatal(err)
@@ -790,7 +833,7 @@ func TestSession_SetPasteboardForImage(t *testing.T) {
 		t.Fatal(err)
 	}
 	Debug = true
-	err = s.SetPasteboardForImage("/Users/hero/Documents/leixipaopao/IMG_5246.JPG")
+	err = s.SetPasteboardForImageFromFile("/Users/hero/Documents/leixipaopao/IMG_5246.JPG")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -808,7 +851,7 @@ func TestSession_SetPasteboardForUrl(t *testing.T) {
 		t.Fatal(err)
 	}
 	Debug = true
-	err = s.SetPasteboardForUrl("http://baidu.com")
+	err = s.SetPasteboardForUrl("https://www.apple.com.cn")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -826,11 +869,35 @@ func TestSession_SetPasteboard(t *testing.T) {
 		t.Fatal(err)
 	}
 	Debug = true
-	encodedContent := base64.URLEncoding.EncodeToString([]byte("https://www.google.com"))
-	err = s.SetPasteboard(WDAContentTypeUrl, encodedContent)
+	err = s.SetPasteboard(WDAContentTypeUrl, "https://www.google.com")
 	if err != nil {
 		t.Fatal(err)
 	}
+}
+
+func TestSession_GetPasteboard(t *testing.T) {
+	c, err := NewClient(deviceURL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	s, err := c.NewSession()
+	if err != nil {
+		t.Fatal(err)
+	}
+	Debug = true
+	// raw, err := s.GetPasteboard(WDAContentTypePlaintext)
+	// content, err := s.GetPasteboardForPlaintext()
+	// url, err := s.GetPasteboardForUrl()
+	// image, format, err := s.GetPasteboardForImage()
+	err = s.GetPasteboardForImageToDisk("/Users/hero/Desktop/s3.png")
+	if err != nil {
+		t.Fatal(err)
+	}
+	// t.Log(raw.String())
+	// t.Log(content)
+	// t.Log(url)
+	// t.Log(format)
+	// t.Log(image.Bounds().Size())
 }
 
 func TestSession_PressHomeButton(t *testing.T) {

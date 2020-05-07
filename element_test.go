@@ -264,8 +264,8 @@ func TestElement_Pinch(t *testing.T) {
 		t.Fatal(err)
 	}
 	// _ = c.Homescreen()
-	element, err := s.FindElement(WDALocator{ClassName: WDAElementType{Image: true}})
-	// element, err := s.FindElement(WDALocator{Name: "自定手势作用区域"})
+	// element, err := s.FindElement(WDALocator{ClassName: WDAElementType{Image: true}})
+	element, err := s.FindElement(WDALocator{Name: "自定手势作用区域"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -275,9 +275,9 @@ func TestElement_Pinch(t *testing.T) {
 	// - 缩小是 左上角+右下角 向中心靠拢
 
 	// zoom in 放大
-	// err = element.Pinch(10, 20)
+	// err = element.Pinch(49, 50)
 	// err = element.Pinch(2, 32)
-	// err = element.Pinch(2, 8)
+	err = element.Pinch(2, 8)
 	// err = element.Pinch(1.9, 3.6)
 	// err = element.Pinch(1.9, 3.6)
 	// err = element.PinchToZoomIn()
@@ -287,7 +287,11 @@ func TestElement_Pinch(t *testing.T) {
 	// err = element.Pinch(0.9, -0.9)
 	// err = element.Pinch(0.9, -3.6)
 	// err = element.Pinch(0.9, -14.4)
-	err = element.PinchToZoomOut()
+	// err = element.PinchToZoomOut()
+
+	err = element.PinchToZoomOutByActions()
+	// err = element.PinchToZoomOutByActions(23)
+
 	if err != nil {
 		t.Fatal(err)
 	}

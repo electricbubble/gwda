@@ -205,9 +205,6 @@ func (c *Client) AppLaunchUnattached(bundleId string) (err error) {
 // Homescreen
 //
 // Forces the device under test to switch to the home screen
-//
-//	1. pressButton
-//	2. WaitUntilApplicationBoardIsVisible
 func (c *Client) Homescreen() (err error) {
 	_, err = internalPost("Homescreen", urlJoin(c.deviceURL, "/wda/homescreen"), nil)
 	return

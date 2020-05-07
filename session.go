@@ -9,6 +9,7 @@ import (
 	"image"
 	"io/ioutil"
 	"net/url"
+	"strconv"
 	"strings"
 )
 
@@ -381,10 +382,10 @@ const (
 )
 
 // SetPasteboard Sets data to the general pasteboard
-func (s *Session) SetPasteboard(contentType WDAContentType, encodedContent string) (err error) {
+func (s *Session) SetPasteboard(contentType WDAContentType, content string) (err error) {
 	body := newWdaBody()
 	body.set("contentType", contentType)
-	body.set("content", encodedContent)
+	body.set("content", base64.StdEncoding.EncodeToString([]byte(content)))
 
 	_, err = internalPost("SetPasteboard", urlJoin(s.sessionURL, "/wda/setPasteboard"), body)
 	return
@@ -392,24 +393,73 @@ func (s *Session) SetPasteboard(contentType WDAContentType, encodedContent strin
 
 // SetPasteboardForType
 func (s *Session) SetPasteboardForPlaintext(content string) (err error) {
-	encodedContent := base64.StdEncoding.EncodeToString([]byte(content))
-	return s.SetPasteboard(WDAContentTypePlaintext, encodedContent)
+	return s.SetPasteboard(WDAContentTypePlaintext, content)
 }
 
-// SetPasteboardForImage
-func (s *Session) SetPasteboardForImage(filename string) (err error) {
+// SetPasteboardForImageFromFile
+func (s *Session) SetPasteboardForImageFromFile(filename string) (err error) {
 	var content []byte
 	if content, err = ioutil.ReadFile(filename); err != nil {
 		return err
 	}
-	encodedContent := base64.StdEncoding.EncodeToString(content)
-	return s.SetPasteboard(WDAContentTypeImage, encodedContent)
+	return s.SetPasteboard(WDAContentTypeImage, string(content))
 }
 
 // SetPasteboardForUrl
 func (s *Session) SetPasteboardForUrl(url string) (err error) {
-	encodedContent := base64.StdEncoding.EncodeToString([]byte(url))
-	return s.SetPasteboard(WDAContentTypeUrl, encodedContent)
+	return s.SetPasteboard(WDAContentTypeUrl, url)
+}
+
+// GetPasteboard
+//
+// It might work when `WebDriverAgentRunner` is [foreground on real devices](https://github.com/appium/WebDriverAgent/issues/330)
+func (s *Session) GetPasteboard(contentType WDAContentType) (raw *bytes.Buffer, err error) {
+	var wdaResp wdaResponse
+	body := newWdaBody().set("contentType", contentType)
+	// [FBRoute POST:@"/wda/getPasteboard"]
+	if wdaResp, err = internalPost("GetPasteboard", urlJoin(s.sessionURL, "/wda/getPasteboard"), body); err != nil {
+		return nil, err
+	}
+	if decodeString, err := base64.StdEncoding.DecodeString(wdaResp.getValue().String()); err != nil {
+		return nil, err
+	} else {
+		raw = bytes.NewBuffer(decodeString)
+		return raw, nil
+	}
+}
+
+func (s *Session) GetPasteboardForPlaintext() (content string, err error) {
+	var raw *bytes.Buffer
+	if raw, err = s.GetPasteboard(WDAContentTypePlaintext); err != nil {
+		return "", err
+	}
+	content = raw.String()
+	return
+}
+
+func (s *Session) GetPasteboardForUrl() (content string, err error) {
+	var raw *bytes.Buffer
+	if raw, err = s.GetPasteboard(WDAContentTypeUrl); err != nil {
+		return "", err
+	}
+	content = raw.String()
+	return
+}
+
+func (s *Session) GetPasteboardForImage() (img image.Image, format string, err error) {
+	var raw *bytes.Buffer
+	if raw, err = s.GetPasteboard(WDAContentTypeImage); err != nil {
+		return nil, "", err
+	}
+	return image.Decode(raw)
+}
+
+func (s *Session) GetPasteboardForImageToDisk(filename string) (err error) {
+	var raw *bytes.Buffer
+	if raw, err = s.GetPasteboard(WDAContentTypeImage); err != nil {
+		return err
+	}
+	return ioutil.WriteFile(filename, raw.Bytes(), 0666)
 }
 
 type WDADeviceButtonName string
@@ -420,8 +470,9 @@ const (
 	WDADeviceButtonVolumeDown WDADeviceButtonName = "volumeDown"
 )
 
-// PressButton Presses the corresponding hardware button on the device
+// PressButton
 //
+// Presses the corresponding hardware button on the device
 // !!! not a synchronous action
 func (s *Session) PressButton(wdaDeviceButton WDADeviceButtonName) (err error) {
 	body := newWdaBody().set("name", wdaDeviceButton)
@@ -624,6 +675,12 @@ func (s *Session) SetRotation(wdaRotation WDARotation) (err error) {
 	return
 }
 
+//  █████  ██████  ██████  ██ ██    ██ ███    ███     ████████  ██████  ██    ██  ██████ ██   ██  █████   ██████ ████████ ██  ██████  ███    ██ ███████
+// ██   ██ ██   ██ ██   ██ ██ ██    ██ ████  ████        ██    ██    ██ ██    ██ ██      ██   ██ ██   ██ ██         ██    ██ ██    ██ ████   ██ ██
+// ███████ ██████  ██████  ██ ██    ██ ██ ████ ██        ██    ██    ██ ██    ██ ██      ███████ ███████ ██         ██    ██ ██    ██ ██ ██  ██ ███████
+// ██   ██ ██      ██      ██ ██    ██ ██  ██  ██        ██    ██    ██ ██    ██ ██      ██   ██ ██   ██ ██         ██    ██ ██    ██ ██  ██ ██      ██
+// ██   ██ ██      ██      ██  ██████  ██      ██        ██     ██████   ██████   ██████ ██   ██ ██   ██  ██████    ██    ██  ██████  ██   ████ ███████
+
 type WDATouchActions []wdaBody
 
 func NewWDATouchActions(cap ...int) *WDATouchActions {
@@ -634,6 +691,9 @@ func NewWDATouchActions(cap ...int) *WDATouchActions {
 	return &tmp
 }
 
+// PerformTouchActions
+//
+// fb_performAppiumTouchActions
 func (s *Session) PerformTouchActions(touchActions *WDATouchActions) (err error) {
 	body := newWdaBody().set("actions", touchActions)
 	// [FBRoute POST:@"/wda/touch/perform"]
@@ -753,6 +813,179 @@ func (ta *WDATouchActions) Cancel() *WDATouchActions {
 	*ta = append(*ta, tmp)
 	return ta
 }
+
+// ██     ██ ██████   ██████      █████   ██████ ████████ ██  ██████  ███    ██ ███████
+// ██     ██      ██ ██          ██   ██ ██         ██    ██ ██    ██ ████   ██ ██
+// ██  █  ██  █████  ██          ███████ ██         ██    ██ ██    ██ ██ ██  ██ ███████
+// ██ ███ ██      ██ ██          ██   ██ ██         ██    ██ ██    ██ ██  ██ ██      ██
+//  ███ ███  ██████   ██████     ██   ██  ██████    ██    ██  ██████  ██   ████ ███████
+
+func performActions(baseUrl *url.URL, actions *WDAActions) (err error) {
+	body := newWdaBody().set("actions", actions)
+	// [FBRoute POST:@"/actions"]
+	_, err = internalPost("PerformActions", urlJoin(baseUrl, "/actions"), body)
+	return
+}
+
+type WDAActions []wdaBody
+
+func NewWDAActions(cap ...int) *WDAActions {
+	if len(cap) == 0 || cap[0] <= 0 {
+		cap = []int{8}
+	}
+	tmp := make(WDAActions, 0, cap[0])
+	return &tmp
+}
+
+// PerformActions
+//
+// fb_performW3CActions
+func (s *Session) PerformActions(actions *WDAActions) (err error) {
+	return performActions(s.sessionURL, actions)
+}
+
+type WDAActionOptionFinger []wdaBody
+
+func NewWDAActionOptionFinger(cap ...int) *WDAActionOptionFinger {
+	if len(cap) == 0 || cap[0] <= 0 {
+		cap = []int{8}
+	}
+	tmp := make(WDAActionOptionFinger, 0, cap[0])
+	return &tmp
+}
+
+type WDAActionOptionFingerMove wdaBody
+
+func NewWWDAActionOptionFingerMove() WDAActionOptionFingerMove {
+	return WDAActionOptionFingerMove(newWdaBody().set("type", "pointerMove"))
+}
+func (ofm WDAActionOptionFingerMove) _setXY(x, y interface{}) WDAActionOptionFingerMove {
+	return WDAActionOptionFingerMove(wdaBody(ofm).setXY(x, y))
+}
+func (ofm WDAActionOptionFingerMove) SetXY(x, y int) WDAActionOptionFingerMove {
+	return ofm._setXY(x, y)
+}
+func (ofm WDAActionOptionFingerMove) SetXYFloat(x, y float64) WDAActionOptionFingerMove {
+	return ofm._setXY(x, y)
+}
+func (ofm WDAActionOptionFingerMove) SetOrigin(element *Element) WDAActionOptionFingerMove {
+	return WDAActionOptionFingerMove(wdaBody(ofm).set("origin", element.UID))
+}
+func (ofm WDAActionOptionFingerMove) SetDuration(duration float64) WDAActionOptionFingerMove {
+	return WDAActionOptionFingerMove(wdaBody(ofm).set("duration", duration))
+}
+
+func (aof *WDAActionOptionFinger) Move(ofm WDAActionOptionFingerMove) *WDAActionOptionFinger {
+	*aof = append(*aof, wdaBody(ofm))
+	return aof
+}
+func (aof *WDAActionOptionFinger) Down() *WDAActionOptionFinger {
+	*aof = append(*aof, newWdaBody().set("type", "pointerDown"))
+	return aof
+}
+func (aof *WDAActionOptionFinger) Up() *WDAActionOptionFinger {
+	*aof = append(*aof, newWdaBody().set("type", "pointerUp"))
+	return aof
+}
+func (aof *WDAActionOptionFinger) Pause(duration ...float64) *WDAActionOptionFinger {
+	if len(duration) == 0 || duration[0] < 0 {
+		duration = []float64{0.5}
+	}
+	*aof = append(*aof, newWdaBody().set("type", "pause").set("duration", duration[0]*1000))
+	return aof
+}
+
+func (act *WDAActions) _newPointerForFinger() wdaBody {
+	pointer := newWdaBody().set("type", "pointer")
+	pointer.set("id", "finger"+strconv.FormatInt(int64(len(*act)+1), 10))
+	pointer.set("parameters", newWdaBody().set("pointerType", "touch"))
+	return pointer
+}
+
+func (act *WDAActions) FingerActionOption(actOptFinger *WDAActionOptionFinger) *WDAActions {
+	pointer := act._newPointerForFinger()
+	pointer.set("actions", *actOptFinger)
+	*act = append(*act, pointer)
+	return act
+}
+
+func (act *WDAActions) FingerTap(x, y int, element ...*Element) *WDAActions {
+	optMove := NewWWDAActionOptionFingerMove().SetXY(x, y)
+	if len(element) != 0 {
+		optMove.SetOrigin(element[0])
+	}
+	actOptFinger := NewWDAActionOptionFinger().
+		Move(optMove).
+		Down().
+		Pause(0.1).
+		Up()
+
+	return act.FingerActionOption(actOptFinger)
+}
+
+func (act *WDAActions) FingerDoubleTap(x, y int, element ...*Element) *WDAActions {
+	optMove := NewWWDAActionOptionFingerMove().SetXY(x, y)
+	if len(element) != 0 {
+		optMove.SetOrigin(element[0])
+	}
+	actOptFinger := NewWDAActionOptionFinger().
+		Move(optMove).
+		Down().
+		Pause(0.1).
+		Up().
+		Pause(0.04).
+		Down().
+		Pause(0.1).
+		Up()
+
+	return act.FingerActionOption(actOptFinger)
+}
+
+func (act *WDAActions) FingerPress(x, y int, duration float64, element ...*Element) *WDAActions {
+	optMove := NewWWDAActionOptionFingerMove().SetXY(x, y)
+	if len(element) != 0 {
+		optMove.SetOrigin(element[0])
+	}
+	actOptFinger := NewWDAActionOptionFinger().
+		Move(optMove).
+		Down().
+		Pause(duration).
+		Up()
+
+	return act.FingerActionOption(actOptFinger)
+}
+
+func (act *WDAActions) _fingerSwipe(fromX, fromY, toX, toY interface{}, element ...*Element) *WDAActions {
+	optMoveFrom := NewWWDAActionOptionFingerMove()._setXY(fromX, fromY)
+	optMoveTo := NewWWDAActionOptionFingerMove()._setXY(toX, toY)
+	if len(element) != 0 {
+		optMoveFrom.SetOrigin(element[0])
+		optMoveTo.SetOrigin(element[0])
+	}
+	actOptFinger := NewWDAActionOptionFinger().
+		Move(optMoveFrom).
+		Down().
+		Pause(0.25).
+		Move(optMoveTo).
+		Pause(0.25).
+		Up()
+
+	return act.FingerActionOption(actOptFinger)
+}
+
+func (act *WDAActions) FingerSwipe(fromX, fromY, toX, toY int, element ...*Element) *WDAActions {
+	return act._fingerSwipe(fromX, fromY, toX, toY, element...)
+}
+
+func (act *WDAActions) FingerSwipeFloat(fromX, fromY, toX, toY float64, element ...*Element) *WDAActions {
+	return act._fingerSwipe(fromX, fromY, toX, toY, element...)
+}
+
+func (act *WDAActions) FingerSwipeCoordinate(fromCoordinate, toCoordinate WDACoordinate, element ...*Element) *WDAActions {
+	return act._fingerSwipe(fromCoordinate.X, fromCoordinate.Y, toCoordinate.X, toCoordinate.Y, element...)
+}
+
+// TODO WDAActions "type": @"key"
 
 // ActiveAppInfo
 //
@@ -1057,39 +1290,125 @@ func (s *Session) SetAppiumSettings(settings map[string]interface{}) (sJson stri
 // It's not working
 // /timeouts
 // /wda/keyboard/dismiss
-// /wda/getPasteboard
 // /wda/touch_id
 
 func (s *Session) tttTmp() {
 	body := newWdaBody()
 	_ = body
 
-	touchAction := NewWDATouchActions()
-
 	// element, err := s.FindElement(WDALocator{ClassName: WDAElementType{ScrollView: true}})
 	element, err := s.FindElement(WDALocator{Name: "自定手势作用区域"})
 	_, _ = element, err
 
-	touchAction.
-		Press(NewWDATouchActionOptionPress().SetElement(element).SetXY(200, 200).SetPressure(1)).
-		// LongPress(NewWDATouchActionOptionLongPress().SetElement(element).SetXY(200, 200)).
-		Wait(0.2).
-		MoveTo(NewWDATouchActionOptionMoveTo().SetElement(element).SetXY(300, 200)).
-		Wait(0.2).
-		MoveTo(NewWDATouchActionOptionMoveTo().SetElement(element).SetXY(200, 400)).
-		Wait(0.2).
-		MoveTo(NewWDATouchActionOptionMoveTo().SetElement(element).SetXY(300, 400)).
-		Release()
+	// actions := NewWDAActions().testFinger(element)
+	// actions := NewWDAActions().FingerTap(75, 185)
+	// actions := NewWDAActions(). // FingerTap(-75, -185, element)
+	// 	// FingerDoubleTap(0, 0, element)
+	// 	FingerPress(75, 185, 2, element)
 
-	body.set("actions", touchAction)
+	// actOptFingerLeft := NewWDAActionOptionFinger().
+	// 	Move(NewWWDAActionOptionFingerMove().SetXY(-75, -185).SetOrigin(element)).
+	// 	Down().
+	// 	Pause(0.1).
+	// 	Move(NewWWDAActionOptionFingerMove().SetOrigin(element)).
+	// 	Pause(0.1).
+	// 	Up()
+	//
+	// actOptFingerRight := NewWDAActionOptionFinger().
+	// 	Move(NewWWDAActionOptionFingerMove().SetXY(75, 185).SetOrigin(element)).
+	// 	Down().
+	// 	Pause(0.1).
+	// 	Move(NewWWDAActionOptionFingerMove().SetOrigin(element)).
+	// 	Pause(0.1).
+	// 	Up()
+	//
+	// actions := NewWDAActions().
+	// 	FingerActionOption(actOptFingerLeft).
+	// 	FingerActionOption(actOptFingerRight)
+
+	// actions := NewWDAActions()._fingerSwipe(-75, -185, 0, 0, element)._fingerSwipe(75, 185, 0, 0, element)
+	actions := NewWDAActions().
+		FingerSwipe(-75, -185, 0, 0, element).
+		FingerSwipe(75, 185, 0, 0, element)
+
+	body.set("actions", actions)
+
+	// optionFinger := NewWDAActionOptionFinger().
+	// 	Move(NewWWDAActionOptionFingerMove().SetXY(-75, -185).SetOrigin(element)).
+	// 	Down().
+	// 	Pause(0.1).
+	// 	Move(NewWWDAActionOptionFingerMove().SetOrigin(element)).
+	// 	Pause(0.1).
+	// 	Up()
+	// marshal, _ := json.Marshal(optionFinger)
+	// marshal, _ := json.Marshal(actions)
+	// fmt.Println(string(marshal))
+
 	// return
-
-	// [FBRoute POST:@"/wda/touch/perform"]
-	// [FBRoute POST:@"/wda/touch/multi/perform"]
-	wdaResp, err := internalPost("###############", urlJoin(s.sessionURL, "/wda/touch/multi/perform"), body)
 
 	// performW3CActions
 	// [FBRoute POST:@"/actions"]
-	// wdaResp, err := internalPost("###############", urlJoin(s.sessionURL, "/actions"), body)
-	fmt.Println(err, wdaResp)
+	wdaResp, err := internalPost("###############", urlJoin(s.sessionURL, "/actions"), body)
+	_, _ = err, wdaResp
+	// fmt.Println(err, wdaResp)
+}
+
+func (act *WDAActions) testFinger(element *Element) *WDAActions {
+	pointer := newWdaBody().set("type", "pointer")
+	pointer.set("id", "finger1")
+	pointer.set("parameters", newWdaBody().set("pointerType", "touch"))
+
+	// type WDAActionOptionFinger []wdaBody
+	actOptFinger := make([]wdaBody, 0, 8)
+
+	// Tap
+	// origin 中心点为坐标起点
+	// actOptFinger = append(actOptFinger, newWdaBody().set("type", "pointerMove").setXY(-75, -185).set("duration", 0).set("origin", element.UID))
+	// actOptFinger = append(actOptFinger, newWdaBody().set("type", "pointerMove").setXY(75, 185).set("duration", 0).set("origin", element.UID))
+	// actOptFinger = append(actOptFinger, newWdaBody().set("type", "pointerDown"))
+	// actOptFinger = append(actOptFinger, newWdaBody().set("type", "pause").set("duration", 100))
+	// actOptFinger = append(actOptFinger, newWdaBody().set("type", "pointerUp"))
+
+	// DoubleTap
+	// actOptFinger = append(actOptFinger, newWdaBody().set("type", "pointerMove").setXY(0, 0).set("duration", 0).set("origin", element.UID))
+	// actOptFinger = append(actOptFinger, newWdaBody().set("type", "pointerDown"))
+	// actOptFinger = append(actOptFinger, newWdaBody().set("type", "pause").set("duration", 100))
+	// actOptFinger = append(actOptFinger, newWdaBody().set("type", "pointerUp"))
+	// actOptFinger = append(actOptFinger, newWdaBody().set("type", "pause").set("duration", 40))
+	// actOptFinger = append(actOptFinger, newWdaBody().set("type", "pointerDown"))
+	// actOptFinger = append(actOptFinger, newWdaBody().set("type", "pause").set("duration", 100))
+	// actOptFinger = append(actOptFinger, newWdaBody().set("type", "pointerUp"))
+
+	// LongPress
+	// actOptFinger = append(actOptFinger, newWdaBody().set("type", "pointerMove").setXY(5, 5).set("duration", 0).set("origin", element.UID))
+	// actOptFinger = append(actOptFinger, newWdaBody().set("type", "pointerDown"))
+	// actOptFinger = append(actOptFinger, newWdaBody().set("type", "pause").set("duration", 500))
+	// actOptFinger = append(actOptFinger, newWdaBody().set("type", "pointerUp"))
+
+	// PressMoveTo
+	actOptFinger = append(actOptFinger, newWdaBody().set("type", "pointerMove").setXY(-75, -185).set("duration", 0).set("origin", element.UID))
+	actOptFinger = append(actOptFinger, newWdaBody().set("type", "pointerDown"))
+	actOptFinger = append(actOptFinger, newWdaBody().set("type", "pause").set("duration", 100))
+	actOptFinger = append(actOptFinger, newWdaBody().set("type", "pointerMove").setXY(0, 0).set("duration", 0).set("origin", element.UID))
+	actOptFinger = append(actOptFinger, newWdaBody().set("type", "pause").set("duration", 100))
+	actOptFinger = append(actOptFinger, newWdaBody().set("type", "pointerUp"))
+
+	pointer.set("actions", actOptFinger)
+	*act = append(*act, pointer)
+
+	// pointer = newWdaBody().set("type", "pointer")
+	// pointer.set("id", "finger2")
+	// pointer.set("parameters", newWdaBody().set("pointerType", "touch"))
+	// actOptFinger = make([]wdaBody, 0, 8)
+	// // PressMoveTo
+	// actOptFinger = append(actOptFinger, newWdaBody().set("type", "pointerMove").setXY(75, 185).set("duration", 0).set("origin", element.UID))
+	// actOptFinger = append(actOptFinger, newWdaBody().set("type", "pointerDown"))
+	// actOptFinger = append(actOptFinger, newWdaBody().set("type", "pause").set("duration", 100))
+	// actOptFinger = append(actOptFinger, newWdaBody().set("type", "pointerMove").setXY(0, 0).set("duration", 0).set("origin", element.UID))
+	// actOptFinger = append(actOptFinger, newWdaBody().set("type", "pause").set("duration", 100))
+	// actOptFinger = append(actOptFinger, newWdaBody().set("type", "pointerUp"))
+	// pointer.set("actions", actOptFinger)
+	// *act = append(*act, pointer)
+
+	return act
 }

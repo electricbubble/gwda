@@ -263,9 +263,30 @@ func (e *Element) PinchToZoomIn() (err error) {
 
 // PinchToZoomOut
 //
+// !! may not work
+//
 // scale, velocity = 0.9, -4.5
 func (e *Element) PinchToZoomOut() (err error) {
 	return e.Pinch(0.9, -4.5)
+}
+
+func (e *Element) PinchToZoomOutByActions(scale ...float64) (err error) {
+	if len(scale) == 0 {
+		scale = []float64{1.0}
+	} else if scale[0] > 23 {
+		scale[0] = 23
+	}
+	var rect WDARect
+	if rect, err = e.Rect(); err != nil {
+		return err
+	}
+	r := scale[0] * 2 / 100.0
+	leftX, leftY := float64(rect.Width)*r, float64(rect.Height)*r
+
+	offsetX, offsetY := int(leftX), int(leftY)
+
+	actions := NewWDAActions().FingerSwipe(0-offsetX, 0-offsetY, 0, 0, e).FingerSwipe(offsetX, offsetY, 0, 0, e)
+	return performActions(e.endpoint, actions)
 }
 
 // Rotate
