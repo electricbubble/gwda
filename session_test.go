@@ -676,34 +676,35 @@ func TestSession_PerformActions(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	element, err := s.FindElement(WDALocator{Name: "自定手势作用区域"})
-	if err != nil {
-		t.Fatal(err)
-	}
-	actOptFingerLeft := NewWDAActionOptionFinger().
-		Move(NewWWDAActionOptionFingerMove().SetXY(-75, -185).SetOrigin(element)).
-		Down().
-		Pause(0.25).
-		Move(NewWWDAActionOptionFingerMove().SetOrigin(element)).
-		Pause(0.25).
-		Up()
-	actOptFingerRight := NewWDAActionOptionFinger().
-		Move(NewWWDAActionOptionFingerMove().SetXY(75, 185).SetOrigin(element)).
-		Down().
-		Pause(0.25).
-		Move(NewWWDAActionOptionFingerMove().SetOrigin(element)).
-		Pause(0.25).
-		Up()
-	_, _, _ = element, actOptFingerLeft, actOptFingerRight
+	// element, err := s.FindElement(WDALocator{Name: "自定手势作用区域"})
+	// if err != nil {
+	// 	t.Fatal(err)
+	// }
+	// actOptFingerLeft := NewWDAActionOptionFinger().
+	// 	Move(NewWWDAActionOptionFingerMove().SetXY(-75, -185).SetOrigin(element)).
+	// 	Down().
+	// 	Pause(0.25).
+	// 	Move(NewWWDAActionOptionFingerMove().SetOrigin(element)).
+	// 	Pause(0.25).
+	// 	Up()
+	// actOptFingerRight := NewWDAActionOptionFinger().
+	// 	Move(NewWWDAActionOptionFingerMove().SetXY(75, 185).SetOrigin(element)).
+	// 	Down().
+	// 	Pause(0.25).
+	// 	Move(NewWWDAActionOptionFingerMove().SetOrigin(element)).
+	// 	Pause(0.25).
+	// 	Up()
+	// _, _, _ = element, actOptFingerLeft, actOptFingerRight
 	Debug = true
 
-	// actions := NewWDAActions().FingerTap(80, 100)
-	// actions := NewWDAActions().FingerTap(50, 0, element)
-	// actions := NewWDAActions().FingerPress(50, 0, 3, element)
-	// actions := NewWDAActions().FingerDoubleTap(0, 50, element)
-	// actions := NewWDAActions().FingerSwipe(-75, -185, 0, 0, element)
-	// actions := NewWDAActions().FingerSwipe(-75, -185, 0, 0, element).FingerSwipe(75, 185, 0, 0, element)
-	actions := NewWDAActions().FingerActionOption(actOptFingerLeft).FingerActionOption(actOptFingerRight)
+	// actions := NewWDAActions().Tap(80, 100)
+	// actions := NewWDAActions().Tap(50, 0, element)
+	// actions := NewWDAActions().Press(50, 0, 3, element)
+	// actions := NewWDAActions().DoubleTap(0, 50, element)
+	// actions := NewWDAActions().Swipe(-75, -185, 0, 0, element)
+	// actions := NewWDAActions().Swipe(-75, -185, 0, 0, element).Swipe(75, 185, 0, 0, element)
+	// actions := NewWDAActions().FingerActionOption(actOptFingerLeft).FingerActionOption(actOptFingerRight)
+	actions := NewWDAActions().SendKeys("WebDriverAgent")
 
 	err = s.PerformActions(actions)
 	if err != nil {

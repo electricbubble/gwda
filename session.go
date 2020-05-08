@@ -895,7 +895,29 @@ func (aof *WDAActionOptionFinger) Pause(duration ...float64) *WDAActionOptionFin
 	return aof
 }
 
-func (act *WDAActions) _newPointerForFinger() wdaBody {
+func (act *WDAActions) _newTypeForKeyboard() wdaBody {
+	pointer := newWdaBody().set("type", "key")
+	pointer.set("id", "keyboard"+strconv.FormatInt(int64(len(*act)+1), 10))
+	return pointer
+}
+
+func (act *WDAActions) SendKeys(text string) *WDAActions {
+	keyboard := act._newTypeForKeyboard()
+	ss := strings.Split(text, "")
+	actOptKey := make([]wdaBody, 0, len(ss)+1)
+
+	for i := range ss {
+		actOptKey = append(actOptKey,
+			newWdaBody().set("type", "keyDown").set("value", ss[i]),
+			newWdaBody().set("type", "keyUp").set("value", ss[i]))
+	}
+
+	keyboard.set("actions", actOptKey)
+	*act = append(*act, keyboard)
+	return act
+}
+
+func (act *WDAActions) _newTypeForFinger() wdaBody {
 	pointer := newWdaBody().set("type", "pointer")
 	pointer.set("id", "finger"+strconv.FormatInt(int64(len(*act)+1), 10))
 	pointer.set("parameters", newWdaBody().set("pointerType", "touch"))
@@ -903,13 +925,13 @@ func (act *WDAActions) _newPointerForFinger() wdaBody {
 }
 
 func (act *WDAActions) FingerActionOption(actOptFinger *WDAActionOptionFinger) *WDAActions {
-	pointer := act._newPointerForFinger()
+	pointer := act._newTypeForFinger()
 	pointer.set("actions", *actOptFinger)
 	*act = append(*act, pointer)
 	return act
 }
 
-func (act *WDAActions) FingerTap(x, y int, element ...*Element) *WDAActions {
+func (act *WDAActions) Tap(x, y int, element ...*Element) *WDAActions {
 	optMove := NewWWDAActionOptionFingerMove().SetXY(x, y)
 	if len(element) != 0 {
 		optMove.SetOrigin(element[0])
@@ -923,7 +945,7 @@ func (act *WDAActions) FingerTap(x, y int, element ...*Element) *WDAActions {
 	return act.FingerActionOption(actOptFinger)
 }
 
-func (act *WDAActions) FingerDoubleTap(x, y int, element ...*Element) *WDAActions {
+func (act *WDAActions) DoubleTap(x, y int, element ...*Element) *WDAActions {
 	optMove := NewWWDAActionOptionFingerMove().SetXY(x, y)
 	if len(element) != 0 {
 		optMove.SetOrigin(element[0])
@@ -941,7 +963,7 @@ func (act *WDAActions) FingerDoubleTap(x, y int, element ...*Element) *WDAAction
 	return act.FingerActionOption(actOptFinger)
 }
 
-func (act *WDAActions) FingerPress(x, y int, duration float64, element ...*Element) *WDAActions {
+func (act *WDAActions) Press(x, y int, duration float64, element ...*Element) *WDAActions {
 	optMove := NewWWDAActionOptionFingerMove().SetXY(x, y)
 	if len(element) != 0 {
 		optMove.SetOrigin(element[0])
@@ -955,7 +977,7 @@ func (act *WDAActions) FingerPress(x, y int, duration float64, element ...*Eleme
 	return act.FingerActionOption(actOptFinger)
 }
 
-func (act *WDAActions) _fingerSwipe(fromX, fromY, toX, toY interface{}, element ...*Element) *WDAActions {
+func (act *WDAActions) _swipe(fromX, fromY, toX, toY interface{}, element ...*Element) *WDAActions {
 	optMoveFrom := NewWWDAActionOptionFingerMove()._setXY(fromX, fromY)
 	optMoveTo := NewWWDAActionOptionFingerMove()._setXY(toX, toY)
 	if len(element) != 0 {
@@ -973,19 +995,17 @@ func (act *WDAActions) _fingerSwipe(fromX, fromY, toX, toY interface{}, element 
 	return act.FingerActionOption(actOptFinger)
 }
 
-func (act *WDAActions) FingerSwipe(fromX, fromY, toX, toY int, element ...*Element) *WDAActions {
-	return act._fingerSwipe(fromX, fromY, toX, toY, element...)
+func (act *WDAActions) Swipe(fromX, fromY, toX, toY int, element ...*Element) *WDAActions {
+	return act._swipe(fromX, fromY, toX, toY, element...)
 }
 
-func (act *WDAActions) FingerSwipeFloat(fromX, fromY, toX, toY float64, element ...*Element) *WDAActions {
-	return act._fingerSwipe(fromX, fromY, toX, toY, element...)
+func (act *WDAActions) SwipeFloat(fromX, fromY, toX, toY float64, element ...*Element) *WDAActions {
+	return act._swipe(fromX, fromY, toX, toY, element...)
 }
 
-func (act *WDAActions) FingerSwipeCoordinate(fromCoordinate, toCoordinate WDACoordinate, element ...*Element) *WDAActions {
-	return act._fingerSwipe(fromCoordinate.X, fromCoordinate.Y, toCoordinate.X, toCoordinate.Y, element...)
+func (act *WDAActions) SwipeCoordinate(fromCoordinate, toCoordinate WDACoordinate, element ...*Element) *WDAActions {
+	return act._swipe(fromCoordinate.X, fromCoordinate.Y, toCoordinate.X, toCoordinate.Y, element...)
 }
-
-// TODO WDAActions "type": @"key"
 
 // ActiveAppInfo
 //
@@ -1300,115 +1320,15 @@ func (s *Session) tttTmp() {
 	element, err := s.FindElement(WDALocator{Name: "自定手势作用区域"})
 	_, _ = element, err
 
-	// actions := NewWDAActions().testFinger(element)
-	// actions := NewWDAActions().FingerTap(75, 185)
-	// actions := NewWDAActions(). // FingerTap(-75, -185, element)
-	// 	// FingerDoubleTap(0, 0, element)
-	// 	FingerPress(75, 185, 2, element)
-
-	// actOptFingerLeft := NewWDAActionOptionFinger().
-	// 	Move(NewWWDAActionOptionFingerMove().SetXY(-75, -185).SetOrigin(element)).
-	// 	Down().
-	// 	Pause(0.1).
-	// 	Move(NewWWDAActionOptionFingerMove().SetOrigin(element)).
-	// 	Pause(0.1).
-	// 	Up()
-	//
-	// actOptFingerRight := NewWDAActionOptionFinger().
-	// 	Move(NewWWDAActionOptionFingerMove().SetXY(75, 185).SetOrigin(element)).
-	// 	Down().
-	// 	Pause(0.1).
-	// 	Move(NewWWDAActionOptionFingerMove().SetOrigin(element)).
-	// 	Pause(0.1).
-	// 	Up()
-	//
-	// actions := NewWDAActions().
-	// 	FingerActionOption(actOptFingerLeft).
-	// 	FingerActionOption(actOptFingerRight)
-
-	// actions := NewWDAActions()._fingerSwipe(-75, -185, 0, 0, element)._fingerSwipe(75, 185, 0, 0, element)
 	actions := NewWDAActions().
-		FingerSwipe(-75, -185, 0, 0, element).
-		FingerSwipe(75, 185, 0, 0, element)
+		Swipe(-75, -185, 0, 0, element).
+		Swipe(75, 185, 0, 0, element)
 
 	body.set("actions", actions)
-
-	// optionFinger := NewWDAActionOptionFinger().
-	// 	Move(NewWWDAActionOptionFingerMove().SetXY(-75, -185).SetOrigin(element)).
-	// 	Down().
-	// 	Pause(0.1).
-	// 	Move(NewWWDAActionOptionFingerMove().SetOrigin(element)).
-	// 	Pause(0.1).
-	// 	Up()
-	// marshal, _ := json.Marshal(optionFinger)
-	// marshal, _ := json.Marshal(actions)
-	// fmt.Println(string(marshal))
-
-	// return
 
 	// performW3CActions
 	// [FBRoute POST:@"/actions"]
 	wdaResp, err := internalPost("###############", urlJoin(s.sessionURL, "/actions"), body)
 	_, _ = err, wdaResp
 	// fmt.Println(err, wdaResp)
-}
-
-func (act *WDAActions) testFinger(element *Element) *WDAActions {
-	pointer := newWdaBody().set("type", "pointer")
-	pointer.set("id", "finger1")
-	pointer.set("parameters", newWdaBody().set("pointerType", "touch"))
-
-	// type WDAActionOptionFinger []wdaBody
-	actOptFinger := make([]wdaBody, 0, 8)
-
-	// Tap
-	// origin 中心点为坐标起点
-	// actOptFinger = append(actOptFinger, newWdaBody().set("type", "pointerMove").setXY(-75, -185).set("duration", 0).set("origin", element.UID))
-	// actOptFinger = append(actOptFinger, newWdaBody().set("type", "pointerMove").setXY(75, 185).set("duration", 0).set("origin", element.UID))
-	// actOptFinger = append(actOptFinger, newWdaBody().set("type", "pointerDown"))
-	// actOptFinger = append(actOptFinger, newWdaBody().set("type", "pause").set("duration", 100))
-	// actOptFinger = append(actOptFinger, newWdaBody().set("type", "pointerUp"))
-
-	// DoubleTap
-	// actOptFinger = append(actOptFinger, newWdaBody().set("type", "pointerMove").setXY(0, 0).set("duration", 0).set("origin", element.UID))
-	// actOptFinger = append(actOptFinger, newWdaBody().set("type", "pointerDown"))
-	// actOptFinger = append(actOptFinger, newWdaBody().set("type", "pause").set("duration", 100))
-	// actOptFinger = append(actOptFinger, newWdaBody().set("type", "pointerUp"))
-	// actOptFinger = append(actOptFinger, newWdaBody().set("type", "pause").set("duration", 40))
-	// actOptFinger = append(actOptFinger, newWdaBody().set("type", "pointerDown"))
-	// actOptFinger = append(actOptFinger, newWdaBody().set("type", "pause").set("duration", 100))
-	// actOptFinger = append(actOptFinger, newWdaBody().set("type", "pointerUp"))
-
-	// LongPress
-	// actOptFinger = append(actOptFinger, newWdaBody().set("type", "pointerMove").setXY(5, 5).set("duration", 0).set("origin", element.UID))
-	// actOptFinger = append(actOptFinger, newWdaBody().set("type", "pointerDown"))
-	// actOptFinger = append(actOptFinger, newWdaBody().set("type", "pause").set("duration", 500))
-	// actOptFinger = append(actOptFinger, newWdaBody().set("type", "pointerUp"))
-
-	// PressMoveTo
-	actOptFinger = append(actOptFinger, newWdaBody().set("type", "pointerMove").setXY(-75, -185).set("duration", 0).set("origin", element.UID))
-	actOptFinger = append(actOptFinger, newWdaBody().set("type", "pointerDown"))
-	actOptFinger = append(actOptFinger, newWdaBody().set("type", "pause").set("duration", 100))
-	actOptFinger = append(actOptFinger, newWdaBody().set("type", "pointerMove").setXY(0, 0).set("duration", 0).set("origin", element.UID))
-	actOptFinger = append(actOptFinger, newWdaBody().set("type", "pause").set("duration", 100))
-	actOptFinger = append(actOptFinger, newWdaBody().set("type", "pointerUp"))
-
-	pointer.set("actions", actOptFinger)
-	*act = append(*act, pointer)
-
-	// pointer = newWdaBody().set("type", "pointer")
-	// pointer.set("id", "finger2")
-	// pointer.set("parameters", newWdaBody().set("pointerType", "touch"))
-	// actOptFinger = make([]wdaBody, 0, 8)
-	// // PressMoveTo
-	// actOptFinger = append(actOptFinger, newWdaBody().set("type", "pointerMove").setXY(75, 185).set("duration", 0).set("origin", element.UID))
-	// actOptFinger = append(actOptFinger, newWdaBody().set("type", "pointerDown"))
-	// actOptFinger = append(actOptFinger, newWdaBody().set("type", "pause").set("duration", 100))
-	// actOptFinger = append(actOptFinger, newWdaBody().set("type", "pointerMove").setXY(0, 0).set("duration", 0).set("origin", element.UID))
-	// actOptFinger = append(actOptFinger, newWdaBody().set("type", "pause").set("duration", 100))
-	// actOptFinger = append(actOptFinger, newWdaBody().set("type", "pointerUp"))
-	// pointer.set("actions", actOptFinger)
-	// *act = append(*act, pointer)
-
-	return act
 }

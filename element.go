@@ -281,11 +281,9 @@ func (e *Element) PinchToZoomOutByActions(scale ...float64) (err error) {
 		return err
 	}
 	r := scale[0] * 2 / 100.0
-	leftX, leftY := float64(rect.Width)*r, float64(rect.Height)*r
+	offsetX, offsetY := float64(rect.Width)*r, float64(rect.Height)*r
 
-	offsetX, offsetY := int(leftX), int(leftY)
-
-	actions := NewWDAActions().FingerSwipe(0-offsetX, 0-offsetY, 0, 0, e).FingerSwipe(offsetX, offsetY, 0, 0, e)
+	actions := NewWDAActions().SwipeFloat(0-offsetX, 0-offsetY, 0, 0, e).SwipeFloat(offsetX, offsetY, 0, 0, e)
 	return performActions(e.endpoint, actions)
 }
 
