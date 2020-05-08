@@ -41,16 +41,6 @@ func (si WDASessionInfo) String() string {
 // GetActiveSession
 //
 // get current session information
-//
-// {
-//    "sessionId" : "8BF16568-832F-4A14-A137-FD0CA566FC64",
-//    "capabilities" : {
-//      "device" : "iphone",
-//      "browserName" : "设置",
-//      "sdkVersion" : "11.4.1",
-//      "CFBundleIdentifier" : "com.apple.Preferences"
-//    }
-// }
 func (s *Session) GetActiveSession() (wdaSessionInfo WDASessionInfo, err error) {
 	var wdaResp wdaResponse
 	if wdaResp, err = internalGet("GetActiveSession", urlJoin(s.sessionURL, "")); err != nil {
@@ -149,10 +139,10 @@ func (s *Session) AppActivate(bundleId string) (err error) {
 //
 // Deactivates application for given time and then activate it again
 func (s *Session) AppDeactivate(seconds ...float64) (err error) {
-	body := newWdaBody()
-	if len(seconds) != 0 {
-		body.set("duration", seconds[0])
+	if len(seconds) == 0 {
+		seconds = []float64{3.0}
 	}
+	body := newWdaBody().set("duration", seconds[0])
 	wdaResp, err := internalPost("AppDeactivate", urlJoin(s.sessionURL, "/wda/deactivateApp"), body)
 	if err != nil {
 		return err
@@ -160,7 +150,10 @@ func (s *Session) AppDeactivate(seconds ...float64) (err error) {
 	return wdaResp.getErrMsg()
 }
 
-const WDATextBackspaceDeleteSequence = "\u0008\u007F"
+const (
+	WDATextBackspaceSequence = "\u0008"
+	WDATextDeleteSequence    = "\u007F"
+)
 
 // sendKeys
 func sendKeys(url string, text string, typingFrequency ...int) (err error) {
@@ -412,7 +405,8 @@ func (s *Session) SetPasteboardForUrl(url string) (err error) {
 
 // GetPasteboard
 //
-// It might work when `WebDriverAgentRunner` is [foreground on real devices](https://github.com/appium/WebDriverAgent/issues/330)
+// It might work when `WebDriverAgentRunner` is in foreground on real devices.
+// https://github.com/appium/WebDriverAgent/issues/330
 func (s *Session) GetPasteboard(contentType WDAContentType) (raw *bytes.Buffer, err error) {
 	var wdaResp wdaResponse
 	body := newWdaBody().set("contentType", contentType)
@@ -1027,17 +1021,6 @@ func (s *Session) ActiveAppInfo() (wdaActiveAppInfo WDAActiveAppInfo, err error)
 // ActiveAppsList
 //
 // use multitasking on iPad
-//
-// [
-//    {
-//      "pid" : 3573,
-//      "bundleId" : "com.apple.DocumentsApp"
-//    },
-//    {
-//      "pid" : 3311,
-//      "bundleId" : "com.apple.reminders"
-//    }
-//  ]
 func (s *Session) ActiveAppsList() (appsList []WDAAppBaseInfo, err error) {
 	var wdaResp wdaResponse
 	if wdaResp, err = internalGet("ActiveAppsList", urlJoin(s.sessionURL, "/wda/apps/list")); err != nil {
@@ -1099,17 +1082,6 @@ func (di WDADeviceInfo) String() string {
 }
 
 // DeviceInfo
-//
-// {
-//    "timeZone" : "Asia\/Shanghai",
-//    "currentLocale" : "zh_CN",
-//    "model" : "iPhone",
-//    "uuid" : "x-x-x-x-x",
-//    "userInterfaceIdiom" : 0,
-//    "userInterfaceStyle" : "unsupported",
-//    "name" : "TEST’s iPhone",
-//    "isSimulator" : false
-//  }
 func (s *Session) DeviceInfo() (wdaDeviceInfo WDADeviceInfo, err error) {
 	return deviceInfo(s.sessionURL)
 }
@@ -1148,16 +1120,11 @@ func (v WDABatteryState) String() string {
 
 // BatteryInfo
 //
-// {
-//    "level": 0.92000001668930054,
-//    "state": 2
-// }
-//
-// level - Battery level in range [0.0, 1.0], where 1.0 means 100% charge.
-// state - Battery state. The following values are possible:
-// UIDeviceBatteryStateUnplugged = 1  // on battery, discharging
-// UIDeviceBatteryStateCharging = 2   // plugged in, less than 100%
-// UIDeviceBatteryStateFull = 3       // plugged in, at 100%
+//	level - Battery level in range [0.0, 1.0], where 1.0 means 100% charge.
+//	state - Battery state. The following values are possible:
+//	UIDeviceBatteryStateUnplugged = 1  // on battery, discharging
+//	UIDeviceBatteryStateCharging = 2   // plugged in, less than 100%
+//	UIDeviceBatteryStateFull = 3       // plugged in, at 100%
 func (s *Session) BatteryInfo() (wdaBatteryInfo WDABatteryInfo, err error) {
 	var wdaResp wdaResponse
 	if wdaResp, err = internalGet("BatteryInfo", urlJoin(s.sessionURL, "/wda/batteryInfo")); err != nil {
@@ -1172,10 +1139,7 @@ func (s *Session) BatteryInfo() (wdaBatteryInfo WDABatteryInfo, err error) {
 
 // WindowSize
 //
-// {
-//    "width": 812,
-//    "height": 375
-// }
+// CGRect frame = request.session.activeApplication.wdFrame;
 func (s *Session) WindowSize() (wdaSize WDASize, err error) {
 	var wdaResp wdaResponse
 	if wdaResp, err = internalGet("WindowSize", urlJoin(s.sessionURL, "/window/size")); err != nil {
@@ -1209,14 +1173,6 @@ func (s WDAScreen) String() string {
 }
 
 // Screen
-//
-// {
-//    "statusBarSize": {
-//        "width": 375,
-//        "height": 44
-//    },
-//    "scale": 3
-// }
 func (s *Session) Screen() (wdaScreen WDAScreen, err error) {
 	var wdaResp wdaResponse
 	if wdaResp, err = internalGet("Screen", urlJoin(s.sessionURL, "/wda/screen")); err != nil {
