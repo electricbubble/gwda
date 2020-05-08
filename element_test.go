@@ -3,6 +3,8 @@ package gwda
 import (
 	"fmt"
 	"math"
+	"os"
+	"path/filepath"
 	"strconv"
 	"testing"
 )
@@ -238,8 +240,6 @@ func TestElement_Swipe(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// element.ScreenshotToDisk("/Users/hero/Desktop/e8.png")
-	// return
 	Debug = true
 	// rect, _ := element.Rect()
 	// 相对元素自身的坐标
@@ -669,7 +669,8 @@ func TestElement_FindElement(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	err = subElement.ScreenshotToDisk("/Users/hero/Desktop/e2.png")
+	userHomeDir, _ := os.UserHomeDir()
+	err = subElement.ScreenshotToDisk(filepath.Join(userHomeDir, "Desktop", "e2.png"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -696,8 +697,9 @@ func TestElement_FindElements(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	userHomeDir, _ := os.UserHomeDir()
 	for i := range subElements {
-		err = subElements[i].ScreenshotToDisk("/Users/hero/Desktop/es" + strconv.FormatInt(int64(i), 10) + ".png")
+		err = subElements[i].ScreenshotToDisk(filepath.Join(userHomeDir, "Desktop", "es"+strconv.FormatInt(int64(i), 10)+".png"))
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -805,8 +807,9 @@ func TestElement_ScreenshotToDisk(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// err = element.ScreenshotToDiskAsJpeg("/Users/hero/Desktop/e1.png")
-	err = element.ScreenshotToDisk("/Users/hero/Desktop/e1.png")
+	userHomeDir, _ := os.UserHomeDir()
+	// err = element.ScreenshotToDiskAsJpeg(filepath.Join(userHomeDir, "Desktop", "e1.png"))
+	err = element.ScreenshotToDisk(filepath.Join(userHomeDir, "Desktop", "e1.png"))
 	if err != nil {
 		t.Fatal(err)
 	}

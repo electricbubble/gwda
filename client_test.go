@@ -1,6 +1,8 @@
 package gwda
 
 import (
+	"os"
+	"path/filepath"
 	"testing"
 	"time"
 )
@@ -212,8 +214,9 @@ func TestClient_ScreenshotToDisk(t *testing.T) {
 		t.Fatal(err)
 	}
 	Debug = true
-	// err = c.ScreenshotToDiskAsPng("/Users/hero/Desktop/c1.png")
-	err = c.ScreenshotToDisk("/Users/hero/Desktop/c1.png")
+	userHomeDir, _ := os.UserHomeDir()
+	// err = c.ScreenshotToDiskAsPng(filepath.Join(userHomeDir, "Desktop", "c1.png"))
+	err = c.ScreenshotToDisk(filepath.Join(userHomeDir, "Desktop", "c1.png"))
 	if err != nil {
 		t.Fatal(err)
 	}

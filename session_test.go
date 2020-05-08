@@ -2,6 +2,8 @@ package gwda
 
 import (
 	"io/ioutil"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -890,7 +892,8 @@ func TestSession_GetPasteboard(t *testing.T) {
 	// content, err := s.GetPasteboardForPlaintext()
 	// url, err := s.GetPasteboardForUrl()
 	// image, format, err := s.GetPasteboardForImage()
-	err = s.GetPasteboardForImageToDisk("/Users/hero/Desktop/s3.png")
+	userHomeDir, _ := os.UserHomeDir()
+	err = s.GetPasteboardForImageToDisk(filepath.Join(userHomeDir, "Desktop", "s3.png"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1026,7 +1029,8 @@ func TestSession_ScreenshotToDisk(t *testing.T) {
 	}
 	// defer s.DeleteSession()
 	Debug = true
-	err = s.ScreenshotToDisk("/Users/hero/Desktop/s1.png")
+	userHomeDir, _ := os.UserHomeDir()
+	err = s.ScreenshotToDisk(filepath.Join(userHomeDir, "Desktop", "s1.png"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1037,7 +1041,7 @@ func TestSession_ScreenshotToDisk(t *testing.T) {
 	}
 
 	Debug = true
-	err = s.ScreenshotToDisk("/Users/hero/Desktop/s2.jpeg", element.UID)
+	err = s.ScreenshotToDisk(filepath.Join(userHomeDir, "Desktop", "s2.png"), element.UID)
 	if err != nil {
 		t.Fatal(err)
 	}
