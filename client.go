@@ -30,6 +30,10 @@ func NewClient(deviceURL string, isInitializesAlertButtonSelector ...bool) (c *C
 		return nil, err
 	}
 
+	if _, err = c.IsWdaHealth(); err != nil {
+		return nil, err
+	}
+
 	if len(isInitializesAlertButtonSelector) != 0 && isInitializesAlertButtonSelector[0] {
 		settings := newWdaBody().set("acceptAlertButtonSelector", _acceptAlertButtonSelector).set("dismissAlertButtonSelector", _dismissAlertButtonSelector)
 		c.setAppiumSettings(settings)
