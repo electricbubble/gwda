@@ -1007,6 +1007,16 @@ func (act *WDAActions) SwipeCoordinate(fromCoordinate, toCoordinate WDACoordinat
 	return act._swipe(fromCoordinate.X, fromCoordinate.Y, toCoordinate.X, toCoordinate.Y, element...)
 }
 
+// MatchTouchID
+//
+// Matches or mismatches TouchID request
+func (s *Session) MatchTouchID(isMatch bool) (bool, error) {
+	body := newWdaBody().set("match", isMatch)
+	// [FBRoute POST:@"/wda/touch_id"]
+	wdaResp, err := internalPost("MatchTouchID", urlJoin(s.sessionURL, "/wda/touch_id"), body)
+	return wdaResp.getValue().Bool(), err
+}
+
 // ActiveAppInfo
 //
 // get current active application
@@ -1317,18 +1327,13 @@ func (s *Session) tttTmp() {
 	_ = body
 
 	// element, err := s.FindElement(WDALocator{ClassName: WDAElementType{ScrollView: true}})
-	element, err := s.FindElement(WDALocator{Name: "自定手势作用区域"})
-	_, _ = element, err
+	// element, err := s.FindElement(WDALocator{Name: "自定手势作用区域"})
+	// _, _ = element, err
 
-	actions := NewWDAActions().
-		Swipe(-75, -185, 0, 0, element).
-		Swipe(75, 185, 0, 0, element)
+	body.set("match", true)
 
-	body.set("actions", actions)
-
-	// performW3CActions
-	// [FBRoute POST:@"/actions"]
-	wdaResp, err := internalPost("###############", urlJoin(s.sessionURL, "/actions"), body)
+	// [FBRoute POST:@"/wda/touch_id"]
+	wdaResp, err := internalPost("###############", urlJoin(s.sessionURL, "/wda/touch_id"), body)
 	_, _ = err, wdaResp
 	// fmt.Println(err, wdaResp)
 }
