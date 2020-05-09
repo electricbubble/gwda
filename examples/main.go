@@ -1,20 +1,3 @@
-# Golang-wda
-
-使用 Golang 实现 [appium/WebDriverAgent](https://github.com/appium/WebDriverAgent) 的客户端库
-
-参考 [facebook-wda](https://github.com/openatx/facebook-wda)
-
-## 安装
-
-> 必须先安装好 `WDA`，安装步骤可参考 [ATX 文档 - iOS 真机如何安装 WebDriverAgent](https://testerhome.com/topics/7220) 或者
-> [WebDriverAgent 安装](http://leixipaopao.com/posts/0005-wda-appium-installing/)
-
-```shell script
-go get -u github.com/electricbubble/gwda
-```
-
-## 使用
-```go
 package main
 
 import (
@@ -26,6 +9,7 @@ import (
 )
 
 func main() {
+	// TODO 预设自动弹窗 `Selector` 的值
 	client, err := gwda.NewClient("http://localhost:8100")
 	checkErr("连接设备", err)
 
@@ -54,6 +38,7 @@ func main() {
 	log.Println("Name:", deviceInfo.Name)
 	log.Println("IsSimulator:", deviceInfo.IsSimulator)
 
+	// TODO 自动弹窗、App 启动参数等设置
 	session, err := client.NewSession()
 	checkErr("创建 session", err)
 
@@ -96,6 +81,7 @@ func main() {
 	switch appRunState {
 	case gwda.WDAAppNotRunning:
 		log.Println("该 App 未运行, 开始打开 App:", bundleId)
+		// TODO app 启动参数设置
 		err = session.AppLaunch(bundleId)
 		checkErr("启动指定 App", err)
 	case gwda.WDAAppRunningBack:
@@ -234,10 +220,3 @@ func checkErr(msg string, err error) {
 		log.Fatalln(msg, err)
 	}
 }
-
-```
-> 以上代码仅使用了 iPhone X (13.4.1) 和 iPhone 6s (11.4.1) 进行了测试。
-
-## TODO
-
-待补充更多 Examples
