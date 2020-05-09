@@ -255,6 +255,23 @@ func TestSession_TouchAndHold(t *testing.T) {
 	}
 }
 
+func TestSession_ForceTouch(t *testing.T) {
+	c, err := NewClient(deviceURL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	s, err := c.NewSession()
+	if err != nil {
+		t.Fatal(err)
+	}
+	Debug = true
+	// err = s.ForceTouch(230, 130, 1)
+	err = s.ForceTouch(230, 130, 1, 0.5)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestSession_Drag(t *testing.T) {
 	c, err := NewClient(deviceURL)
 	if err != nil {

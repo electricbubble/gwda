@@ -260,6 +260,32 @@ func (s *Session) TouchAndHoldFloat(x, y float64, duration ...float64) (err erro
 	return touchAndHold(s.sessionURL, x, y, duration[0])
 }
 
+func (s *Session) _forceTouch(x, y interface{}, pressure float64, duration ...float64) (err error) {
+	if len(duration) == 0 {
+		duration = []float64{1.0}
+	}
+	touchActions := NewWDATouchActions().
+		Press(
+			NewWDATouchActionOptionPress().
+				_setXY(x, y).
+				SetPressure(pressure)).
+		Wait(duration[0]).
+		Release()
+	return s.PerformTouchActions(touchActions)
+}
+
+func (s *Session) ForceTouch(x, y int, pressure float64, duration ...float64) (err error) {
+	return s._forceTouch(x, y, pressure, duration...)
+}
+
+func (s *Session) ForceTouchFloat(x, y, pressure float64, duration ...float64) (err error) {
+	return s._forceTouch(x, y, pressure, duration...)
+}
+
+func (s *Session) ForceTouchCoordinate(coordinate WDACoordinate, pressure float64, duration ...float64) (err error) {
+	return s._forceTouch(coordinate.X, coordinate.Y, pressure, duration...)
+}
+
 // drag
 //
 // [FBRoute POST:@"/wda/dragfromtoforduration"]
@@ -746,11 +772,14 @@ type WDATouchActionOptionPress wdaBody
 func NewWDATouchActionOptionPress() WDATouchActionOptionPress {
 	return make(WDATouchActionOptionPress)
 }
-func (tao WDATouchActionOptionPress) SetXY(x, y int) WDATouchActionOptionPress {
+func (tao WDATouchActionOptionPress) _setXY(x, y interface{}) WDATouchActionOptionPress {
 	return WDATouchActionOptionPress(wdaBody(tao).setXY(x, y))
 }
+func (tao WDATouchActionOptionPress) SetXY(x, y int) WDATouchActionOptionPress {
+	return tao._setXY(x, y)
+}
 func (tao WDATouchActionOptionPress) SetXYFloat(x, y float64) WDATouchActionOptionPress {
-	return WDATouchActionOptionPress(wdaBody(tao).setXY(x, y))
+	return tao._setXY(x, y)
 }
 func (tao WDATouchActionOptionPress) SetElement(element *Element) WDATouchActionOptionPress {
 	return WDATouchActionOptionPress(wdaBody(tao).set("element", element.UID))
