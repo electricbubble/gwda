@@ -1,15 +1,18 @@
 # Golang-wda
+[![doc](https://godoc.org/github.com/electricbubble/gwda?status.svg)](https://pkg.go.dev/github.com/electricbubble/gwda?tab=doc#pkg-index)
+[![go report card](https://goreportcard.com/badge/github.com/electricbubble/gwda)](https://goreportcard.com/report/github.com/electricbubble/gwda)
+[![license](https://img.shields.io/github/license/electricbubble/gwda)](https://github.com/ElectricBubble/gwda/blob/master/LICENSE)
 
 使用 Golang 实现 [appium/WebDriverAgent](https://github.com/appium/WebDriverAgent) 的客户端库
 
-参考 [facebook-wda](https://github.com/openatx/facebook-wda)
+参考 facebook-wda (python): [https://github.com/openatx/facebook-wda](https://github.com/openatx/facebook-wda)
 
 ## 安装
 
 > 必须先安装好 `WDA`，安装步骤可参考 [ATX 文档 - iOS 真机如何安装 WebDriverAgent](https://testerhome.com/topics/7220) 或者
 > [WebDriverAgent 安装](http://leixipaopao.com/posts/0005-wda-appium-installing/)
 
-```shell script
+```bash
 go get -u github.com/electricbubble/gwda
 ```
 
