@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/base64"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"image"
 	"io/ioutil"
@@ -557,7 +556,7 @@ func findUidOfElements(baseUrl *url.URL, wdaLocator WDALocator) (elemUIDs []stri
 	}
 	results := wdaResp.getValue().Array()
 	if len(results) == 0 {
-		return nil, errors.New(fmt.Sprintf("no such element: unable to find an element using '%s', value '%s'", using, value))
+		return nil, fmt.Errorf("no such element: unable to find an element using '%s', value '%s'", using, value)
 	}
 	elemUIDs = make([]string, len(results))
 	for i := range elemUIDs {

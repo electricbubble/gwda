@@ -369,7 +369,7 @@ func (e *Element) PickerWheelSelect(order WDAPickerWheelSelectOrder, offset ...i
 	if len(offset) == 0 {
 		offset = []int{2}
 	} else if offset[0] <= 0 || offset[0] > 5 {
-		return errors.New(fmt.Sprintf("'offset' value is expected to be in range (0, 5]. '%d' was given instead", offset[0]))
+		return fmt.Errorf("'offset' value is expected to be in range (0, 5]. '%d' was given instead", offset[0])
 	}
 	body := newWdaBody().set("order", order).set("offset", float64(offset[0])*0.1)
 	// [FBRoute POST:@"/wda/pickerwheel/:uuid/select"]
@@ -546,7 +546,7 @@ func (e *Element) FindVisibleCells() (elements []*Element, err error) {
 	}
 	results := wdaResp.getValue().Array()
 	if len(results) == 0 {
-		return nil, errors.New(fmt.Sprintf("no such element: unable to find a cell element in this element"))
+		return nil, errors.New("no such element: unable to find a cell element in this element")
 	}
 	elements = make([]*Element, len(results))
 	for i := range elements {
@@ -633,13 +633,13 @@ func (wl WDALocator) getUsingAndValue() (using, value string) {
 	tBy := reflect.TypeOf(wl)
 	for i := 0; i < vBy.NumField(); i++ {
 		vi := vBy.Field(i).Interface()
-		switch vi.(type) {
+		switch vi := vi.(type) {
 		case WDAElementType:
-			value = vi.(WDAElementType).String()
+			value = vi.String()
 		case string:
-			value = vi.(string)
+			value = vi
 		case WDAElementAttribute:
-			value = vi.(WDAElementAttribute).String()
+			value = vi.String()
 		}
 		if value != "" && value != "UNKNOWN" {
 			using = tBy.Field(i).Tag.Get("json")
@@ -653,11 +653,11 @@ type WDAElementAttribute wdaBody
 
 func (ea WDAElementAttribute) String() string {
 	for k, v := range ea {
-		switch v.(type) {
+		switch v := v.(type) {
 		case bool:
-			return k + "=" + strconv.FormatBool(v.(bool))
+			return k + "=" + strconv.FormatBool(v)
 		case string:
-			return k + "=" + v.(string)
+			return k + "=" + v
 		default:
 			return k + "=" + fmt.Sprintf("%v", v)
 		}

@@ -3,7 +3,6 @@ package gwda
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"github.com/tidwall/gjson"
 	"io/ioutil"
@@ -52,7 +51,7 @@ func internalDo(actionName, method, url string, body wdaBody) (wdaResp wdaRespon
 		// body 已经通过 `newWdaBody` 进行初始化和修改，理论上也不存在 err
 		bsBody, err = json.Marshal(body)
 		if err != nil {
-			return nil, errors.New(fmt.Sprintf("%s: invalid request body %s", actionName, err.Error()))
+			return nil, fmt.Errorf("%s: invalid request body %s", actionName, err.Error())
 		}
 		req, _ = http.NewRequest(method, url, bytes.NewBuffer(bsBody))
 	} else {
@@ -64,7 +63,7 @@ func internalDo(actionName, method, url string, body wdaBody) (wdaResp wdaRespon
 	start := time.Now()
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return nil, errors.New(fmt.Sprintf("%s: failed to send request %s", actionName, err.Error()))
+		return nil, fmt.Errorf("%s: failed to send request %s", actionName, err.Error())
 	}
 	defer func() {
 		_ = resp.Body.Close()
@@ -75,14 +74,14 @@ func internalDo(actionName, method, url string, body wdaBody) (wdaResp wdaRespon
 		if body != nil {
 			output += fmt.Sprintf("Body: %s\n", bsBody)
 		}
-		output += fmt.Sprintf("Duration: %s\n", time.Now().Sub(start).String())
+		output += fmt.Sprintf("Duration: %s\n", time.Since(start).String())
 	}
 	wdaResp, err = ioutil.ReadAll(resp.Body)
 	if err != nil {
 		if Debug {
 			log.Println(output)
 		}
-		return nil, errors.New(fmt.Sprintf("%s: failed to read response %s", actionName, err.Error()))
+		return nil, fmt.Errorf("%s: failed to read response %s", actionName, err.Error())
 	}
 	if Debug {
 		if actionName == "Screenshot" {
@@ -175,8 +174,8 @@ func (wdaResp wdaResponse) getErrMsg() error {
 	// 获取 NSLocalizedDescription 的值
 	re := regexp.MustCompile(`{.+?=(.+?)}`)
 	subMatch := re.FindStringSubmatch(wdaErrMsg)
-	if subMatch != nil && len(subMatch) == 2 {
+	if len(subMatch) == 2 {
 		errText = subMatch[1]
 	}
-	return errors.New(fmt.Sprintf("%s: %s", wdaErrType, errText))
+	return fmt.Errorf("%s: %s", wdaErrType, errText)
 }

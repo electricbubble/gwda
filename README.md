@@ -1,6 +1,6 @@
 # Golang-wda
-[![doc](https://godoc.org/github.com/electricbubble/gwda?status.svg)](https://pkg.go.dev/github.com/electricbubble/gwda?tab=doc#pkg-index)
-[![go report card](https://goreportcard.com/badge/github.com/electricbubble/gwda)](https://goreportcard.com/report/github.com/electricbubble/gwda)
+[![go doc](https://godoc.org/github.com/electricbubble/gwda?status.svg)](https://pkg.go.dev/github.com/electricbubble/gwda?tab=doc#pkg-index)
+[![go report](https://goreportcard.com/badge/github.com/electricbubble/gwda)](https://goreportcard.com/report/github.com/electricbubble/gwda)
 [![license](https://img.shields.io/github/license/electricbubble/gwda)](https://github.com/ElectricBubble/gwda/blob/master/LICENSE)
 
 使用 Golang 实现 [appium/WebDriverAgent](https://github.com/appium/WebDriverAgent) 的客户端库

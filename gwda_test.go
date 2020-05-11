@@ -30,10 +30,10 @@ func TestTmpGwda(t *testing.T) {
 
 	fmt.Println()
 
-	using, value := WDALocator{ClassName: WDAElementType{Application: true}}.getUsingAndValue()
-	using, value = WDALocator{Name: "App Store"}.getUsingAndValue()
-	using, value = WDALocator{AccessibilityId: "设置"}.getUsingAndValue()
-	using, value = WDALocator{LinkText: NewWDAElementAttribute().SetLabel("TestFlight")}.getUsingAndValue()
+	// using, value := WDALocator{ClassName: WDAElementType{Application: true}}.getUsingAndValue()
+	// using, value := WDALocator{Name: "App Store"}.getUsingAndValue()
+	// using, value := WDALocator{AccessibilityId: "设置"}.getUsingAndValue()
+	using, value := WDALocator{LinkText: NewWDAElementAttribute().SetLabel("TestFlight")}.getUsingAndValue()
 	fmt.Println("using:", using)
 	fmt.Println("value:", value)
 
