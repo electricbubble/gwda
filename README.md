@@ -245,7 +245,7 @@ func checkErr(msg string, err error) {
     > 也可能是前期最常用的函数
 
 - [弹窗处理](https://github.com/electricbubble/gwda/blob/master/examples/alert/main.go)  
-![alert](https://cdn.jsdelivr.net/gh/ElectricBubble/ImageHosting/img/图像.gif)
+![alert](https://raw.githubusercontent.com/ElectricBubble/ImageHosting/master/img/图像.gif)
 
 > 以上代码仅使用了 iPhone X (13.4.1) 和 iPhone 6s (11.4.1) 进行了测试。
 
