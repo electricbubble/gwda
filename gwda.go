@@ -72,7 +72,6 @@ func internalDo(actionName, method, url string, body wdaBody) (wdaResp wdaRespon
 		req.Header.Set(k, v)
 	}
 	start := time.Now()
-
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("%s: failed to send request %s", actionName, err.Error())
