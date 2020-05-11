@@ -239,6 +239,14 @@ func checkErr(msg string, err error) {
 }
 
 ```
+
+- [调试函数](https://github.com/electricbubble/gwda/blob/master/examples/debug/main.go)  
+这类函数需要遍历 app 的所有/可见元素，所以会根据元素的复杂程度导致耗时不同。  
+    > 也可能是前期最常用的函数
+
+- [弹窗处理](https://github.com/electricbubble/gwda/blob/master/examples/alert/main.go)  
+![alert](https://cdn.jsdelivr.net/gh/ElectricBubble/ImageHosting/img/图像.gif)
+
 > 以上代码仅使用了 iPhone X (13.4.1) 和 iPhone 6s (11.4.1) 进行了测试。
 
 ## TODO
