@@ -4,15 +4,26 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/tidwall/gjson"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
+	"os"
 	"path"
 	"regexp"
 	"time"
+
+	"github.com/tidwall/gjson"
 )
+
+func init() {
+	httpProxy := os.Getenv("http_proxy")
+	if httpProxy != "" {
+		if proxyURL, err := url.Parse(httpProxy); err == nil {
+			http.DefaultTransport = &http.Transport{Proxy: http.ProxyURL(proxyURL)}
+		}
+	}
+}
 
 var Debug = false
 var wdaHeader = map[string]string{
@@ -61,6 +72,7 @@ func internalDo(actionName, method, url string, body wdaBody) (wdaResp wdaRespon
 		req.Header.Set(k, v)
 	}
 	start := time.Now()
+
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("%s: failed to send request %s", actionName, err.Error())
