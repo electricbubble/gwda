@@ -290,10 +290,7 @@ func TestElement_Click(t *testing.T) {
 	_ = s.AppLaunch(bundleId)
 	Debug = true
 	element, err := s.FindElement(WDALocator{LinkText: NewWDAElementAttribute().SetValue("通知")})
-	if err != nil {
-		// staleElementReferenceErrorWithMessage
-		t.Fatal(err)
-	}
+	checkErr(t, err)
 	t.Log(element)
 
 	err = element.Click()
