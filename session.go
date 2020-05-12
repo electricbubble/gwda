@@ -750,11 +750,17 @@ type WDATouchActionOptionLongPress wdaBody
 func NewWDATouchActionOptionLongPress() WDATouchActionOptionLongPress {
 	return make(WDATouchActionOptionLongPress)
 }
-func (tao WDATouchActionOptionLongPress) SetXY(x, y int) WDATouchActionOptionLongPress {
+func (tao WDATouchActionOptionLongPress) _setXY(x, y interface{}) WDATouchActionOptionLongPress {
 	return WDATouchActionOptionLongPress(wdaBody(tao).setXY(x, y))
 }
+func (tao WDATouchActionOptionLongPress) SetXY(x, y int) WDATouchActionOptionLongPress {
+	return tao._setXY(x, y)
+}
 func (tao WDATouchActionOptionLongPress) SetXYFloat(x, y float64) WDATouchActionOptionLongPress {
-	return WDATouchActionOptionLongPress(wdaBody(tao).setXY(x, y))
+	return tao._setXY(x, y)
+}
+func (tao WDATouchActionOptionLongPress) SetXYCoordinate(coordinate WDACoordinate) WDATouchActionOptionLongPress {
+	return tao._setXY(coordinate.X, coordinate.Y)
 }
 func (tao WDATouchActionOptionLongPress) SetElement(element *Element) WDATouchActionOptionLongPress {
 	return WDATouchActionOptionLongPress(wdaBody(tao).set("element", element.UID))
@@ -780,6 +786,9 @@ func (tao WDATouchActionOptionPress) SetXY(x, y int) WDATouchActionOptionPress {
 func (tao WDATouchActionOptionPress) SetXYFloat(x, y float64) WDATouchActionOptionPress {
 	return tao._setXY(x, y)
 }
+func (tao WDATouchActionOptionPress) SetXYCoordinate(coordinate WDACoordinate) WDATouchActionOptionPress {
+	return tao._setXY(coordinate.X, coordinate.Y)
+}
 func (tao WDATouchActionOptionPress) SetElement(element *Element) WDATouchActionOptionPress {
 	return WDATouchActionOptionPress(wdaBody(tao).set("element", element.UID))
 }
@@ -804,11 +813,17 @@ type WDATouchActionOptionMoveTo wdaBody
 func NewWDATouchActionOptionMoveTo() WDATouchActionOptionMoveTo {
 	return make(WDATouchActionOptionMoveTo)
 }
-func (tao WDATouchActionOptionMoveTo) SetXY(x, y int) WDATouchActionOptionMoveTo {
+func (tao WDATouchActionOptionMoveTo) _setXY(x, y interface{}) WDATouchActionOptionMoveTo {
 	return WDATouchActionOptionMoveTo(wdaBody(tao).setXY(x, y))
 }
+func (tao WDATouchActionOptionMoveTo) SetXY(x, y int) WDATouchActionOptionMoveTo {
+	return tao._setXY(x, y)
+}
 func (tao WDATouchActionOptionMoveTo) SetXYFloat(x, y float64) WDATouchActionOptionMoveTo {
-	return WDATouchActionOptionMoveTo(wdaBody(tao).setXY(x, y))
+	return tao._setXY(x, y)
+}
+func (tao WDATouchActionOptionMoveTo) SetXYCoordinate(coordinate WDACoordinate) WDATouchActionOptionMoveTo {
+	return tao._setXY(coordinate.X, coordinate.Y)
 }
 func (tao WDATouchActionOptionMoveTo) SetElement(element *Element) WDATouchActionOptionMoveTo {
 	return WDATouchActionOptionMoveTo(wdaBody(tao).set("element", element.UID))
