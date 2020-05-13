@@ -249,6 +249,8 @@ func checkErr(msg string, err error) {
 
 - [手势操作](https://github.com/electricbubble/gwda/blob/master/examples/gesture/main.go)  
 可自定义手势，比如 `手势密码`  
+同时该示例代码中包含了部分创建 `NewSession` 和 `AppLaunch` 的额外参数  
+[这里有一个修改 App 语言的启动参数](https://github.com/electricbubble/gwda/blob/master/session_test.go#L237)  
 ![gesture](https://raw.githubusercontent.com/electricbubble/ImageHosting/master/img/202005121752图像.gif)
 
 > 以上代码仅使用了 iPhone X (13.4.1) 和 iPhone 6s (11.4.1) 进行了测试。

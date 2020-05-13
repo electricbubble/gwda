@@ -30,22 +30,28 @@ func alertsMonitor() {
 	// 创建 session 时，设置当 Alert 出现时的默认处理行为（ Accept/Dismiss ）
 	// gwda.WDASessionAlertActionAccept
 	session, err := client.NewSession(
-		gwda.NewWDASessionCapability(bundleId).
+		// 可在创建 session 指定需要打开的 App （创建后会自动打开，并默认 SetShouldWaitForQuiescence(true)）
+		// gwda.NewWDASessionCapability(bundleId).
+		gwda.NewWDASessionCapability().
 			SetDefaultAlertAction(gwda.WDASessionAlertActionAccept))
 	checkErr("创建 session", err)
 
 	// 将开始 2s 一次的弹窗监控
 
-	_ = session.AppLaunch(bundleId, gwda.NewWDAAppLaunchOption().SetShouldWaitForQuiescence(false))
+	// _ = session.AppLaunch(bundleId, gwda.NewWDAAppLaunchOption().SetShouldWaitForQuiescence(false))
+	// SetShouldWaitForQuiescence(true)
+	_ = session.AppLaunch(bundleId)
 
 	time.Sleep(time.Second * 4)
 
 	// 实际上 弹窗监控是可以跨 session 的，所以，在没有 DeleteSession() 之前可以自动处理其他的 App 弹窗
 	bundleId = "com.apple.AppStore"
 	_ = session.AppLaunch(bundleId, gwda.NewWDAAppLaunchOption().SetShouldWaitForQuiescence(false))
+	// _ = session.AppLaunch(bundleId)
 
 	defer func() {
 		time.Sleep(time.Second * 12)
+		_ = session.AppTerminate(bundleId)
 		// ⚠️ 当设置自动弹窗处理的时候，请务必使用 session.DeleteSession() 来让 `WDA` 内部去关闭弹窗的监控
 		// 删除 session 同时会关闭 `gwda.NewWDASessionCapability(bundleId)` 指定的 App
 		_ = session.DeleteSession()

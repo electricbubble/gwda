@@ -9,7 +9,6 @@ import (
 )
 
 func main() {
-	// TODO 预设自动弹窗 `Selector` 的值
 	client, err := gwda.NewClient("http://localhost:8100")
 	checkErr("连接设备", err)
 
@@ -38,7 +37,6 @@ func main() {
 	log.Println("Name:", deviceInfo.Name)
 	log.Println("IsSimulator:", deviceInfo.IsSimulator)
 
-	// TODO 自动弹窗、App 启动参数等设置
 	session, err := client.NewSession()
 	checkErr("创建 session", err)
 
@@ -81,7 +79,6 @@ func main() {
 	switch appRunState {
 	case gwda.WDAAppNotRunning:
 		log.Println("该 App 未运行, 开始打开 App:", bundleId)
-		// TODO app 启动参数设置
 		err = session.AppLaunch(bundleId)
 		checkErr("启动指定 App", err)
 	case gwda.WDAAppRunningBack:
