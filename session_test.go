@@ -717,7 +717,7 @@ func TestSession_Screenshot(t *testing.T) {
 	checkErr(t, err)
 
 	Debug = true
-	_, err = s.Screenshot(element.UID)
+	_, err = s.Screenshot(element)
 	checkErr(t, err)
 }
 
@@ -736,7 +736,7 @@ func TestSession_ScreenshotToDisk(t *testing.T) {
 	checkErr(t, err)
 
 	Debug = true
-	err = s.ScreenshotToDisk(filepath.Join(userHomeDir, "Desktop", "s2.png"), element.UID)
+	err = s.ScreenshotToDisk(filepath.Join(userHomeDir, "Desktop", "s2.png"), element)
 	checkErr(t, err)
 }
 
@@ -757,8 +757,7 @@ func TestSession_ScreenshotToImage(t *testing.T) {
 	checkErr(t, err)
 
 	Debug = true
-	// toJpeg, err := s.ScreenshotElementToJpeg(element.UID)
-	img, format, err = s.ScreenshotToImage(element.UID)
+	img, format, err = s.ScreenshotToImage(element)
 	checkErr(t, err)
 	t.Log("元素图片的格式:", format)
 	t.Log("元素图片的大小:", img.Bounds().Size())
@@ -809,6 +808,28 @@ func TestTmpSession(t *testing.T) {
 	s, err := c.NewSession()
 	checkErr(t, err)
 	Debug = true
+
+	// err = s.AppLaunch("com.apple.calculator")
+	// checkErr(t, err)
+	// orientation, err := s.Orientation()
+	// if orientation == WDAOrientationPortrait {
+	// 	err = s.SetOrientation(WDAOrientationLandscapeLeft)
+	// }
+	//
+	// userHomeDir, _ := os.UserHomeDir()
+	// err = s.ScreenshotToDisk(filepath.Join(userHomeDir, "Desktop", "s4.png"))
+	// checkErr(t, err)
+	//
+	// element, err := s.FindElement(WDALocator{Name: "("})
+	// checkErr(t, err)
+	//
+	// err = element.ScreenshotToDisk(filepath.Join(userHomeDir, "Desktop", "e5.png"))
+	// checkErr(t, err)
+	//
+	// err = s.ScreenshotToDisk(filepath.Join(userHomeDir, "Desktop", "e6.png"), element)
+	// checkErr(t, err)
+	//
+	// return
 
 	// s.SetOrientation(WDAOrientationLandscapeRight)
 	s.tttTmp()

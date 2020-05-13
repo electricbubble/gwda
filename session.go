@@ -1267,18 +1267,18 @@ func (s *Session) Lock() (err error) {
 // Screenshot
 //
 // OR takes a screenshot of the specified element
-func (s *Session) Screenshot(elemUID ...string) (raw *bytes.Buffer, err error) {
-	return screenshot(s.sessionURL, elemUID...)
+func (s *Session) Screenshot(element ...*Element) (raw *bytes.Buffer, err error) {
+	return screenshot(s.sessionURL, element...)
 }
 
 // ScreenshotToDisk
-func (s *Session) ScreenshotToDisk(filename string, elemUID ...string) (err error) {
-	return screenshotToDisk(s.sessionURL, filename, elemUID...)
+func (s *Session) ScreenshotToDisk(filename string, element ...*Element) (err error) {
+	return screenshotToDisk(s.sessionURL, filename, element...)
 }
 
 // ScreenshotToImage
-func (s *Session) ScreenshotToImage(elemUID ...string) (img image.Image, format string, err error) {
-	return screenshotToImage(s.sessionURL, elemUID...)
+func (s *Session) ScreenshotToImage(element ...*Element) (img image.Image, format string, err error) {
+	return screenshotToImage(s.sessionURL, element...)
 }
 
 // Source

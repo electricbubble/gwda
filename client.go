@@ -378,12 +378,12 @@ func (c *Client) ActiveAppInfo() (wdaActiveAppInfo WDAActiveAppInfo, err error) 
 // [FBRoute GET:@"/screenshot"]
 // [FBRoute GET:@"/element/:uuid/screenshot"]
 // [FBRoute GET:@"/screenshot/:uuid"]
-func screenshot(baseUrl *url.URL, elemUID ...string) (raw *bytes.Buffer, err error) {
+func screenshot(baseUrl *url.URL, element ...*Element) (raw *bytes.Buffer, err error) {
 	var wdaResp wdaResponse
 
 	tmpPath := "/screenshot"
-	if len(elemUID) != 0 && elemUID[0] != "" {
-		tmpPath += "/" + elemUID[0]
+	if len(element) != 0 && element[0].UID != "" {
+		tmpPath += "/" + element[0].UID
 	}
 
 	if wdaResp, err = internalGet("Screenshot", urlJoin(baseUrl, tmpPath)); err != nil {
@@ -398,17 +398,17 @@ func screenshot(baseUrl *url.URL, elemUID ...string) (raw *bytes.Buffer, err err
 	}
 }
 
-func screenshotToDisk(baseUrl *url.URL, filename string, elemUID ...string) (err error) {
+func screenshotToDisk(baseUrl *url.URL, filename string, element ...*Element) (err error) {
 	var raw *bytes.Buffer
-	if raw, err = screenshot(baseUrl, elemUID...); err != nil {
+	if raw, err = screenshot(baseUrl, element...); err != nil {
 		return err
 	}
 	err = ioutil.WriteFile(filename, raw.Bytes(), 0666)
 	return
 }
 
-func screenshotToImage(baseUrl *url.URL, elemUID ...string) (img image.Image, format string, err error) {
-	if raw, err := screenshot(baseUrl, elemUID...); err != nil {
+func screenshotToImage(baseUrl *url.URL, element ...*Element) (img image.Image, format string, err error) {
+	if raw, err := screenshot(baseUrl, element...); err != nil {
 		return nil, "", err
 	} else {
 		img, format, err := image.Decode(raw)
