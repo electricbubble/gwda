@@ -17,6 +17,7 @@ import (
 
 type Client struct {
 	deviceURL *url.URL
+	MjpegURL  *url.URL
 }
 
 // NewClient
@@ -29,6 +30,8 @@ func NewClient(deviceURL string, isInitializesAlertButtonSelector ...bool) (c *C
 	if c.deviceURL, err = url.Parse(deviceURL); err != nil {
 		return nil, err
 	}
+	c.MjpegURL, _ = url.Parse(c.deviceURL.String())
+	c.MjpegURL.Host = c.MjpegURL.Hostname() + ":" + "9100"
 
 	if _, err = c.IsWdaHealth(); err != nil {
 		return nil, err
