@@ -492,6 +492,20 @@ func (e *Element) GetAttribute(attr WDAElementAttribute) (value string, err erro
 	return wdaResp.getValue().String(), nil
 }
 
+func (e *Element) Name() (string, error) {
+	return e.GetAttribute(NewWDAElementAttribute().SetName(""))
+}
+
+func (e *Element) Label() (string, error) {
+	return e.GetAttribute(NewWDAElementAttribute().SetLabel(""))
+}
+
+func (e *Element) Value() (string, error) {
+	return e.GetAttribute(NewWDAElementAttribute().SetValue(""))
+}
+
+// Text
+// 	FBFirstNonEmptyValue(element.wdValue, element.wdLabel);
 func (e *Element) Text() (text string, err error) {
 	var wdaResp wdaResponse
 	// [FBRoute GET:@"/element/:uuid/text"]
