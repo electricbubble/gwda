@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type Session struct {
@@ -1316,10 +1317,47 @@ func (s *Session) SetAppiumSettings(settings map[string]interface{}) (sJson stri
 	return wdaResp.getValue().String(), nil
 }
 
+type WDACondition func(s *Session) (bool, error)
+
+func (s *Session) _waitWithTimeoutAndInterval(condition WDACondition, timeout, interval time.Duration) (err error) {
+	startTime := time.Now()
+	for {
+		done, err := condition(s)
+		if err != nil {
+			return err
+		}
+		if done {
+			return nil
+		}
+
+		if elapsed := time.Since(startTime); elapsed > timeout {
+			return fmt.Errorf("timeout after %v", elapsed)
+		}
+		time.Sleep(interval)
+	}
+}
+
+// WaitWithTimeoutAndInterval waits for the condition to evaluate to true.
+func (s *Session) WaitWithTimeoutAndInterval(condition WDACondition, timeout, interval float64) (err error) {
+	dTimeout := time.Millisecond * time.Duration(timeout*1000)
+	dInterval := time.Millisecond * time.Duration(interval*1000)
+	return s._waitWithTimeoutAndInterval(condition, dTimeout, dInterval)
+}
+
+// WaitWithTimeout works like WaitWithTimeoutAndInterval, but with default polling interval.
+func (s *Session) WaitWithTimeout(condition WDACondition, timeout float64) error {
+	dTimeout := time.Millisecond * time.Duration(timeout*1000)
+	return s._waitWithTimeoutAndInterval(condition, dTimeout, DefaultWaitInterval)
+}
+
+// Wait works like WaitWithTimeoutAndInterval, but using the default timeout and polling interval.
+func (s *Session) Wait(condition WDACondition) error {
+	return s._waitWithTimeoutAndInterval(condition, DefaultWaitTimeout, DefaultWaitInterval)
+}
+
 // It's not working
 // /timeouts
 // /wda/keyboard/dismiss
-// /wda/touch_id
 
 func (s *Session) tttTmp() {
 	body := newWdaBody()

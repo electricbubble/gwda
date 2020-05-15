@@ -802,6 +802,27 @@ func TestSession_GetAppiumSettings(t *testing.T) {
 	t.Log(settings)
 }
 
+func TestSession_Wait(t *testing.T) {
+	c, err := NewClient(deviceURL)
+	checkErr(t, err)
+	s, err := c.NewSession()
+	checkErr(t, err)
+
+	element, err := s.FindElement(WDALocator{Name: "App Store"})
+	checkErr(t, err)
+	checkErr(t, element.Click())
+
+	exists := func(s *Session) (bool, error) {
+		element, err = s.FindElement(WDALocator{Name: "搜索"})
+		if err == nil {
+			return true, nil
+		}
+		return false, nil
+	}
+	checkErr(t, s.WaitWithTimeoutAndInterval(exists, 1, 0.1))
+	checkErr(t, element.Click())
+}
+
 func TestTmpSession(t *testing.T) {
 	c, err := NewClient(deviceURL)
 	checkErr(t, err)

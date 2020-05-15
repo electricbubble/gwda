@@ -26,6 +26,10 @@ func init() {
 }
 
 var Debug = false
+
+var DefaultWaitTimeout = time.Second * 60
+var DefaultWaitInterval = time.Millisecond * 250
+
 var wdaHeader = map[string]string{
 	"Content-Type": "application/json;charset=UTF-8",
 	"accept":       "application/json",
