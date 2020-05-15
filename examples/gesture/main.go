@@ -135,7 +135,13 @@ func setup(session *gwda.Session, duration ...time.Duration) {
 		findAndClick(session, gwda.WDALocator{LinkText: gwda.NewWDAElementAttribute().SetLabel("切换控制")}, "切换控制")
 	}
 
-	time.Sleep(time.Second * 1)
+	isSwitched := func(s *gwda.Session) (bool, error) {
+		if activeNavBarName(s) == "切换控制" {
+			return true, nil
+		}
+		return false, nil
+	}
+	checkErr("等待列表切换", session.WaitWithTimeoutAndInterval(isSwitched, 10, 0.1))
 
 	elemList, err := session.FindElement(gwda.WDALocator{ClassName: gwda.WDAElementType{Table: true}})
 	checkErr("找到当前列表 切换控制", err)
