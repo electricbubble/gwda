@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"github.com/electricbubble/gwda"
 	"log"
 	"time"
@@ -56,29 +57,18 @@ func main() {
 
 	findAndClick(session, gwda.WDALocator{Predicate: "rect.x == 0 && rect.y == 44 && rect.width == 44 && rect.height == 44"}, "签到日历的 返回按钮")
 
-	elemBackLv2, err := waitForElement(session, gwda.WDALocator{Name: "返回"})
-	checkErr(err, "找到签到页的 返回按钮")
-	rectBackLv2, err := elemBackLv2.Rect()
-	checkErr(err, "获取签到页 返回按钮 的坐标")
-
-	// 判断第二层的返回按钮是否可见
-	isShowBackLv2 := func(s *gwda.Session) (bool, error) {
-		isDisplayed, fErr := elemBackLv2.IsDisplayed()
-		// 如果查看 可见性 报错，则直接跳出判断，结束 `session.Wait`
-		if fErr != nil {
-			return false, fErr
-		}
-		if isDisplayed {
-			return true, nil
-		} else {
-			// 如果 返回按钮 不可见，则可能是出现了一个提示性弹窗，点击可使其消失
-			fErr := session.Tap(rectBackLv2.X+rectBackLv2.Width+1, rectBackLv2.Y+rectBackLv2.Height+1)
-			// 如果查看 点击 报错，则直接跳出判断，结束 `session.Wait`
-			return false, fErr
-		}
+	locatorBackLv2 := gwda.WDALocator{Name: "返回"}
+	findAndClick(session, locatorBackLv2, "签到页的 返回按钮")
+	// 点击后再查找这个 返回按钮
+	elemBackLv2, err := session.FindElement(locatorBackLv2)
+	if err == nil {
+		// 如果找到了，意味着出现了每日仅提示两次的一个弹窗
+		rectBackLv2, err := elemBackLv2.Rect()
+		checkErr(err, "获取签到页 返回按钮 的坐标")
+		// 通过点击使弹窗消失
+		checkErr(session.Tap(rectBackLv2.X+rectBackLv2.Width+1, rectBackLv2.Y+rectBackLv2.Height+1))
+		checkErr(elemBackLv2.Click(), "点击签到页的 返回按钮")
 	}
-	checkErr(session.Wait(isShowBackLv2), "等待签到页的按钮可见 返回按钮")
-	checkErr(elemBackLv2.Click(), "点击签到页的 返回按钮")
 
 	findAndClick(session, gwda.WDALocator{Name: "返回按钮"}, "'我的京豆'的 返回按钮")
 }
@@ -96,12 +86,13 @@ func waitForElement(session *gwda.Session, locator gwda.WDALocator) (element *gw
 		if fErr == nil {
 			return true, nil
 		}
+		// 如果直接返回 err 将直接终止 `session.Wait`
 		return false, nil
 	}
 
 	if err = session.Wait(exists); err != nil {
 		// 当前的判断条件，这里只可能是超时
-		return nil, err
+		return nil, fmt.Errorf("%s: %w", err.Error(), fErr)
 	}
 	return element, fErr
 }
