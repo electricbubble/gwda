@@ -11,7 +11,7 @@ var deviceURL = "http://localhost:8100"
 var bundleId = "com.apple.Preferences"
 
 func TestClient_NewSession(t *testing.T) {
-	Debug = true
+	WDADebug = true
 	c, err := NewClient(deviceURL)
 	checkErr(t, err)
 	bundleId = "com.taobao.taobao4iphone"
@@ -45,7 +45,7 @@ func TestClient_NewSession(t *testing.T) {
 func TestClient_AppLaunchUnattached(t *testing.T) {
 	c, err := NewClient(deviceURL)
 	checkErr(t, err)
-	Debug = true
+	WDADebug = true
 	// 锁屏界面下，启动会失败 `LSApplicationWorkspace failed to launch app`
 	// 但是，如果被打开的 App 正在运行中（前台或后台），则不会报错
 	// 但也不会点亮屏幕
@@ -54,7 +54,7 @@ func TestClient_AppLaunchUnattached(t *testing.T) {
 }
 
 func TestClient_Status(t *testing.T) {
-	Debug = true
+	WDADebug = true
 	c, err := NewClient(deviceURL)
 	checkErr(t, err)
 	status, err := c.Status()
@@ -63,7 +63,7 @@ func TestClient_Status(t *testing.T) {
 }
 
 func TestClient_Homescreen(t *testing.T) {
-	Debug = true
+	WDADebug = true
 	c, err := NewClient(deviceURL)
 	// c, err := NewClient(deviceURL, true)
 	checkErr(t, err)
@@ -74,7 +74,7 @@ func TestClient_Homescreen(t *testing.T) {
 func TestClient_AlertAccept(t *testing.T) {
 	c, err := NewClient(deviceURL)
 	checkErr(t, err)
-	Debug = true
+	WDADebug = true
 	// err = c.AlertAccept()
 	err = c.AlertAccept("始终允许")
 	checkErr(t, err)
@@ -83,7 +83,7 @@ func TestClient_AlertAccept(t *testing.T) {
 func TestClient_AlertDismiss(t *testing.T) {
 	c, err := NewClient(deviceURL)
 	checkErr(t, err)
-	Debug = true
+	WDADebug = true
 	// err = c.AlertDismiss()
 	err = c.AlertDismiss("不允许")
 	checkErr(t, err)
@@ -92,7 +92,7 @@ func TestClient_AlertDismiss(t *testing.T) {
 func TestClient_AlertText(t *testing.T) {
 	c, err := NewClient(deviceURL)
 	checkErr(t, err)
-	Debug = true
+	WDADebug = true
 	text, err := c.AlertText()
 	checkErr(t, err)
 	t.Log(text)
@@ -101,7 +101,7 @@ func TestClient_AlertText(t *testing.T) {
 func TestClient_IsLocked(t *testing.T) {
 	c, err := NewClient(deviceURL)
 	checkErr(t, err)
-	Debug = true
+	WDADebug = true
 	isLocked, err := c.IsLocked()
 	checkErr(t, err)
 	if isLocked {
@@ -114,7 +114,7 @@ func TestClient_IsLocked(t *testing.T) {
 func TestClient_Unlock(t *testing.T) {
 	c, err := NewClient(deviceURL)
 	checkErr(t, err)
-	Debug = true
+	WDADebug = true
 	err = c.Unlock()
 	checkErr(t, err)
 }
@@ -122,7 +122,7 @@ func TestClient_Unlock(t *testing.T) {
 func TestClient_Lock(t *testing.T) {
 	c, err := NewClient(deviceURL)
 	checkErr(t, err)
-	Debug = true
+	WDADebug = true
 	err = c.Lock()
 	checkErr(t, err)
 }
@@ -130,7 +130,7 @@ func TestClient_Lock(t *testing.T) {
 func TestClient_DeviceInfo(t *testing.T) {
 	c, err := NewClient(deviceURL)
 	checkErr(t, err)
-	Debug = true
+	WDADebug = true
 	deviceInfo, err := c.DeviceInfo()
 	checkErr(t, err)
 	t.Log(deviceInfo.Name)
@@ -140,7 +140,7 @@ func TestClient_DeviceInfo(t *testing.T) {
 func TestClient_Screenshot(t *testing.T) {
 	c, err := NewClient(deviceURL)
 	checkErr(t, err)
-	Debug = true
+	WDADebug = true
 	_, err = c.Screenshot()
 	checkErr(t, err)
 }
@@ -148,7 +148,7 @@ func TestClient_Screenshot(t *testing.T) {
 func TestClient_ScreenshotToImage(t *testing.T) {
 	c, err := NewClient(deviceURL)
 	checkErr(t, err)
-	Debug = true
+	WDADebug = true
 	// toPng, err := c.ScreenshotToPng()
 	img, format, err := c.ScreenshotToImage()
 	checkErr(t, err)
@@ -159,7 +159,7 @@ func TestClient_ScreenshotToImage(t *testing.T) {
 func TestClient_ScreenshotToDisk(t *testing.T) {
 	c, err := NewClient(deviceURL)
 	checkErr(t, err)
-	Debug = true
+	WDADebug = true
 	userHomeDir, _ := os.UserHomeDir()
 	// err = c.ScreenshotToDiskAsPng(filepath.Join(userHomeDir, "Desktop", "c1.png"))
 	err = c.ScreenshotToDisk(filepath.Join(userHomeDir, "Desktop", "c1.png"))
@@ -169,7 +169,7 @@ func TestClient_ScreenshotToDisk(t *testing.T) {
 func TestClient_Source(t *testing.T) {
 	c, err := NewClient(deviceURL)
 	checkErr(t, err)
-	Debug = true
+	WDADebug = true
 	s, err := c.Source() // xml
 	// s, err := c.Source(NewWDASourceOption().SetFormatAsJson())
 	// s, err := c.Source(NewWDASourceOption().SetFormatAsDescription())
@@ -188,7 +188,7 @@ func TestClient_Source(t *testing.T) {
 func TestClient_AccessibleSource(t *testing.T) {
 	c, err := NewClient(deviceURL)
 	checkErr(t, err)
-	Debug = true
+	WDADebug = true
 	s, err := c.AccessibleSource()
 	checkErr(t, err)
 	t.Log(s)
@@ -197,7 +197,7 @@ func TestClient_AccessibleSource(t *testing.T) {
 func TestClient_ActiveAppInfo(t *testing.T) {
 	c, err := NewClient(deviceURL)
 	checkErr(t, err)
-	Debug = true
+	WDADebug = true
 	info, err := c.ActiveAppInfo()
 	checkErr(t, err)
 	t.Log(info)
@@ -208,7 +208,7 @@ func TestClient_ActiveAppInfo(t *testing.T) {
 func TestClient_IsWdaHealth(t *testing.T) {
 	c, err := NewClient(deviceURL)
 	checkErr(t, err)
-	Debug = true
+	WDADebug = true
 	isWdaHealth, err := c.IsWdaHealth()
 	checkErr(t, err)
 	t.Log(isWdaHealth)
@@ -217,7 +217,7 @@ func TestClient_IsWdaHealth(t *testing.T) {
 func TestClient_WdaShutdown(t *testing.T) {
 	c, err := NewClient(deviceURL)
 	checkErr(t, err)
-	Debug = true
+	WDADebug = true
 	err = c.WdaShutdown()
 	checkErr(t, err)
 	_, err = c.IsWdaHealth()
@@ -230,7 +230,7 @@ func TestClient_WdaShutdown(t *testing.T) {
 func TestTmp(t *testing.T) {
 	c, err := NewClient(deviceURL)
 	checkErr(t, err)
-	Debug = true
+	WDADebug = true
 	c.tttTmp()
 }
 

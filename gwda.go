@@ -25,7 +25,7 @@ func init() {
 	}
 }
 
-var Debug = false
+var WDADebug = false
 
 var DefaultWaitTimeout = time.Second * 60
 var DefaultWaitInterval = time.Millisecond * 250
@@ -84,7 +84,7 @@ func internalDo(actionName, method, url string, body wdaBody) (wdaResp wdaRespon
 		_ = resp.Body.Close()
 	}()
 	output := ""
-	if Debug {
+	if WDADebug {
 		output = fmt.Sprintf("[DEBUG]↩︎\nActionName: %s\nMethod: %s\nURL: %s\n", actionName, method, req.URL.String())
 		if body != nil {
 			output += fmt.Sprintf("Body: %s\n", bsBody)
@@ -93,12 +93,12 @@ func internalDo(actionName, method, url string, body wdaBody) (wdaResp wdaRespon
 	}
 	wdaResp, err = ioutil.ReadAll(resp.Body)
 	if err != nil {
-		if Debug {
+		if WDADebug {
 			log.Println(output)
 		}
 		return nil, fmt.Errorf("%s: failed to read response %s", actionName, err.Error())
 	}
-	if Debug {
+	if WDADebug {
 		if actionName == "Screenshot" {
 			output += fmt.Sprintf("Response: too long, don't display (%s)\n", url)
 		} else {

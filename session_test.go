@@ -11,7 +11,7 @@ import (
 func TestSession_GetActiveSession(t *testing.T) {
 	c, err := NewClient(deviceURL)
 	checkErr(t, err)
-	Debug = true
+	WDADebug = true
 	s, err := c.NewSession()
 	checkErr(t, err)
 	sessionInfo, err := s.GetActiveSession()
@@ -30,7 +30,7 @@ func TestSession_GetActiveSession(t *testing.T) {
 func TestSession_DeleteSession(t *testing.T) {
 	c, err := NewClient(deviceURL)
 	checkErr(t, err)
-	Debug = true
+	WDADebug = true
 	s, err := c.NewSession()
 	checkErr(t, err)
 	err = s.DeleteSession()
@@ -51,7 +51,7 @@ func TestSession_DeleteSession(t *testing.T) {
 func TestSession_DeviceInfo(t *testing.T) {
 	c, err := NewClient(deviceURL)
 	checkErr(t, err)
-	Debug = true
+	WDADebug = true
 	s, err := c.NewSession()
 	checkErr(t, err)
 	dInfo, err := s.DeviceInfo()
@@ -66,7 +66,7 @@ func TestSession_BatteryInfo(t *testing.T) {
 	checkErr(t, err)
 	s, err := c.NewSession()
 	checkErr(t, err)
-	Debug = true
+	WDADebug = true
 	batteryInfo, err := s.BatteryInfo()
 	checkErr(t, err)
 	t.Log(batteryInfo)
@@ -79,7 +79,7 @@ func TestSession_WindowSize(t *testing.T) {
 	checkErr(t, err)
 	s, err := c.NewSession()
 	checkErr(t, err)
-	Debug = true
+	WDADebug = true
 	windowSize, err := s.WindowSize()
 	checkErr(t, err)
 	t.Log(windowSize)
@@ -90,7 +90,7 @@ func TestSession_Screen(t *testing.T) {
 	checkErr(t, err)
 	s, err := c.NewSession()
 	checkErr(t, err)
-	Debug = true
+	WDADebug = true
 	screen, err := s.Screen()
 	checkErr(t, err)
 	t.Log(screen)
@@ -101,7 +101,7 @@ func TestSession_Scale(t *testing.T) {
 	checkErr(t, err)
 	s, err := c.NewSession()
 	checkErr(t, err)
-	Debug = true
+	WDADebug = true
 	scale, err := s.Scale()
 	checkErr(t, err)
 	t.Log(scale)
@@ -112,7 +112,7 @@ func TestSession_StatusBarSize(t *testing.T) {
 	checkErr(t, err)
 	s, err := c.NewSession()
 	checkErr(t, err)
-	Debug = true
+	WDADebug = true
 	statusBarSize, err := s.StatusBarSize()
 	checkErr(t, err)
 	t.Log(statusBarSize)
@@ -135,7 +135,7 @@ func TestSession_ActiveAppsList(t *testing.T) {
 	checkErr(t, err)
 	s, err := c.NewSession()
 	checkErr(t, err)
-	Debug = true
+	WDADebug = true
 	appsList, err := s.ActiveAppsList()
 	checkErr(t, err)
 	t.Log(appsList)
@@ -146,7 +146,7 @@ func TestSession_Tap(t *testing.T) {
 	checkErr(t, err)
 	s, err := c.NewSession()
 	checkErr(t, err)
-	Debug = true
+	WDADebug = true
 	err = s.Tap(230, 130)
 	checkErr(t, err)
 	// err = s.Tap(210, 290)
@@ -160,7 +160,7 @@ func TestSession_DoubleTap(t *testing.T) {
 	checkErr(t, err)
 	s, err := c.NewSession()
 	checkErr(t, err)
-	Debug = true
+	WDADebug = true
 	err = s.DoubleTap(230, 130)
 	checkErr(t, err)
 }
@@ -170,7 +170,7 @@ func TestSession_TouchAndHold(t *testing.T) {
 	checkErr(t, err)
 	s, err := c.NewSession()
 	checkErr(t, err)
-	Debug = true
+	WDADebug = true
 	// err = s.TouchAndHold(210, 290)
 	err = s.TouchAndHold(230, 130)
 	// err = s.TouchAndHoldFloat(230, 130, 2.5)
@@ -182,7 +182,7 @@ func TestSession_ForceTouch(t *testing.T) {
 	checkErr(t, err)
 	s, err := c.NewSession()
 	checkErr(t, err)
-	Debug = true
+	WDADebug = true
 	// err = s.ForceTouch(230, 130, 1)
 	err = s.ForceTouch(230, 130, 1, 0.5)
 	checkErr(t, err)
@@ -193,7 +193,7 @@ func TestSession_Drag(t *testing.T) {
 	checkErr(t, err)
 	s, err := c.NewSession()
 	checkErr(t, err)
-	Debug = true
+	WDADebug = true
 	// err = s.Drag(230, 130, 230, 480,2)
 	// err = s.Drag(230, 130, 230, 480)
 	err = s.Drag(230, 130, 230, 30)
@@ -207,7 +207,7 @@ func TestSession_Swipe(t *testing.T) {
 	checkErr(t, err)
 	s, err := c.NewSession()
 	checkErr(t, err)
-	Debug = true
+	WDADebug = true
 	err = s.Swipe(230, 130, 230*2, 130*2)
 	checkErr(t, err)
 }
@@ -217,7 +217,7 @@ func TestSession_SwipeSwipeDirection(t *testing.T) {
 	checkErr(t, err)
 	s, err := c.NewSession()
 	checkErr(t, err)
-	Debug = true
+	WDADebug = true
 	// err = s.SwipeUp()
 	err = s.SwipeDown()
 	// err = s.SwipeLeft()
@@ -226,7 +226,7 @@ func TestSession_SwipeSwipeDirection(t *testing.T) {
 }
 
 func TestSession_AppLaunch(t *testing.T) {
-	Debug = true
+	WDADebug = true
 	c, err := NewClient(deviceURL)
 	checkErr(t, err)
 	s, err := c.NewSession()
@@ -252,7 +252,7 @@ func TestSession_AppTerminate(t *testing.T) {
 	bundleId := "com.apple.Preferences"
 	s, err := c.NewSession()
 	checkErr(t, err)
-	Debug = true
+	WDADebug = true
 	err = s.AppTerminate(bundleId)
 	checkErr(t, err)
 }
@@ -263,7 +263,7 @@ func TestSession_AppState(t *testing.T) {
 	// bundleId := "com.apple.Preferences"
 	s, err := c.NewSession()
 	checkErr(t, err)
-	Debug = true
+	WDADebug = true
 	state, err := s.AppState(bundleId)
 	checkErr(t, err)
 	t.Log(state)
@@ -275,7 +275,7 @@ func TestSession_SendKeys(t *testing.T) {
 	checkErr(t, err)
 	s, err := c.NewSession()
 	checkErr(t, err)
-	Debug = true
+	WDADebug = true
 	err = s.SendKeys(bundleId + "\n")
 	checkErr(t, err)
 
@@ -290,7 +290,7 @@ func TestSession_FindElement(t *testing.T) {
 	s, err := c.NewSession()
 	checkErr(t, err)
 	_ = s.AppLaunch(bundleId)
-	Debug = true
+	WDADebug = true
 	// **/XCUIElementTypeButton[`label == '允许' OR label == '好'`]
 	// "XCUIElementTypeWindow/*/*[$type == 'XCUIElementTypeButton' AND label BEGINSWITH 'A'$]"
 
@@ -323,7 +323,7 @@ func TestSession_FindElements(t *testing.T) {
 	checkErr(t, err)
 	s, err := c.NewSession()
 	checkErr(t, err)
-	Debug = true
+	WDADebug = true
 	// elements, err := s.FindElements("partial link text", "label=看一看")
 	// elements, err := s.FindElements("partial link text", "label=发现")
 	// **/XCUIElementTypeButton[`label == '允许' OR label == '好'`]
@@ -351,7 +351,7 @@ func TestSession_ActiveElement(t *testing.T) {
 	checkErr(t, err)
 	s, err := c.NewSession()
 	checkErr(t, err)
-	Debug = true
+	WDADebug = true
 	element, err := s.ActiveElement()
 	checkErr(t, err)
 	t.Log(element.Rect())
@@ -362,7 +362,7 @@ func TestSession_AlertSendKeys(t *testing.T) {
 	checkErr(t, err)
 	s, err := c.NewSession()
 	checkErr(t, err)
-	Debug = true
+	WDADebug = true
 	err = s.AlertSendKeys("test")
 	checkErr(t, err)
 }
@@ -372,7 +372,7 @@ func TestSession_AlertAccept(t *testing.T) {
 	checkErr(t, err)
 	s, err := c.NewSession()
 	checkErr(t, err)
-	Debug = true
+	WDADebug = true
 	// err = s.AlertAccept()
 	// err = s.AlertAccept("好")
 	err = s.AlertAccept("允许")
@@ -384,7 +384,7 @@ func TestSession_AlertDismiss(t *testing.T) {
 	checkErr(t, err)
 	s, err := c.NewSession()
 	checkErr(t, err)
-	Debug = true
+	WDADebug = true
 	// err = s.AlertDismiss()
 	err = s.AlertDismiss("不允许")
 	checkErr(t, err)
@@ -395,7 +395,7 @@ func TestSession_AlertText(t *testing.T) {
 	checkErr(t, err)
 	s, err := c.NewSession()
 	checkErr(t, err)
-	Debug = true
+	WDADebug = true
 	text, err := s.AlertText()
 	checkErr(t, err)
 	t.Log(text)
@@ -406,7 +406,7 @@ func TestSession_AlertButtons(t *testing.T) {
 	checkErr(t, err)
 	s, err := c.NewSession()
 	checkErr(t, err)
-	Debug = true
+	WDADebug = true
 	buttons, err := s.AlertButtons()
 	checkErr(t, err)
 	t.Log(buttons)
@@ -417,7 +417,7 @@ func TestSession_Orientation(t *testing.T) {
 	checkErr(t, err)
 	s, err := c.NewSession()
 	checkErr(t, err)
-	Debug = true
+	WDADebug = true
 	orientation, err := s.Orientation()
 	checkErr(t, err)
 	t.Log(orientation)
@@ -428,7 +428,7 @@ func TestSession_SetOrientation(t *testing.T) {
 	checkErr(t, err)
 	s, err := c.NewSession()
 	checkErr(t, err)
-	Debug = true
+	WDADebug = true
 	err = s.SetOrientation(WDAOrientationPortraitUpsideDown)
 	checkErr(t, err)
 }
@@ -438,7 +438,7 @@ func TestSession_Rotation(t *testing.T) {
 	checkErr(t, err)
 	s, err := c.NewSession()
 	checkErr(t, err)
-	Debug = true
+	WDADebug = true
 	rotation, err := s.Rotation()
 	checkErr(t, err)
 	t.Log(rotation)
@@ -449,7 +449,7 @@ func TestSession_SetRotation(t *testing.T) {
 	checkErr(t, err)
 	s, err := c.NewSession()
 	checkErr(t, err)
-	Debug = true
+	WDADebug = true
 	err = s.SetRotation(WDARotation{X: 0, Y: 0, Z: 270})
 	checkErr(t, err)
 }
@@ -461,7 +461,7 @@ func TestSession_PerformAppiumTouchActions(t *testing.T) {
 	checkErr(t, err)
 	element, err := s.FindElement(WDALocator{Name: "自定手势作用区域"})
 	checkErr(t, err)
-	Debug = true
+	WDADebug = true
 
 	touchActions := NewWDATouchActions().
 		Press(NewWDATouchActionOptionPress().SetElement(element).SetXY(200, 200).SetPressure(0.8)).
@@ -502,7 +502,7 @@ func TestSession_PerformActions(t *testing.T) {
 	// 	Pause(0.25).
 	// 	Up()
 	// _, _, _ = element, actOptFingerLeft, actOptFingerRight
-	Debug = true
+	WDADebug = true
 
 	// actions := NewWDAActions().Tap(80, 100)
 	// actions := NewWDAActions().Tap(50, 0, element)
@@ -522,7 +522,7 @@ func TestSession_IsLocked(t *testing.T) {
 	checkErr(t, err)
 	s, err := c.NewSession()
 	checkErr(t, err)
-	Debug = true
+	WDADebug = true
 	locked, err := s.IsLocked()
 	checkErr(t, err)
 	if locked {
@@ -539,7 +539,7 @@ func TestSession_Unlock(t *testing.T) {
 	_ = bundleId
 	s, err := c.NewSession()
 	checkErr(t, err)
-	Debug = true
+	WDADebug = true
 	err = s.Unlock()
 	checkErr(t, err)
 }
@@ -551,7 +551,7 @@ func TestSession_Lock(t *testing.T) {
 	_ = bundleId
 	s, err := c.NewSession()
 	checkErr(t, err)
-	Debug = true
+	WDADebug = true
 	err = s.Lock()
 	checkErr(t, err)
 }
@@ -562,7 +562,7 @@ func TestSession_AppActivate(t *testing.T) {
 	// bundleId := "com.apple.Preferences"
 	s, err := c.NewSession()
 	checkErr(t, err)
-	Debug = true
+	WDADebug = true
 	err = s.AppActivate(bundleId)
 	checkErr(t, err)
 }
@@ -574,7 +574,7 @@ func TestSession_AppDeactivate(t *testing.T) {
 	_ = bundleId
 	s, err := c.NewSession()
 	checkErr(t, err)
-	Debug = true
+	WDADebug = true
 	err = s.AppDeactivate(10.6)
 	checkErr(t, err)
 }
@@ -586,7 +586,7 @@ func TestSession_SetPasteboardForPlaintext(t *testing.T) {
 	_ = bundleId
 	s, err := c.NewSession()
 	checkErr(t, err)
-	Debug = true
+	WDADebug = true
 	err = s.SetPasteboardForPlaintext("abcd1234")
 	checkErr(t, err)
 }
@@ -598,7 +598,7 @@ func TestSession_SetPasteboardForImageFromFile(t *testing.T) {
 	_ = bundleId
 	s, err := c.NewSession()
 	checkErr(t, err)
-	Debug = true
+	WDADebug = true
 	err = s.SetPasteboardForImageFromFile("/Users/hero/Documents/leixipaopao/IMG_5246.JPG")
 	checkErr(t, err)
 }
@@ -610,7 +610,7 @@ func TestSession_SetPasteboardForUrl(t *testing.T) {
 	_ = bundleId
 	s, err := c.NewSession()
 	checkErr(t, err)
-	Debug = true
+	WDADebug = true
 	err = s.SetPasteboardForUrl("https://www.apple.com.cn")
 	checkErr(t, err)
 }
@@ -622,7 +622,7 @@ func TestSession_SetPasteboard(t *testing.T) {
 	_ = bundleId
 	s, err := c.NewSession()
 	checkErr(t, err)
-	Debug = true
+	WDADebug = true
 	err = s.SetPasteboard(WDAContentTypeUrl, "https://www.google.com")
 	checkErr(t, err)
 }
@@ -632,7 +632,7 @@ func TestSession_GetPasteboard(t *testing.T) {
 	checkErr(t, err)
 	s, err := c.NewSession()
 	checkErr(t, err)
-	Debug = true
+	WDADebug = true
 	// raw, err := s.GetPasteboard(WDAContentTypePlaintext)
 	// content, err := s.GetPasteboardForPlaintext()
 	// url, err := s.GetPasteboardForUrl()
@@ -654,7 +654,7 @@ func TestSession_PressHomeButton(t *testing.T) {
 	_ = bundleId
 	s, err := c.NewSession()
 	checkErr(t, err)
-	Debug = true
+	WDADebug = true
 	err = s.PressHomeButton()
 	checkErr(t, err)
 }
@@ -666,7 +666,7 @@ func TestSession_PressVolumeUpButton(t *testing.T) {
 	_ = bundleId
 	s, err := c.NewSession()
 	checkErr(t, err)
-	Debug = true
+	WDADebug = true
 	err = s.PressVolumeUpButton()
 	checkErr(t, err)
 }
@@ -678,7 +678,7 @@ func TestSession_PressVolumeDownButton(t *testing.T) {
 	_ = bundleId
 	s, err := c.NewSession()
 	checkErr(t, err)
-	Debug = true
+	WDADebug = true
 	err = s.PressVolumeDownButton()
 	checkErr(t, err)
 }
@@ -688,7 +688,7 @@ func TestSession_SiriActivate(t *testing.T) {
 	checkErr(t, err)
 	s, err := c.NewSession()
 	checkErr(t, err)
-	Debug = true
+	WDADebug = true
 	err = s.SiriActivate("查一下附近的餐厅")
 	checkErr(t, err)
 }
@@ -698,7 +698,7 @@ func TestSession_SiriOpenURL(t *testing.T) {
 	checkErr(t, err)
 	s, err := c.NewSession()
 	checkErr(t, err)
-	Debug = true
+	WDADebug = true
 	err = s.SiriOpenURL("https://apple.com")
 	checkErr(t, err)
 }
@@ -709,14 +709,14 @@ func TestSession_Screenshot(t *testing.T) {
 	s, err := c.NewSession()
 	checkErr(t, err)
 	// defer s.DeleteSession()
-	Debug = true
+	WDADebug = true
 	_, err = s.Screenshot()
 	checkErr(t, err)
-	Debug = false
+	WDADebug = false
 	element, err := s.FindElement(WDALocator{Predicate: "type == 'XCUIElementTypeCell' AND name == '通知'"})
 	checkErr(t, err)
 
-	Debug = true
+	WDADebug = true
 	_, err = s.Screenshot(element)
 	checkErr(t, err)
 }
@@ -727,15 +727,15 @@ func TestSession_ScreenshotToDisk(t *testing.T) {
 	s, err := c.NewSession()
 	checkErr(t, err)
 	// defer s.DeleteSession()
-	Debug = true
+	WDADebug = true
 	userHomeDir, _ := os.UserHomeDir()
 	err = s.ScreenshotToDisk(filepath.Join(userHomeDir, "Desktop", "s1.png"))
 	checkErr(t, err)
-	Debug = false
+	WDADebug = false
 	element, err := s.FindElement(WDALocator{Predicate: "type == 'XCUIElementTypeCell' AND name == '通知'"})
 	checkErr(t, err)
 
-	Debug = true
+	WDADebug = true
 	err = s.ScreenshotToDisk(filepath.Join(userHomeDir, "Desktop", "s2.png"), element)
 	checkErr(t, err)
 }
@@ -746,7 +746,7 @@ func TestSession_ScreenshotToImage(t *testing.T) {
 	s, err := c.NewSession()
 	checkErr(t, err)
 	// defer s.DeleteSession()
-	Debug = true
+	WDADebug = true
 	// toPng, err := s.ScreenshotToPng()
 	img, format, err := s.ScreenshotToImage()
 	checkErr(t, err)
@@ -756,7 +756,7 @@ func TestSession_ScreenshotToImage(t *testing.T) {
 	element, err := s.FindElement(WDALocator{Predicate: "type == 'XCUIElementTypeCell' AND name == '通知'"})
 	checkErr(t, err)
 
-	Debug = true
+	WDADebug = true
 	img, format, err = s.ScreenshotToImage(element)
 	checkErr(t, err)
 	t.Log("元素图片的格式:", format)
@@ -769,7 +769,7 @@ func TestSession_Source(t *testing.T) {
 	checkErr(t, err)
 	s, err := c.NewSession()
 	checkErr(t, err)
-	Debug = true
+	WDADebug = true
 	// sTree, err := s.Source()
 	sTree, err := s.Source()
 	checkErr(t, err)
@@ -783,7 +783,7 @@ func TestSession_AccessibleSource(t *testing.T) {
 	_ = bundleId
 	s, err := c.NewSession()
 	checkErr(t, err)
-	Debug = true
+	WDADebug = true
 	source, err := s.AccessibleSource()
 	checkErr(t, err)
 	t.Log(source)
@@ -796,7 +796,7 @@ func TestSession_GetAppiumSettings(t *testing.T) {
 	// _ = bundleId
 	s, err := c.NewSession()
 	checkErr(t, err)
-	Debug = true
+	WDADebug = true
 	settings, err := s.GetAppiumSettings()
 	checkErr(t, err)
 	t.Log(settings)
@@ -828,7 +828,7 @@ func TestTmpSession(t *testing.T) {
 	checkErr(t, err)
 	s, err := c.NewSession()
 	checkErr(t, err)
-	Debug = true
+	WDADebug = true
 
 	// err = s.AppLaunch("com.apple.calculator")
 	// checkErr(t, err)
