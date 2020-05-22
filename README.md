@@ -7,6 +7,11 @@
 
 参考 facebook-wda (python): [https://github.com/openatx/facebook-wda](https://github.com/openatx/facebook-wda)
 
+## 扩展库
+
+- [electricbubble/gwda-ext-opencv](github.com/electricbubble/gwda-ext-opencv) 直接通过指定图片进行操作
+
+
 ## 安装
 
 > 必须先安装好 `WDA`，安装步骤可参考 [ATX 文档 - iOS 真机如何安装 WebDriverAgent](https://testerhome.com/topics/7220) 或者
@@ -255,6 +260,3 @@ func checkErr(msg string, err error) {
 
 > 以上代码仅使用了 iPhone X (13.4.1) 和 iPhone 6s (11.4.1) 进行了测试。
 
-## TODO
-
-待补充更多 Examples
