@@ -9,7 +9,7 @@
 
 ## 扩展库
 
-- [electricbubble/gwda-ext-opencv](github.com/electricbubble/gwda-ext-opencv) 直接通过指定图片进行操作
+- [electricbubble/gwda-ext-opencv](https://github.com/electricbubble/gwda-ext-opencv) 直接通过指定图片进行操作
 
 
 ## 安装
