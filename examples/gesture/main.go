@@ -7,7 +7,8 @@ import (
 )
 
 func main() {
-	client, err := gwda.NewClient("http://localhost:8100")
+	// client, err := gwda.NewClient("http://localhost:8100")
+	client, err := gwda.NewUSBClient()
 	checkErr("连接设备", err)
 	session, err := client.NewSession()
 	checkErr("创建 session", err)

@@ -23,7 +23,7 @@ func TestElement_Tap(t *testing.T) {
 	checkErr(t, err)
 	t.Log(rect)
 
-	WDADebug = true
+	WDADebug(true)
 	err = element.Tap(rect.X+4, rect.Y+4)
 	checkErr(t, err)
 }
@@ -44,7 +44,7 @@ func TestElement_DoubleTap(t *testing.T) {
 	checkErr(t, err)
 	t.Log(rect)
 
-	WDADebug = true
+	WDADebug(true)
 	err = element.DoubleTap()
 	checkErr(t, err)
 }
@@ -55,7 +55,7 @@ func TestElement_TwoFingerTap(t *testing.T) {
 	_ = c.Unlock()
 	s, err := c.NewSession()
 	checkErr(t, err)
-	WDADebug = true
+	WDADebug(true)
 	element, err := s.FindElement(WDALocator{Name: "自定手势作用区域"})
 	checkErr(t, err)
 
@@ -69,7 +69,7 @@ func TestElement_TapWithNumberOfTaps(t *testing.T) {
 	_ = c.Unlock()
 	s, err := c.NewSession()
 	checkErr(t, err)
-	WDADebug = true
+	WDADebug(true)
 	element, err := s.FindElement(WDALocator{Name: "自定手势作用区域"})
 	checkErr(t, err)
 
@@ -87,7 +87,7 @@ func TestElement_TouchAndHold(t *testing.T) {
 	element, err := s.FindElement(WDALocator{Predicate: "type == 'XCUIElementTypeIcon' AND visible == true"})
 	checkErr(t, err)
 
-	WDADebug = true
+	WDADebug(true)
 	err = element.TouchAndHold(1)
 	// err = element.TouchAndHoldFloat(2.5)
 	checkErr(t, err)
@@ -102,7 +102,7 @@ func TestElement_ForceTouch(t *testing.T) {
 	// launchOpt := NewWDAAppLaunchOption().SetShouldWaitForQuiescence(true).SetArguments([]string{"-AppleLanguages", "(en-US)"})
 	// s.AppLaunch(bundleId, launchOpt)
 	// return
-	WDADebug = true
+	WDADebug(true)
 	// element, err := s.FindElement(WDALocator{Predicate: "type == 'XCUIElementTypeCell' AND name == '灵敏度评估'"})
 	// element, err := s.FindElement(WDALocator{Predicate: "type == 'XCUIElementTypeIcon' AND visible == true"})
 	// element, err := s.FindElement(WDALocator{ClassName: WDAElementType{Cell: true}})
@@ -147,7 +147,7 @@ func TestElement_Drag(t *testing.T) {
 	element, err := s.FindElement(WDALocator{Predicate: "type == 'XCUIElementTypeIcon' AND visible == true"})
 	checkErr(t, err)
 
-	WDADebug = true
+	WDADebug(true)
 	// err = element.Drag(230, 130, 230, 480, 2)
 	// err = element.Drag(230, 130, 230, 480)
 	// err = element.Drag(230, 130, 230, 30)
@@ -173,7 +173,7 @@ func TestElement_Swipe(t *testing.T) {
 	// element, err := s.FindElement(WDALocator{ClassName: WDAElementType{Image: true}})
 	checkErr(t, err)
 
-	WDADebug = true
+	WDADebug(true)
 	// rect, _ := element.Rect()
 	// 相对元素自身的坐标
 	// err = element.Swipe(rect.X, rect.Y+rect.Height/2, rect.X+rect.Width, rect.Y+rect.Height/2)
@@ -195,7 +195,7 @@ func TestElement_Pinch(t *testing.T) {
 	element, err := s.FindElement(WDALocator{Name: "自定手势作用区域"})
 	checkErr(t, err)
 
-	WDADebug = true
+	WDADebug(true)
 	// - 放大的捏放在屏幕中心
 	// - 缩小是 左上角+右下角 向中心靠拢
 
@@ -229,7 +229,7 @@ func TestElement_Rotate(t *testing.T) {
 	element, err := s.FindElement(WDALocator{Name: "自定手势作用区域"})
 	checkErr(t, err)
 
-	WDADebug = true
+	WDADebug(true)
 	// 顺时针 90度
 	err = element.Rotate(math.Pi / 2)
 	// 逆时针 180度
@@ -247,7 +247,7 @@ func TestElement_Scroll(t *testing.T) {
 	// element, err := s.FindElement(WDALocator{Predicate: "type == 'XCUIElementTypeCell' AND name == '手机淘宝'"})
 	checkErr(t, err)
 
-	WDADebug = true
+	WDADebug(true)
 	// err = element.ScrollUp()
 	// err = element.ScrollDown()
 	// err = element.ScrollLeft()
@@ -272,7 +272,7 @@ func TestElement_PickerWheelSelect(t *testing.T) {
 	element, err := s.FindElement(WDALocator{ClassName: WDAElementType{PickerWheel: true}})
 	checkErr(t, err)
 
-	WDADebug = true
+	WDADebug(true)
 	err = element.PickerWheelSelect(WDAPickerWheelSelectOrderNext, 3)
 	checkErr(t, err)
 	err = element.PickerWheelSelectNext()
@@ -288,7 +288,7 @@ func TestElement_Click(t *testing.T) {
 	s, err := c.NewSession()
 	checkErr(t, err)
 	_ = s.AppLaunch(bundleId)
-	WDADebug = true
+	WDADebug(true)
 	element, err := s.FindElement(WDALocator{LinkText: NewWDAElementAttribute().SetValue("通知")})
 	checkErr(t, err)
 	t.Log(element)
@@ -304,7 +304,7 @@ func TestElement_SendKeys(t *testing.T) {
 	s, err := c.NewSession()
 	checkErr(t, err)
 	_ = s.AppLaunch(bundleId)
-	WDADebug = true
+	WDADebug(true)
 	element, err := s.FindElement(WDALocator{ClassName: WDAElementType{SearchField: true}})
 	checkErr(t, err)
 
@@ -322,7 +322,7 @@ func TestElement_Clear(t *testing.T) {
 		_ = s.DeleteSession()
 	}()
 	_ = s.AppLaunch(bundleId)
-	WDADebug = true
+	WDADebug(true)
 	element, err := s.FindElement(WDALocator{ClassName: WDAElementType{SearchField: true}})
 	checkErr(t, err)
 
@@ -338,7 +338,7 @@ func TestElement_Rect(t *testing.T) {
 	checkErr(t, err)
 	s, err := c.NewSession()
 	checkErr(t, err)
-	WDADebug = true
+	WDADebug(true)
 	element, err := s.FindElement(WDALocator{LinkText: NewWDAElementAttribute().SetValue("通知")})
 	checkErr(t, err)
 	t.Log(element)
@@ -355,7 +355,7 @@ func TestElement_IsEnabled(t *testing.T) {
 	_ = bundleId
 	s, err := c.NewSession()
 	checkErr(t, err)
-	WDADebug = true
+	WDADebug(true)
 	element, err := s.FindElement(WDALocator{LinkText: NewWDAElementAttribute().SetValue("通知")})
 	checkErr(t, err)
 
@@ -370,7 +370,7 @@ func TestElement_IsDisplayed(t *testing.T) {
 	s, err := c.NewSession()
 	checkErr(t, err)
 	_ = s.AppLaunch(bundleId)
-	WDADebug = true
+	WDADebug(true)
 	element, err := s.FindElement(WDALocator{LinkText: NewWDAElementAttribute().SetValue("通知")})
 	checkErr(t, err)
 
@@ -385,7 +385,7 @@ func TestElement_IsSelected(t *testing.T) {
 	s, err := c.NewSession()
 	checkErr(t, err)
 	_ = s.AppLaunch(bundleId)
-	WDADebug = true
+	WDADebug(true)
 	element, err := s.FindElement(WDALocator{LinkText: NewWDAElementAttribute().SetValue("通知")})
 	checkErr(t, err)
 
@@ -411,7 +411,7 @@ func TestElement_GetAttribute(t *testing.T) {
 	_ = c.Unlock()
 	s, err := c.NewSession()
 	checkErr(t, err)
-	WDADebug = true
+	WDADebug(true)
 	element, err := s.FindElement(WDALocator{LinkText: NewWDAElementAttribute().SetLabel("通用")})
 	checkErr(t, err)
 
@@ -432,7 +432,7 @@ func TestElement_Text(t *testing.T) {
 	s, err := c.NewSession()
 	checkErr(t, err)
 	_ = s.AppLaunch(bundleId)
-	WDADebug = true
+	WDADebug(true)
 	element, err := s.FindElement(WDALocator{LinkText: NewWDAElementAttribute().SetLabel("通用")})
 	checkErr(t, err)
 
@@ -452,7 +452,7 @@ func TestElement_Type(t *testing.T) {
 	s, err := c.NewSession()
 	checkErr(t, err)
 	_ = s.AppLaunch(bundleId)
-	WDADebug = true
+	WDADebug(true)
 	element, err := s.FindElement(WDALocator{LinkText: NewWDAElementAttribute().SetLabel("通用")})
 	checkErr(t, err)
 
@@ -473,7 +473,7 @@ func TestElement_FindElement(t *testing.T) {
 	_ = s.AppLaunch(bundleId)
 	element, err := s.FindElement(WDALocator{LinkText: NewWDAElementAttribute().SetLabel("通用")})
 	checkErr(t, err)
-	WDADebug = true
+	WDADebug(true)
 	subElement, err := element.FindElement(WDALocator{ClassName: WDAElementType{Image: true}})
 	checkErr(t, err)
 
@@ -491,7 +491,7 @@ func TestElement_FindElements(t *testing.T) {
 	_ = s.AppLaunch(bundleId)
 	element, err := s.FindElement(WDALocator{LinkText: NewWDAElementAttribute().SetLabel("通用")})
 	checkErr(t, err)
-	WDADebug = true
+	WDADebug(true)
 	subElements, err := element.FindElements(WDALocator{Predicate: "value != 'abc123'"})
 	checkErr(t, err)
 
@@ -512,7 +512,7 @@ func TestElement_FindVisibleCells(t *testing.T) {
 	_ = s.AppLaunch(bundleId)
 	element, err := s.FindElement(WDALocator{ClassName: WDAElementType{Table: true}})
 	checkErr(t, err)
-	WDADebug = true
+	WDADebug(true)
 	elemCells, err := element.FindVisibleCells()
 	checkErr(t, err)
 
@@ -530,7 +530,7 @@ func TestElement_Screenshot(t *testing.T) {
 	s, err := c.NewSession()
 	checkErr(t, err)
 	_ = s.AppLaunch(bundleId)
-	WDADebug = true
+	WDADebug(true)
 	element, err := s.FindElement(WDALocator{Predicate: "type == 'XCUIElementTypeCell' AND name == '通知'"})
 	checkErr(t, err)
 	t.Log(element)
@@ -546,7 +546,7 @@ func TestElement_ScreenshotToImage(t *testing.T) {
 	s, err := c.NewSession()
 	checkErr(t, err)
 	_ = s.AppLaunch(bundleId)
-	WDADebug = true
+	WDADebug(true)
 	// element, err := s.FindElement(WDALocator{LinkText: NewWDAElementAttribute().SetValue("通知")})
 	element, err := s.FindElement(WDALocator{Predicate: "type == 'XCUIElementTypeCell' AND name == '通知'"})
 	checkErr(t, err)
@@ -566,7 +566,7 @@ func TestElement_ScreenshotToDisk(t *testing.T) {
 	s, err := c.NewSession()
 	checkErr(t, err)
 	_ = s.AppLaunch(bundleId)
-	WDADebug = true
+	WDADebug(true)
 	// element, err := s.FindElement(WDALocator{LinkText: NewWDAElementAttribute().SetValue("通知")})
 	element, err := s.FindElement(WDALocator{Predicate: "type == 'XCUIElementTypeCell' AND name == '通知'"})
 	checkErr(t, err)
@@ -584,7 +584,7 @@ func TestElement_IsAccessible(t *testing.T) {
 	s, err := c.NewSession()
 	checkErr(t, err)
 	_ = s.AppLaunch(bundleId)
-	WDADebug = true
+	WDADebug(true)
 	element, err := s.FindElement(WDALocator{Predicate: "type == 'XCUIElementTypeCell' AND name == '通知'"})
 	checkErr(t, err)
 
@@ -607,7 +607,7 @@ func TestElement_IsAccessibilityContainer(t *testing.T) {
 	s, err := c.NewSession()
 	checkErr(t, err)
 	_ = s.AppLaunch(bundleId)
-	WDADebug = true
+	WDADebug(true)
 	element, err := s.FindElement(WDALocator{Predicate: "type == 'XCUIElementTypeCell' AND name == '通知'"})
 	checkErr(t, err)
 
@@ -629,7 +629,7 @@ func TestElement_Tmp(t *testing.T) {
 	_ = c.Unlock()
 	s, err := c.NewSession()
 	checkErr(t, err)
-	WDADebug = true
+	WDADebug(true)
 	element, err := s.FindElement(WDALocator{ClassName: WDAElementType{PickerWheel: true}})
 	// element, err := s.FindElement(WDALocator{ClassName: WDAElementType{Table: true}})
 	// element, err := s.FindElement(WDALocator{Predicate: "type == 'XCUIElementTypeCell' AND name == '手机淘宝'"})

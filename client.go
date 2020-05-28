@@ -2,22 +2,27 @@ package gwda
 
 import (
 	"bytes"
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
+	goUSBMux "github.com/electricbubble/go-usbmuxd-device"
 	"image"
 	_ "image/jpeg"
 	_ "image/png"
 	"io/ioutil"
 	"log"
+	"net"
+	"net/http"
 	"net/url"
 	"strings"
 )
 
 type Client struct {
-	deviceURL *url.URL
-	MjpegURL  *url.URL
+	deviceURL    *url.URL
+	MjpegURL     *url.URL
+	serialNumber string
 }
 
 // NewClient
@@ -42,6 +47,61 @@ func NewClient(deviceURL string, isInitializesAlertButtonSelector ...bool) (c *C
 		c.setAppiumSettings(settings)
 	}
 	return c, nil
+}
+
+func NewUSBClient(device ...Device) (c *Client, err error) {
+	if len(device) == 0 {
+		if device, err = DeviceList(); err != nil {
+			return nil, err
+		}
+	}
+	getHTTPClient := func(_conn net.Conn) *http.Client {
+		return &http.Client{
+			Transport: &http.Transport{
+				DialContext: func(_ context.Context, _, _ string) (net.Conn, error) {
+					return _conn, nil
+				},
+			},
+		}
+	}
+	dev := device[0]
+
+	var conn net.Conn
+	if conn, err = goUSBMux.NewUSBHub().CreateConnect(dev.DeviceID(), dev.WDAPort); err != nil {
+		return nil, err
+	}
+	usbHTTPClient[dev.serialNumber] = getHTTPClient(conn)
+
+	if conn, err = goUSBMux.NewUSBHub().CreateConnect(dev.DeviceID(), dev.MjpegPort); err != nil {
+		return nil, err
+	}
+	usbHTTPClient[dev.serialNumber+"_Mjpeg"] = getHTTPClient(conn)
+
+	c = new(Client)
+	c.serialNumber = dev.serialNumber
+
+	if c.deviceURL, err = url.Parse("http://" + dev.serialNumber); err != nil {
+		return nil, err
+	}
+
+	if _, err = c.IsWdaHealth(); err != nil {
+		return nil, err
+	}
+
+	if dev.IsInitializesAlertButtonSelector {
+		settings := newWdaBody().set("acceptAlertButtonSelector", _acceptAlertButtonSelector).set("dismissAlertButtonSelector", _dismissAlertButtonSelector)
+		c.setAppiumSettings(settings)
+	}
+
+	return
+}
+
+func (c *Client) GetUSBMjpegHTTPClient() (*http.Client, string, error) {
+	if client, ok := usbHTTPClient[c.serialNumber+"_Mjpeg"]; !ok {
+		return nil, "", errors.New("no http client for the usb device")
+	} else {
+		return client, "http://" + c.serialNumber, nil
+	}
 }
 
 func (c *Client) setAppiumSettings(settings map[string]interface{}) {

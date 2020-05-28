@@ -34,7 +34,13 @@ import (
 )
 
 func main() {
-	client, err := gwda.NewClient("http://localhost:8100")
+	// 通过 `iproxy` 或其他方式将 iOS 设备的 `WDA` 端口转发到本地端口
+	// client, err := gwda.NewClient("http://localhost:8100")
+	// 直接通过 USB 读取设备，默认与第一个设备进行连接
+	client, err := gwda.NewUSBClient()
+	// 也可以获取全部使用 USB 连接的设备，并指定某一个设备进行连接
+	// deviceList, err := gwda.DeviceList()
+	// client, err := gwda.NewUSBClient(deviceList[0])
 	checkErr("连接设备", err)
 
 	err = client.Lock()
