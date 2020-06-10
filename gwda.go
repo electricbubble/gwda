@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	goUSBMux "github.com/electricbubble/go-usbmuxd-device"
+	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -26,7 +27,7 @@ func init() {
 	}
 }
 
-var wdaDebug = false
+var wdaDebugFlag = false
 
 var usbHTTPClient = make(map[string]*http.Client)
 
@@ -49,79 +50,74 @@ func urlJoin(endpoint *url.URL, elem string, isWdaFirst ...bool) string {
 	return tmp.String()
 }
 
-func internalGet(actionName, url string) (wdaResp wdaResponse, err error) {
-	return internalDo(actionName, http.MethodGet, url, nil)
+func executeGet(actionName, url string) (wdaResp wdaResponse, err error) {
+	return executeHTTP(actionName, http.MethodGet, url, nil)
 }
 
-func internalPost(actionName, url string, body wdaBody) (wdaResp wdaResponse, err error) {
-	return internalDo(actionName, http.MethodPost, url, body)
+func executePost(actionName, url string, body wdaBody) (wdaResp wdaResponse, err error) {
+	return executeHTTP(actionName, http.MethodPost, url, body)
 }
 
-func internalDelete(actionName, url string) (wdaResp wdaResponse, err error) {
-	return internalDo(actionName, http.MethodDelete, url, nil)
+func executeDelete(actionName, url string) (wdaResp wdaResponse, err error) {
+	return executeHTTP(actionName, http.MethodDelete, url, nil)
 }
 
-func internalDo(actionName, method, sURL string, body wdaBody) (wdaResp wdaResponse, err error) {
+func executeHTTP(actionName, method, sURL string, body wdaBody) (wdaResp wdaResponse, err error) {
 	var req *http.Request
-	// 忽略 err 是因为在新建 Client 的时候已经校验了 URL 所以除此之外，应该不会出现其他错误
+	var reqBody io.Reader = nil
 	var bsBody []byte
 	if body != nil {
-		// body 已经通过 `newWdaBody` 进行初始化和修改，理论上也不存在 err
-		bsBody, err = json.Marshal(body)
-		if err != nil {
-			return nil, fmt.Errorf("%s: invalid request body %s", actionName, err.Error())
+		if bsBody, err = json.Marshal(body); err != nil {
+			return nil, fmt.Errorf("%s: invalid request body %w", actionName, err)
 		}
-		req, _ = http.NewRequest(method, sURL, bytes.NewBuffer(bsBody))
-	} else {
-		req, _ = http.NewRequest(method, sURL, nil)
+		reqBody = bytes.NewBuffer(bsBody)
 	}
+
+	req, _ = http.NewRequest(method, sURL, reqBody)
 	for k, v := range wdaHeader {
 		req.Header.Set(k, v)
 	}
 
 	httpClient := http.DefaultClient
 
-	tmp, _ := url.Parse(sURL)
-	if tmp.Port() == "" && len(tmp.Host) == 40 {
-		if tmpClient, ok := usbHTTPClient[tmp.Host]; !ok {
+	filteredURL, _ := url.Parse(sURL)
+	if filteredURL.Port() == "" && len(filteredURL.Host) == 40 {
+		udid := filteredURL.Host
+		filteredURL.Host = "__UDID__"
+		if tmpClient, ok := usbHTTPClient[udid]; !ok {
+			// much better for debugging
 			return nil, fmt.Errorf("no http client: %s", sURL)
+			// return nil, fmt.Errorf("no http client: %s", filteredURL.String())
 		} else {
 			httpClient = tmpClient
 		}
 	}
 
+	debugLog(fmt.Sprintf("--> %s %s %s\n%s", method, filteredURL.String(), actionName, bsBody))
+
 	start := time.Now()
 	var resp *http.Response
 	resp, err = httpClient.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("%s: failed to send request %s", actionName, err.Error())
+		return nil, fmt.Errorf("%s: failed to send request %w", actionName, err)
 	}
 	defer func() {
 		_ = resp.Body.Close()
 	}()
-	output := ""
-	if wdaDebug {
-		output = fmt.Sprintf("[DEBUG]↩︎\nActionName: %s\nMethod: %s\nURL: %s\n", actionName, method, req.URL.String())
-		if body != nil {
-			output += fmt.Sprintf("Body: %s\n", bsBody)
-		}
-		output += fmt.Sprintf("Duration: %s\n", time.Since(start).String())
-	}
+
 	wdaResp, err = ioutil.ReadAll(resp.Body)
+
+	if actionName == "Screenshot" {
+		debugLog(fmt.Sprintf("<-- %s %s %d %s %s 'too long, don't display'\n",
+			method, filteredURL.String(), resp.StatusCode, time.Now().Sub(start), actionName))
+	} else {
+		debugLog(fmt.Sprintf("<-- %s %s %d %s %s\n%s\n", method, filteredURL.String(), resp.StatusCode, time.Now().Sub(start), actionName, wdaResp))
+	}
+
 	if err != nil {
-		if wdaDebug {
-			log.Println(output)
-		}
-		return nil, fmt.Errorf("%s: failed to read response %s", actionName, err.Error())
+		return nil, fmt.Errorf("%s: failed to read response %w", actionName, err)
 	}
-	if wdaDebug {
-		if actionName == "Screenshot" {
-			output += fmt.Sprintf("Response: too long, don't display (%s)\n", sURL)
-		} else {
-			output += fmt.Sprintf("Response: %s\n", wdaResp)
-		}
-		log.Println(output)
-	}
+
 	err = wdaResp.getErrMsg()
 	return
 }
@@ -149,10 +145,6 @@ func (wb wdaBody) setAppLaunchOption(opt WDAAppLaunchOption) (body wdaBody) {
 	return wb
 }
 
-// func (wb wdaBody) setTextToType(text string) (body wdaBody) {
-// 	return wb.set("value", strings.Split(text, ""))
-// }
-
 type wdaResponse []byte
 
 func (wdaResp wdaResponse) String() string {
@@ -165,26 +157,6 @@ func (wdaResp wdaResponse) getByPath(path string) gjson.Result {
 func (wdaResp wdaResponse) getValue() gjson.Result {
 	return gjson.GetBytes(wdaResp, "value")
 }
-
-// func (wdaResp wdaResponse) getValue2Bytes() []byte {
-// 	return []byte(wdaResp.getValue().Raw)
-// }
-
-// func (wdaResp wdaResponse) isReady() bool {
-// 	return gjson.GetBytes(wdaResp, "value.ready").Bool()
-// }
-
-// func (wdaResp wdaResponse) getElementID() gjson.Result {
-// 	return wdaResp.getValue().get
-// }
-
-// func (wdaResp wdaResponse) getSessionID() (sessionID string, err error) {
-// 	sessionID = wdaResp.getByPath("sessionId").String()
-// 	if sessionID == "" {
-// 		err = errors.New("not find sessionId")
-// 	}
-// 	return
-// }
 
 func (wdaResp wdaResponse) getErrMsg() error {
 	// {
@@ -215,9 +187,16 @@ func WDADebug(b ...bool) {
 	if len(b) == 0 {
 		b = []bool{true}
 	}
-	wdaDebug = b[0]
+	wdaDebugFlag = b[0]
 
 	if len(b) == 2 {
 		goUSBMux.Debug(b[1])
 	}
+}
+
+func debugLog(msg string) {
+	if !wdaDebugFlag {
+		return
+	}
+	log.Println("[DEBUG] " + msg)
 }

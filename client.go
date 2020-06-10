@@ -68,12 +68,12 @@ func NewUSBClient(device ...Device) (c *Client, err error) {
 
 	var conn net.Conn
 	if conn, err = goUSBMux.NewUSBHub().CreateConnect(dev.DeviceID(), dev.WDAPort); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("usb %w", err)
 	}
 	usbHTTPClient[dev.serialNumber] = getHTTPClient(conn)
 
 	if conn, err = goUSBMux.NewUSBHub().CreateConnect(dev.DeviceID(), dev.MjpegPort); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("usb %w", err)
 	}
 	usbHTTPClient[dev.serialNumber+"_Mjpeg"] = getHTTPClient(conn)
 
@@ -235,7 +235,7 @@ func (c *Client) NewSession(capabilities ...WDASessionCapability) (s *Session, e
 		body.set("capabilities", newWdaBody()) // .set("alwaysMatch", nil))
 	}
 	var wdaResp wdaResponse
-	if wdaResp, err = internalPost("NewSession", urlJoin(c.deviceURL, "/session"), body); err != nil {
+	if wdaResp, err = executePost("NewSession", urlJoin(c.deviceURL, "/session"), body); err != nil {
 		return nil, err
 	}
 	if sid := wdaResp.getByPath("sessionId").String(); sid == "" {
@@ -252,7 +252,7 @@ func (c *Client) NewSession(capabilities ...WDASessionCapability) (s *Session, e
 // Checking service status
 func (c *Client) Status() (sJson string, err error) {
 	var wdaResp wdaResponse
-	if wdaResp, err = internalGet("Status", urlJoin(c.deviceURL, "/status")); err != nil {
+	if wdaResp, err = executeGet("Status", urlJoin(c.deviceURL, "/status")); err != nil {
 		return "", err
 	}
 	return wdaResp.String(), nil
@@ -265,7 +265,7 @@ func (c *Client) Status() (sJson string, err error) {
 // shouldWaitForQuiescence: false
 func (c *Client) AppLaunchUnattached(bundleId string) (err error) {
 	body := newWdaBody().setBundleID(bundleId)
-	_, err = internalPost("AppLaunchUnattached", urlJoin(c.deviceURL, "/wda/apps/launchUnattached"), body)
+	_, err = executePost("AppLaunchUnattached", urlJoin(c.deviceURL, "/wda/apps/launchUnattached"), body)
 	return
 }
 
@@ -273,7 +273,7 @@ func (c *Client) AppLaunchUnattached(bundleId string) (err error) {
 //
 // Forces the device under test to switch to the home screen
 func (c *Client) Homescreen() (err error) {
-	_, err = internalPost("Homescreen", urlJoin(c.deviceURL, "/wda/homescreen"), nil)
+	_, err = executePost("Homescreen", urlJoin(c.deviceURL, "/wda/homescreen"), nil)
 	return
 }
 
@@ -283,7 +283,7 @@ func alertAccept(baseUrl *url.URL, label ...string) (err error) {
 		body.set("name", label[0])
 	}
 	// [FBRoute POST:@"/alert/accept"]
-	_, err = internalPost("AlertAccept", urlJoin(baseUrl, "/alert/accept"), body)
+	_, err = executePost("AlertAccept", urlJoin(baseUrl, "/alert/accept"), body)
 	return
 }
 
@@ -293,7 +293,7 @@ func alertDismiss(baseUrl *url.URL, label ...string) (err error) {
 		body.set("name", label[0])
 	}
 	// [FBRoute POST:@"/alert/dismiss"]
-	_, err = internalPost("AlertDismiss", urlJoin(baseUrl, "/alert/dismiss"), body)
+	_, err = executePost("AlertDismiss", urlJoin(baseUrl, "/alert/dismiss"), body)
 	return
 }
 
@@ -308,7 +308,7 @@ func (c *Client) AlertDismiss(label ...string) (err error) {
 func alertText(baseUrl *url.URL) (text string, err error) {
 	var wdaResp wdaResponse
 	// [FBRoute GET:@"/alert/text"]
-	if wdaResp, err = internalGet("AlertText", urlJoin(baseUrl, "/alert/text")); err != nil {
+	if wdaResp, err = executeGet("AlertText", urlJoin(baseUrl, "/alert/text")); err != nil {
 		return "", err
 	}
 	return wdaResp.getValue().String(), nil
@@ -320,19 +320,19 @@ func (c *Client) AlertText() (text string, err error) {
 
 func isLocked(baseUrl *url.URL) (isLocked bool, err error) {
 	var wdaResp wdaResponse
-	if wdaResp, err = internalGet("Locked", urlJoin(baseUrl, "/wda/locked")); err != nil {
+	if wdaResp, err = executeGet("Locked", urlJoin(baseUrl, "/wda/locked")); err != nil {
 		return false, err
 	}
 	return wdaResp.getValue().Bool(), nil
 }
 
 func unlock(baseUrl *url.URL) (err error) {
-	_, err = internalPost("Unlock", urlJoin(baseUrl, "/wda/unlock"), nil)
+	_, err = executePost("Unlock", urlJoin(baseUrl, "/wda/unlock"), nil)
 	return
 }
 
 func lock(baseUrl *url.URL) (err error) {
-	_, err = internalPost("Lock", urlJoin(baseUrl, "/wda/lock"), nil)
+	_, err = executePost("Lock", urlJoin(baseUrl, "/wda/lock"), nil)
 	return
 }
 
@@ -373,7 +373,7 @@ func (c *Client) Lock() (err error) {
 //  }
 func deviceInfo(baseUrl *url.URL) (wdaDeviceInfo WDADeviceInfo, err error) {
 	var wdaResp wdaResponse
-	if wdaResp, err = internalGet("DeviceInfo", urlJoin(baseUrl, "/wda/device/info")); err != nil {
+	if wdaResp, err = executeGet("DeviceInfo", urlJoin(baseUrl, "/wda/device/info")); err != nil {
 		return WDADeviceInfo{}, err
 	}
 	wdaDeviceInfo._string = wdaResp.getValue().String()
@@ -419,7 +419,7 @@ type WDAAppBaseInfo struct {
 // }
 func activeAppInfo(baseUrl *url.URL) (wdaActiveAppInfo WDAActiveAppInfo, err error) {
 	var wdaResp wdaResponse
-	if wdaResp, err = internalGet("ActiveAppInfo", urlJoin(baseUrl, "/wda/activeAppInfo")); err != nil {
+	if wdaResp, err = executeGet("ActiveAppInfo", urlJoin(baseUrl, "/wda/activeAppInfo")); err != nil {
 		return WDAActiveAppInfo{}, err
 	}
 
@@ -449,7 +449,7 @@ func screenshot(baseUrl *url.URL, element ...*Element) (raw *bytes.Buffer, err e
 		tmpPath += "/" + element[0].UID
 	}
 
-	if wdaResp, err = internalGet("Screenshot", urlJoin(baseUrl, tmpPath)); err != nil {
+	if wdaResp, err = executeGet("Screenshot", urlJoin(baseUrl, tmpPath)); err != nil {
 		return nil, err
 	}
 
@@ -539,7 +539,7 @@ func source(baseUrl *url.URL, srcOpt ...WDASourceOption) (s string, err error) {
 		tmp.RawQuery = q.Encode()
 	}
 	var wdaResp wdaResponse
-	if wdaResp, err = internalGet("Source", urlJoin(tmp, "/source")); err != nil {
+	if wdaResp, err = executeGet("Source", urlJoin(tmp, "/source")); err != nil {
 		return "", err
 	}
 	return wdaResp.getValue().String(), nil
@@ -552,7 +552,7 @@ func (c *Client) Source(srcOpt ...WDASourceOption) (s string, err error) {
 
 func accessibleSource(baseUrl *url.URL) (sJson string, err error) {
 	var wdaResp wdaResponse
-	if wdaResp, err = internalGet("AccessibleSource", urlJoin(baseUrl, "/wda/accessibleSource")); err != nil {
+	if wdaResp, err = executeGet("AccessibleSource", urlJoin(baseUrl, "/wda/accessibleSource")); err != nil {
 		return "", err
 	}
 	return wdaResp.getValue().String(), nil
@@ -575,13 +575,13 @@ func (c *Client) AccessibleSource() (sJson string, err error) {
 //
 // !!! Health check might modify simulator state so it should only be called in-between testing sessions
 func (c *Client) HealthCheck() (err error) {
-	_, err = internalGet("HealthCheck", urlJoin(c.deviceURL, "/wda/healthcheck"))
+	_, err = executeGet("HealthCheck", urlJoin(c.deviceURL, "/wda/healthcheck"))
 	return
 }
 
 func (c *Client) IsWdaHealth() (isHealth bool, err error) {
 	var wdaResp wdaResponse
-	if wdaResp, err = internalGet("IsWdaHealth", urlJoin(c.deviceURL, "/health")); err != nil {
+	if wdaResp, err = executeGet("IsWdaHealth", urlJoin(c.deviceURL, "/health")); err != nil {
 		return false, err
 	}
 	if wdaResp.String() != "I-AM-ALIVE" {
@@ -591,12 +591,12 @@ func (c *Client) IsWdaHealth() (isHealth bool, err error) {
 }
 
 func (c *Client) WdaShutdown() (err error) {
-	_, err = internalGet("WdaShutdown", urlJoin(c.deviceURL, "/wda/shutdown"))
+	_, err = executeGet("WdaShutdown", urlJoin(c.deviceURL, "/wda/shutdown"))
 	return
 }
 
 func (c *Client) tttTmp() {
 	body := newWdaBody()
-	wdaResp, err := internalPost("tttTmp", urlJoin(c.deviceURL, "/alert/accept"), body)
+	wdaResp, err := executePost("tttTmp", urlJoin(c.deviceURL, "/alert/accept"), body)
 	fmt.Println(err, "\n", wdaResp)
 }

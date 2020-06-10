@@ -712,7 +712,7 @@ func TestSession_Screenshot(t *testing.T) {
 	WDADebug(true)
 	_, err = s.Screenshot()
 	checkErr(t, err)
-	wdaDebug = false
+	wdaDebugFlag = false
 	element, err := s.FindElement(WDALocator{Predicate: "type == 'XCUIElementTypeCell' AND name == '通知'"})
 	checkErr(t, err)
 
@@ -731,7 +731,7 @@ func TestSession_ScreenshotToDisk(t *testing.T) {
 	userHomeDir, _ := os.UserHomeDir()
 	err = s.ScreenshotToDisk(filepath.Join(userHomeDir, "Desktop", "s1.png"))
 	checkErr(t, err)
-	wdaDebug = false
+	wdaDebugFlag = false
 	element, err := s.FindElement(WDALocator{Predicate: "type == 'XCUIElementTypeCell' AND name == '通知'"})
 	checkErr(t, err)
 

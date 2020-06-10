@@ -57,7 +57,7 @@ func (e *Element) DoubleTap() error {
 // Sends a two finger tap event to a hittable point computed for the element.
 func (e *Element) TwoFingerTap() (err error) {
 	// [FBRoute POST:@"/wda/element/:uuid/twoFingerTap"]
-	_, err = internalPost("TwoFingerTap", urlJoin(e.endpoint, e._withFormat("/twoFingerTap"), true), nil)
+	_, err = executePost("TwoFingerTap", urlJoin(e.endpoint, e._withFormat("/twoFingerTap"), true), nil)
 	return
 }
 
@@ -79,7 +79,7 @@ func (e *Element) TapWithNumberOfTaps(numberOfTaps, numberOfTouches int) (err er
 	}
 	body := newWdaBody().set("numberOfTaps", numberOfTaps).set("numberOfTouches", numberOfTouches)
 	// [FBRoute POST:@"/wda/element/:uuid/tapWithNumberOfTaps"]
-	_, err = internalPost("TapWithNumberOfTaps", urlJoin(e.endpoint, e._withFormat("/tapWithNumberOfTaps"), true), body)
+	_, err = executePost("TapWithNumberOfTaps", urlJoin(e.endpoint, e._withFormat("/tapWithNumberOfTaps"), true), body)
 	return
 }
 
@@ -111,7 +111,7 @@ func (e *Element) _forceTouch(wdaCoordinate WDACoordinate, pressure float64, dur
 	}
 	body.set("duration", duration[0])
 	// [FBRoute POST:@"/wda/element/:uuid/forceTouch"]
-	_, err = internalPost("ForceTouch", urlJoin(e.endpoint, e._withFormat("/forceTouch"), true), body)
+	_, err = executePost("ForceTouch", urlJoin(e.endpoint, e._withFormat("/forceTouch"), true), body)
 	return
 }
 
@@ -191,7 +191,7 @@ func (e *Element) SwipeFloat(fromX, fromY, toX, toY float64) (err error) {
 func (e *Element) SwipeDirection(direction WDASwipeDirection) (err error) {
 	body := newWdaBody().set("direction", direction)
 	// [FBRoute POST:@"/wda/element/:uuid/swipe"]
-	_, err = internalPost("SwipeDirection", urlJoin(e.endpoint, e._withFormat("/swipe"), true), body)
+	_, err = executePost("SwipeDirection", urlJoin(e.endpoint, e._withFormat("/swipe"), true), body)
 	return
 }
 
@@ -250,7 +250,7 @@ func (e *Element) Pinch(scale, velocity float64) (err error) {
 	}
 	body := newWdaBody().set("scale", scale).set("velocity", velocity)
 	// [FBRoute POST:@"/wda/element/:uuid/pinch"]
-	_, err = internalPost("Pinch", urlJoin(e.endpoint, e._withFormat("/pinch"), true), body)
+	_, err = executePost("Pinch", urlJoin(e.endpoint, e._withFormat("/pinch"), true), body)
 	return
 }
 
@@ -311,13 +311,13 @@ func (e *Element) Rotate(rotation float64, velocity ...float64) (err error) {
 	}
 	body := newWdaBody().set("rotation", rotation).set("velocity", velocity[0])
 	// [FBRoute POST:@"/wda/element/:uuid/rotate"]
-	_, err = internalPost("Rotate", urlJoin(e.endpoint, e._withFormat("/rotate"), true), body)
+	_, err = executePost("Rotate", urlJoin(e.endpoint, e._withFormat("/rotate"), true), body)
 	return
 }
 
 func (e *Element) _scroll(body wdaBody) (err error) {
 	// [FBRoute POST:@"/wda/element/:uuid/scroll"]
-	_, err = internalPost("Scroll", urlJoin(e.endpoint, e._withFormat("/scroll"), true), body)
+	_, err = executePost("Scroll", urlJoin(e.endpoint, e._withFormat("/scroll"), true), body)
 	return
 }
 
@@ -373,7 +373,7 @@ func (e *Element) PickerWheelSelect(order WDAPickerWheelSelectOrder, offset ...i
 	}
 	body := newWdaBody().set("order", order).set("offset", float64(offset[0])*0.1)
 	// [FBRoute POST:@"/wda/pickerwheel/:uuid/select"]
-	_, err = internalPost("PickerWheelSelect", urlJoin(e.endpoint, path.Join("/pickerwheel", e.UID, "/select"), true), body)
+	_, err = executePost("PickerWheelSelect", urlJoin(e.endpoint, path.Join("/pickerwheel", e.UID, "/select"), true), body)
 	return
 }
 
@@ -393,7 +393,7 @@ func (e *Element) PickerWheelSelectPrevious(offset ...int) (err error) {
 
 func (e *Element) Click() (err error) {
 	// [FBRoute POST:@"/element/:uuid/click"]
-	_, err = internalPost("Click", urlJoin(e.endpoint, e._withFormat("/click")), nil)
+	_, err = executePost("Click", urlJoin(e.endpoint, e._withFormat("/click")), nil)
 	return
 }
 
@@ -404,7 +404,7 @@ func (e *Element) SendKeys(text string, typingFrequency ...int) error {
 
 func (e *Element) Clear() (err error) {
 	// [FBRoute POST:@"/element/:uuid/clear"]
-	_, err = internalPost("Clear", urlJoin(e.endpoint, e._withFormat("/clear")), nil)
+	_, err = executePost("Clear", urlJoin(e.endpoint, e._withFormat("/clear")), nil)
 	return
 }
 
@@ -421,7 +421,7 @@ type WDARect struct {
 func (e *Element) Rect() (wdaRect WDARect, err error) {
 	var wdaResp wdaResponse
 	// [FBRoute GET:@"/element/:uuid/rect"]
-	if wdaResp, err = internalGet("Rect", urlJoin(e.endpoint, e._withFormat("/rect"))); err != nil {
+	if wdaResp, err = executeGet("Rect", urlJoin(e.endpoint, e._withFormat("/rect"))); err != nil {
 		return WDARect{}, err
 	}
 	wdaRect._string = wdaResp.getValue().String()
@@ -432,7 +432,7 @@ func (e *Element) Rect() (wdaRect WDARect, err error) {
 func (e *Element) IsEnabled() (isEnabled bool, err error) {
 	var wdaResp wdaResponse
 	// [FBRoute GET:@"/element/:uuid/enabled"]
-	if wdaResp, err = internalGet("IsEnabled", urlJoin(e.endpoint, e._withFormat("/enabled"))); err != nil {
+	if wdaResp, err = executeGet("IsEnabled", urlJoin(e.endpoint, e._withFormat("/enabled"))); err != nil {
 		return false, err
 	}
 	return wdaResp.getValue().Bool(), nil
@@ -441,7 +441,7 @@ func (e *Element) IsEnabled() (isEnabled bool, err error) {
 func (e *Element) IsDisplayed() (isDisplayed bool, err error) {
 	var wdaResp wdaResponse
 	// [FBRoute GET:@"/element/:uuid/displayed"]
-	if wdaResp, err = internalGet("IsDisplayed", urlJoin(e.endpoint, e._withFormat("/displayed"))); err != nil {
+	if wdaResp, err = executeGet("IsDisplayed", urlJoin(e.endpoint, e._withFormat("/displayed"))); err != nil {
 		return false, err
 	}
 	return wdaResp.getValue().Bool(), nil
@@ -450,7 +450,7 @@ func (e *Element) IsDisplayed() (isDisplayed bool, err error) {
 func (e *Element) IsSelected() (isSelected bool, err error) {
 	var wdaResp wdaResponse
 	// [FBRoute GET:@"/element/:uuid/selected"]
-	if wdaResp, err = internalGet("IsSelected", urlJoin(e.endpoint, e._withFormat("/selected"))); err != nil {
+	if wdaResp, err = executeGet("IsSelected", urlJoin(e.endpoint, e._withFormat("/selected"))); err != nil {
 		return false, err
 	}
 	return wdaResp.getValue().Bool(), nil
@@ -459,7 +459,7 @@ func (e *Element) IsSelected() (isSelected bool, err error) {
 func (e *Element) IsAccessible() (isAccessible bool, err error) {
 	var wdaResp wdaResponse
 	// [FBRoute GET:@"/wda/element/:uuid/accessible"]
-	if wdaResp, err = internalGet("IsAccessible", urlJoin(e.endpoint, e._withFormat("/accessible"), true)); err != nil {
+	if wdaResp, err = executeGet("IsAccessible", urlJoin(e.endpoint, e._withFormat("/accessible"), true)); err != nil {
 		return false, err
 	}
 	return wdaResp.getValue().Bool(), nil
@@ -468,7 +468,7 @@ func (e *Element) IsAccessible() (isAccessible bool, err error) {
 func (e *Element) IsAccessibilityContainer() (isAccessibilityContainer bool, err error) {
 	var wdaResp wdaResponse
 	// [FBRoute GET:@"/wda/element/:uuid/accessibilityContainer"]
-	if wdaResp, err = internalGet("IsAccessibilityContainer", urlJoin(e.endpoint, e._withFormat("/accessibilityContainer"), true)); err != nil {
+	if wdaResp, err = executeGet("IsAccessibilityContainer", urlJoin(e.endpoint, e._withFormat("/accessibilityContainer"), true)); err != nil {
 		return false, err
 	}
 	return wdaResp.getValue().Bool(), nil
@@ -486,7 +486,7 @@ func (e *Element) GetAttribute(attr WDAElementAttribute) (value string, err erro
 	}
 	var wdaResp wdaResponse
 	// [FBRoute GET:@"/element/:uuid/attribute/:name"]
-	if wdaResp, err = internalGet("GetAttribute", urlJoin(e.endpoint, e._withFormat("/attribute", attrName))); err != nil {
+	if wdaResp, err = executeGet("GetAttribute", urlJoin(e.endpoint, e._withFormat("/attribute", attrName))); err != nil {
 		return "", err
 	}
 	return wdaResp.getValue().String(), nil
@@ -509,7 +509,7 @@ func (e *Element) Value() (string, error) {
 func (e *Element) Text() (text string, err error) {
 	var wdaResp wdaResponse
 	// [FBRoute GET:@"/element/:uuid/text"]
-	if wdaResp, err = internalGet("Text", urlJoin(e.endpoint, e._withFormat("/text"))); err != nil {
+	if wdaResp, err = executeGet("Text", urlJoin(e.endpoint, e._withFormat("/text"))); err != nil {
 		return "", err
 	}
 	return wdaResp.getValue().String(), nil
@@ -521,7 +521,7 @@ func (e *Element) Text() (text string, err error) {
 func (e *Element) Type() (elemType string, err error) {
 	var wdaResp wdaResponse
 	// [FBRoute GET:@"/element/:uuid/name"]
-	if wdaResp, err = internalGet("Type", urlJoin(e.endpoint, e._withFormat("/name"))); err != nil {
+	if wdaResp, err = executeGet("Type", urlJoin(e.endpoint, e._withFormat("/name"))); err != nil {
 		return "", err
 	}
 	return wdaResp.getValue().String(), nil
@@ -555,7 +555,7 @@ func (e *Element) FindElements(wdaLocator WDALocator) (elements []*Element, err 
 func (e *Element) FindVisibleCells() (elements []*Element, err error) {
 	var wdaResp wdaResponse
 	// [FBRoute GET:@"/wda/element/:uuid/getVisibleCells"]
-	if wdaResp, err = internalGet("FindVisibleCells", urlJoin(e.endpoint, e._withFormat("/getVisibleCells"), true)); err != nil {
+	if wdaResp, err = executeGet("FindVisibleCells", urlJoin(e.endpoint, e._withFormat("/getVisibleCells"), true)); err != nil {
 		return nil, err
 	}
 	results := wdaResp.getValue().Array()
@@ -590,10 +590,6 @@ func (e *Element) ScreenshotToImage() (img image.Image, format string, err error
 	return screenshotToImage(e._withFormatToUrl())
 }
 
-// func addToRootWda(baseUrl *url.URL) {
-// fmt.Println(url.Parse(urlJoin(baseUrl, "/accessible")))
-// }
-
 func (e *Element) tttTmp() {
 
 	var err error
@@ -615,7 +611,7 @@ func (e *Element) tttTmp() {
 
 	var wdaResp wdaResponse
 	// [FBRoute POST:@"/wda/pickerwheel/:uuid/select"]
-	wdaResp, err = internalPost("###############", urlJoin(e.endpoint, path.Join("/pickerwheel", e.UID, "/select"), true), body)
+	wdaResp, err = executePost("###############", urlJoin(e.endpoint, path.Join("/pickerwheel", e.UID, "/select"), true), body)
 	_ = wdaResp
 	_ = err
 	// fmt.Println(err, wdaResp)

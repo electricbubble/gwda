@@ -43,7 +43,7 @@ func (si WDASessionInfo) String() string {
 // get current session information
 func (s *Session) GetActiveSession() (wdaSessionInfo WDASessionInfo, err error) {
 	var wdaResp wdaResponse
-	if wdaResp, err = internalGet("GetActiveSession", urlJoin(s.sessionURL, "")); err != nil {
+	if wdaResp, err = executeGet("GetActiveSession", urlJoin(s.sessionURL, "")); err != nil {
 		return WDASessionInfo{}, err
 	}
 
@@ -59,7 +59,7 @@ func (s *Session) GetActiveSession() (wdaSessionInfo WDASessionInfo, err error) 
 //	1. alertsMonitor disable
 //	2. testedApplicationBundleId terminate
 func (s *Session) DeleteSession() (err error) {
-	_, err = internalDelete("DeleteSession", s.sessionURL.String())
+	_, err = executeDelete("DeleteSession", s.sessionURL.String())
 	return
 }
 
@@ -107,7 +107,7 @@ func (s *Session) AppLaunch(bundleId string, opt ...WDAAppLaunchOption) (err err
 	}
 	body := newWdaBody().setBundleID(bundleId)
 	body.setAppLaunchOption(opt[0])
-	_, err = internalPost("AppLaunch", urlJoin(s.sessionURL, "/wda/apps/launch"), body)
+	_, err = executePost("AppLaunch", urlJoin(s.sessionURL, "/wda/apps/launch"), body)
 	return
 }
 
@@ -118,7 +118,7 @@ func (s *Session) AppLaunch(bundleId string, opt ...WDAAppLaunchOption) (err err
 //	1. unregisterApplicationWithBundleId
 func (s *Session) AppTerminate(bundleId string) (err error) {
 	body := newWdaBody().setBundleID(bundleId)
-	_, err = internalPost("AppTerminate", urlJoin(s.sessionURL, "/wda/apps/terminate"), body)
+	_, err = executePost("AppTerminate", urlJoin(s.sessionURL, "/wda/apps/terminate"), body)
 	// "value" : true,
 	// "value" : false,
 	return
@@ -131,7 +131,7 @@ func (s *Session) AppTerminate(bundleId string) (err error) {
 // This method is only supported since Xcode9.
 func (s *Session) AppActivate(bundleId string) (err error) {
 	body := newWdaBody().setBundleID(bundleId)
-	_, err = internalPost("AppActivate", urlJoin(s.sessionURL, "/wda/apps/activate"), body)
+	_, err = executePost("AppActivate", urlJoin(s.sessionURL, "/wda/apps/activate"), body)
 	return
 }
 
@@ -143,7 +143,7 @@ func (s *Session) AppDeactivate(seconds ...float64) (err error) {
 		seconds = []float64{3.0}
 	}
 	body := newWdaBody().set("duration", seconds[0])
-	wdaResp, err := internalPost("AppDeactivate", urlJoin(s.sessionURL, "/wda/deactivateApp"), body)
+	wdaResp, err := executePost("AppDeactivate", urlJoin(s.sessionURL, "/wda/deactivateApp"), body)
 	if err != nil {
 		return err
 	}
@@ -161,7 +161,7 @@ func sendKeys(url string, text string, typingFrequency ...int) (err error) {
 	if len(typingFrequency) != 0 {
 		body.set("frequency", typingFrequency[0])
 	}
-	_, err = internalPost("SendKeys", url, body)
+	_, err = executePost("SendKeys", url, body)
 	return
 }
 
@@ -181,7 +181,7 @@ func tap(baseUrl *url.URL, x, y interface{}, elemUID ...string) (err error) {
 	} else {
 		tmpPath += "/" + elemUID[0]
 	}
-	_, err = internalPost("Tap", urlJoin(baseUrl, tmpPath), body)
+	_, err = executePost("Tap", urlJoin(baseUrl, tmpPath), body)
 	return
 }
 
@@ -212,7 +212,7 @@ func doubleTap(baseUrl *url.URL, x, y interface{}, elemPrefixPath ...string) (er
 	} else {
 		tmpPath = elemPrefixPath[0] + tmpPath
 	}
-	_, err = internalPost("DoubleTap", urlJoin(baseUrl, tmpPath, true), body)
+	_, err = executePost("DoubleTap", urlJoin(baseUrl, tmpPath, true), body)
 	return
 }
 
@@ -239,7 +239,7 @@ func touchAndHold(baseUrl *url.URL, x, y, duration interface{}, elemPrefixPath .
 	} else {
 		tmpPath = elemPrefixPath[0] + tmpPath
 	}
-	_, err = internalPost("TouchAndHold", urlJoin(baseUrl, tmpPath, true), body)
+	_, err = executePost("TouchAndHold", urlJoin(baseUrl, tmpPath, true), body)
 	return
 }
 
@@ -298,7 +298,7 @@ func drag(baseUrl *url.URL, fromX, fromY, toX, toY, pressForDuration interface{}
 	if len(elemPrefixPath) != 0 {
 		tmpPath = elemPrefixPath[0] + tmpPath
 	}
-	_, err = internalPost("Drag", urlJoin(baseUrl, tmpPath, true), body)
+	_, err = executePost("Drag", urlJoin(baseUrl, tmpPath, true), body)
 	return
 }
 
@@ -406,7 +406,7 @@ func (s *Session) SetPasteboard(contentType WDAContentType, content string) (err
 	body.set("contentType", contentType)
 	body.set("content", base64.StdEncoding.EncodeToString([]byte(content)))
 
-	_, err = internalPost("SetPasteboard", urlJoin(s.sessionURL, "/wda/setPasteboard"), body)
+	_, err = executePost("SetPasteboard", urlJoin(s.sessionURL, "/wda/setPasteboard"), body)
 	return
 }
 
@@ -437,7 +437,7 @@ func (s *Session) GetPasteboard(contentType WDAContentType) (raw *bytes.Buffer, 
 	var wdaResp wdaResponse
 	body := newWdaBody().set("contentType", contentType)
 	// [FBRoute POST:@"/wda/getPasteboard"]
-	if wdaResp, err = internalPost("GetPasteboard", urlJoin(s.sessionURL, "/wda/getPasteboard"), body); err != nil {
+	if wdaResp, err = executePost("GetPasteboard", urlJoin(s.sessionURL, "/wda/getPasteboard"), body); err != nil {
 		return nil, err
 	}
 	if decodeString, err := base64.StdEncoding.DecodeString(wdaResp.getValue().String()); err != nil {
@@ -496,7 +496,7 @@ const (
 // !!! not a synchronous action
 func (s *Session) PressButton(wdaDeviceButton WDADeviceButtonName) (err error) {
 	body := newWdaBody().set("name", wdaDeviceButton)
-	_, err = internalPost("PressButton", urlJoin(s.sessionURL, "/wda/pressButton"), body)
+	_, err = executePost("PressButton", urlJoin(s.sessionURL, "/wda/pressButton"), body)
 	return
 }
 
@@ -517,7 +517,7 @@ func (s *Session) PressVolumeDownButton() (err error) {
 // Activates Siri service voice recognition with the given text to parse
 func (s *Session) SiriActivate(text string) (err error) {
 	body := newWdaBody().set("text", text)
-	_, err = internalPost("SiriActivate", urlJoin(s.sessionURL, "/wda/siri/activate"), body)
+	_, err = executePost("SiriActivate", urlJoin(s.sessionURL, "/wda/siri/activate"), body)
 	return
 }
 
@@ -525,7 +525,7 @@ func (s *Session) SiriActivate(text string) (err error) {
 // It doesn't actually work, right?
 func (s *Session) SiriOpenURL(url string) (err error) {
 	body := newWdaBody().set("url", url)
-	_, err = internalPost("SiriOpenURL", urlJoin(s.sessionURL, "/url"), body)
+	_, err = executePost("SiriOpenURL", urlJoin(s.sessionURL, "/url"), body)
 	return
 }
 
@@ -533,7 +533,7 @@ func findUidOfElement(baseUrl *url.URL, wdaLocator WDALocator) (elemUID string, 
 	using, value := wdaLocator.getUsingAndValue()
 	body := newWdaBody().set("using", using).set("value", value)
 	var wdaResp wdaResponse
-	if wdaResp, err = internalPost("FindElement", urlJoin(baseUrl, "/element"), body); err != nil {
+	if wdaResp, err = executePost("FindElement", urlJoin(baseUrl, "/element"), body); err != nil {
 		return "", err
 	}
 	return wdaResp.getValue().Get("ELEMENT").String(), nil
@@ -552,7 +552,7 @@ func findUidOfElements(baseUrl *url.URL, wdaLocator WDALocator) (elemUIDs []stri
 	using, value := wdaLocator.getUsingAndValue()
 	body := newWdaBody().set("using", using).set("value", value)
 	var wdaResp wdaResponse
-	if wdaResp, err = internalPost("FindElements", urlJoin(baseUrl, "/elements"), body); err != nil {
+	if wdaResp, err = executePost("FindElements", urlJoin(baseUrl, "/elements"), body); err != nil {
 		return nil, err
 	}
 	results := wdaResp.getValue().Array()
@@ -586,7 +586,7 @@ func (s *Session) FindElements(wdaLocator WDALocator) (elements []*Element, err 
 // [NSPredicate predicateWithFormat:@"hasKeyboardFocus == YES"]
 func (s *Session) ActiveElement() (element *Element, err error) {
 	var wdaResp wdaResponse
-	if wdaResp, err = internalGet("ActiveElement", urlJoin(s.sessionURL, "/element/active")); err != nil {
+	if wdaResp, err = executeGet("ActiveElement", urlJoin(s.sessionURL, "/element/active")); err != nil {
 		return nil, err
 	}
 	element = newElement(s.sessionURL, wdaResp.getValue().Get("ELEMENT").String())
@@ -613,7 +613,7 @@ func (s *Session) AlertText() (text string, err error) {
 func (s *Session) AlertButtons() (buttons []string, err error) {
 	var wdaResp wdaResponse
 	// [FBRoute GET:@"/wda/alert/buttons"]
-	if wdaResp, err = internalGet("AlertButtons", urlJoin(s.sessionURL, "/wda/alert/buttons")); err != nil {
+	if wdaResp, err = executeGet("AlertButtons", urlJoin(s.sessionURL, "/wda/alert/buttons")); err != nil {
 		return nil, err
 	}
 	results := wdaResp.getValue().Array()
@@ -651,7 +651,7 @@ func (v WDAOrientation) String() string {
 func (s *Session) Orientation() (orientation WDAOrientation, err error) {
 	var wdaResp wdaResponse
 	// [FBRoute GET:@"/orientation"]
-	if wdaResp, err = internalGet("Orientation", urlJoin(s.sessionURL, "/orientation")); err != nil {
+	if wdaResp, err = executeGet("Orientation", urlJoin(s.sessionURL, "/orientation")); err != nil {
 		return "", err
 	}
 	return WDAOrientation(wdaResp.getValue().String()), nil
@@ -660,7 +660,7 @@ func (s *Session) Orientation() (orientation WDAOrientation, err error) {
 func (s *Session) SetOrientation(orientation WDAOrientation) (err error) {
 	body := newWdaBody().set("orientation", orientation)
 	// [FBRoute POST:@"/orientation"]
-	_, err = internalPost("SetOrientation", urlJoin(s.sessionURL, "/orientation"), body)
+	_, err = executePost("SetOrientation", urlJoin(s.sessionURL, "/orientation"), body)
 	return
 }
 
@@ -678,7 +678,7 @@ func (r WDARotation) String() string {
 func (s *Session) Rotation() (wdaRotation WDARotation, err error) {
 	var wdaResp wdaResponse
 	// [FBRoute GET:@"/rotation"]
-	if wdaResp, err = internalGet("Rotation", urlJoin(s.sessionURL, "/rotation")); err != nil {
+	if wdaResp, err = executeGet("Rotation", urlJoin(s.sessionURL, "/rotation")); err != nil {
 		return WDARotation{}, err
 	}
 	wdaRotation._string = wdaResp.getValue().String()
@@ -691,7 +691,7 @@ func (s *Session) SetRotation(wdaRotation WDARotation) (err error) {
 	body.setXY(wdaRotation.X, wdaRotation.Y)
 	body.set("z", wdaRotation.Z)
 	// [FBRoute POST:@"/rotation"]
-	_, err = internalPost("SetRotation", urlJoin(s.sessionURL, "/rotation"), body)
+	_, err = executePost("SetRotation", urlJoin(s.sessionURL, "/rotation"), body)
 	return
 }
 
@@ -718,7 +718,7 @@ func (s *Session) PerformTouchActions(touchActions *WDATouchActions) (err error)
 	body := newWdaBody().set("actions", touchActions)
 	// [FBRoute POST:@"/wda/touch/perform"]
 	// [FBRoute POST:@"/wda/touch/multi/perform"]
-	_, err = internalPost("PerformTouchActions", urlJoin(s.sessionURL, "/wda/touch/multi/perform"), body)
+	_, err = executePost("PerformTouchActions", urlJoin(s.sessionURL, "/wda/touch/multi/perform"), body)
 	return
 }
 
@@ -861,7 +861,7 @@ func (ta *WDATouchActions) Cancel() *WDATouchActions {
 func performActions(baseUrl *url.URL, actions *WDAActions) (err error) {
 	body := newWdaBody().set("actions", actions)
 	// [FBRoute POST:@"/actions"]
-	_, err = internalPost("PerformActions", urlJoin(baseUrl, "/actions"), body)
+	_, err = executePost("PerformActions", urlJoin(baseUrl, "/actions"), body)
 	return
 }
 
@@ -1051,7 +1051,7 @@ func (act *WDAActions) SwipeCoordinate(fromCoordinate, toCoordinate WDACoordinat
 func (s *Session) MatchTouchID(isMatch bool) (bool, error) {
 	body := newWdaBody().set("match", isMatch)
 	// [FBRoute POST:@"/wda/touch_id"]
-	wdaResp, err := internalPost("MatchTouchID", urlJoin(s.sessionURL, "/wda/touch_id"), body)
+	wdaResp, err := executePost("MatchTouchID", urlJoin(s.sessionURL, "/wda/touch_id"), body)
 	return wdaResp.getValue().Bool(), err
 }
 
@@ -1067,7 +1067,7 @@ func (s *Session) ActiveAppInfo() (wdaActiveAppInfo WDAActiveAppInfo, err error)
 // use multitasking on iPad
 func (s *Session) ActiveAppsList() (appsList []WDAAppBaseInfo, err error) {
 	var wdaResp wdaResponse
-	if wdaResp, err = internalGet("ActiveAppsList", urlJoin(s.sessionURL, "/wda/apps/list")); err != nil {
+	if wdaResp, err = executeGet("ActiveAppsList", urlJoin(s.sessionURL, "/wda/apps/list")); err != nil {
 		return nil, err
 	}
 	appsList = make([]WDAAppBaseInfo, 0)
@@ -1103,7 +1103,7 @@ func (v WDAAppRunState) String() string {
 func (s *Session) AppState(bundleId string) (appRunState WDAAppRunState, err error) {
 	body := newWdaBody().setBundleID(bundleId)
 	var wdaResp wdaResponse
-	if wdaResp, err = internalPost("AppState", urlJoin(s.sessionURL, "/wda/apps/state"), body); err != nil {
+	if wdaResp, err = executePost("AppState", urlJoin(s.sessionURL, "/wda/apps/state"), body); err != nil {
 		return -1, err
 	}
 	return WDAAppRunState(wdaResp.getValue().Int()), nil
@@ -1171,7 +1171,7 @@ func (v WDABatteryState) String() string {
 //	UIDeviceBatteryStateFull = 3       // plugged in, at 100%
 func (s *Session) BatteryInfo() (wdaBatteryInfo WDABatteryInfo, err error) {
 	var wdaResp wdaResponse
-	if wdaResp, err = internalGet("BatteryInfo", urlJoin(s.sessionURL, "/wda/batteryInfo")); err != nil {
+	if wdaResp, err = executeGet("BatteryInfo", urlJoin(s.sessionURL, "/wda/batteryInfo")); err != nil {
 		return
 	}
 
@@ -1186,7 +1186,7 @@ func (s *Session) BatteryInfo() (wdaBatteryInfo WDABatteryInfo, err error) {
 // CGRect frame = request.session.activeApplication.wdFrame;
 func (s *Session) WindowSize() (wdaSize WDASize, err error) {
 	var wdaResp wdaResponse
-	if wdaResp, err = internalGet("WindowSize", urlJoin(s.sessionURL, "/window/size")); err != nil {
+	if wdaResp, err = executeGet("WindowSize", urlJoin(s.sessionURL, "/window/size")); err != nil {
 		return
 	}
 
@@ -1219,7 +1219,7 @@ func (s WDAScreen) String() string {
 // Screen
 func (s *Session) Screen() (wdaScreen WDAScreen, err error) {
 	var wdaResp wdaResponse
-	if wdaResp, err = internalGet("Screen", urlJoin(s.sessionURL, "/wda/screen")); err != nil {
+	if wdaResp, err = executeGet("Screen", urlJoin(s.sessionURL, "/wda/screen")); err != nil {
 		return
 	}
 
@@ -1298,7 +1298,7 @@ func (s *Session) AccessibleSource() (sJson string, err error) {
 
 func (s *Session) GetAppiumSettings() (sJson string, err error) {
 	var wdaResp wdaResponse
-	if wdaResp, err = internalGet("GetAppiumSettings", urlJoin(s.sessionURL, "/appium/settings")); err != nil {
+	if wdaResp, err = executeGet("GetAppiumSettings", urlJoin(s.sessionURL, "/appium/settings")); err != nil {
 		return "", err
 	}
 	return wdaResp.getValue().String(), nil
@@ -1311,7 +1311,7 @@ func (s *Session) SetAppiumSetting(key string, value interface{}) (sJson string,
 func (s *Session) SetAppiumSettings(settings map[string]interface{}) (sJson string, err error) {
 	body := newWdaBody().set("settings", settings)
 	var wdaResp wdaResponse
-	if wdaResp, err = internalPost("SetAppiumSettings", urlJoin(s.sessionURL, "/appium/settings"), body); err != nil {
+	if wdaResp, err = executePost("SetAppiumSettings", urlJoin(s.sessionURL, "/appium/settings"), body); err != nil {
 		return "", err
 	}
 	return wdaResp.getValue().String(), nil
@@ -1370,7 +1370,7 @@ func (s *Session) tttTmp() {
 	body.set("match", true)
 
 	// [FBRoute POST:@"/wda/touch_id"]
-	wdaResp, err := internalPost("###############", urlJoin(s.sessionURL, "/wda/touch_id"), body)
+	wdaResp, err := executePost("###############", urlJoin(s.sessionURL, "/wda/touch_id"), body)
 	_, _ = err, wdaResp
 	// fmt.Println(err, wdaResp)
 }
