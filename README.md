@@ -266,3 +266,6 @@ func checkErr(msg string, err error) {
 
 > 以上代码仅使用了 iPhone X (13.4.1) 和 iPhone 6s (11.4.1) 进行了测试。
 
+## Thanks
+
+Thank you [JetBrains](https://www.jetbrains.com/?from=gwda) for providing free open source licenses
