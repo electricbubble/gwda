@@ -16,6 +16,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 )
 
@@ -31,6 +32,40 @@ type Client struct {
 // 	AcceptAlertButtonSelector: **/XCUIElementTypeButton[`label IN {'允许','好','仅在使用应用期间','暂不'}`]
 // 	DismissAlertButtonSelector: **/XCUIElementTypeButton[`label IN {'不允许','暂不'}`]
 func NewClient(deviceURL string, isInitializesAlertButtonSelector ...bool) (c *Client, err error) {
+	{
+		var chkURL *url.URL
+		if chkURL, err = url.Parse(deviceURL); err != nil {
+			return nil, err
+		}
+		var device *Device = nil
+		if len(chkURL.Hostname()) == 40 {
+			// http://__UDID__
+			// http://__UDID__:8100
+			var deviceList []Device
+			if deviceList, err = DeviceList(); err != nil {
+				return nil, err
+			}
+			for i, dev := range deviceList {
+				if dev.SerialNumber() == chkURL.Hostname() {
+					device = &deviceList[i]
+					break
+				}
+			}
+			if len(deviceList) == 0 || device == nil {
+				return nil, goUSBMux.ErrNoFindUSBDevice
+			}
+			if chkURL.Port() != "" {
+				if device.WDAPort, err = strconv.Atoi(chkURL.Port()); err != nil {
+					return nil, err
+				}
+			}
+			if len(isInitializesAlertButtonSelector) != 0 {
+				device.IsInitializesAlertButtonSelector = isInitializesAlertButtonSelector[0]
+			}
+			return NewUSBClient(*device)
+		}
+	}
+
 	c = &Client{}
 	if c.deviceURL, err = url.Parse(deviceURL); err != nil {
 		return nil, err

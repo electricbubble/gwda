@@ -31,6 +31,17 @@ func TestNewUSBClient(t *testing.T) {
 	// t.Log(buf)
 }
 
+func TestClient_NewClient(t *testing.T) {
+	WDADebug(true)
+	// deviceURL = "http://__UDID__:8100"
+	// deviceURL = "http://__UDID__:"
+	deviceURL = "http://__UDID__"
+	// deviceURL = "http://__UDID__:8200"
+	c, err := NewClient(deviceURL)
+	checkErr(t, err)
+	_ = c
+}
+
 func TestClient_NewSession(t *testing.T) {
 	WDADebug(true)
 	c, err := NewClient(deviceURL)
