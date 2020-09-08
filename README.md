@@ -1,7 +1,7 @@
 # Golang-wda
 [![go doc](https://godoc.org/github.com/electricbubble/gwda?status.svg)](https://pkg.go.dev/github.com/electricbubble/gwda?tab=doc#pkg-index)
 [![go report](https://goreportcard.com/badge/github.com/electricbubble/gwda)](https://goreportcard.com/report/github.com/electricbubble/gwda)
-[![license](https://img.shields.io/github/license/electricbubble/gwda)](https://github.com/ElectricBubble/gwda/blob/master/LICENSE)
+[![license](https://img.shields.io/github/license/electricbubble/gwda)](https://github.com/electricbubble/gwda/blob/master/LICENSE)
 
 使用 Golang 实现 [appium/WebDriverAgent](https://github.com/appium/WebDriverAgent) 的客户端库
 
@@ -11,6 +11,7 @@
 
 - [electricbubble/gwda-ext-opencv](https://github.com/electricbubble/gwda-ext-opencv) 直接通过指定图片进行操作
 
+> 如果使用 `Android` 设备, 可查看 [electricbubble/guia2](https://github.com/electricbubble/guia2)
 
 ## 安装
 
@@ -18,7 +19,7 @@
 > [WebDriverAgent 安装](http://leixipaopao.com/posts/0005-wda-appium-installing/)
 
 ```bash
-go get -u github.com/electricbubble/gwda
+go get github.com/electricbubble/gwda
 ```
 
 ## 使用
