@@ -823,36 +823,13 @@ func TestSession_Wait(t *testing.T) {
 	checkErr(t, element.Click())
 }
 
-func TestTmpSession(t *testing.T) {
-	c, err := NewClient(deviceURL)
+func TestSession_AppAuthReset(t *testing.T) {
+	c, err := NewUSBClient()
 	checkErr(t, err)
 	s, err := c.NewSession()
 	checkErr(t, err)
+
 	WDADebug(true)
-
-	// err = s.AppLaunch("com.apple.calculator")
-	// checkErr(t, err)
-	// orientation, err := s.Orientation()
-	// if orientation == WDAOrientationPortrait {
-	// 	err = s.SetOrientation(WDAOrientationLandscapeLeft)
-	// }
-	//
-	// userHomeDir, _ := os.UserHomeDir()
-	// err = s.ScreenshotToDisk(filepath.Join(userHomeDir, "Desktop", "s4.png"))
-	// checkErr(t, err)
-	//
-	// element, err := s.FindElement(WDALocator{Name: "("})
-	// checkErr(t, err)
-	//
-	// err = element.ScreenshotToDisk(filepath.Join(userHomeDir, "Desktop", "e5.png"))
-	// checkErr(t, err)
-	//
-	// err = s.ScreenshotToDisk(filepath.Join(userHomeDir, "Desktop", "e6.png"), element)
-	// checkErr(t, err)
-	//
-	// return
-
-	// s.SetOrientation(WDAOrientationLandscapeRight)
-	s.tttTmp()
-	// _ = s
+	err = s.AppAuthReset(WDAProtectedResourceCamera)
+	checkErr(t, err)
 }

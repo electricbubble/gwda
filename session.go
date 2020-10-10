@@ -1359,18 +1359,30 @@ func (s *Session) Wait(condition WDACondition) error {
 // /timeouts
 // /wda/keyboard/dismiss
 
-func (s *Session) tttTmp() {
-	body := newWdaBody()
-	_ = body
+type WDAProtectedResource int
 
-	// element, err := s.FindElement(WDALocator{ClassName: WDAElementType{ScrollView: true}})
-	// element, err := s.FindElement(WDALocator{Name: "自定手势作用区域"})
-	// _, _ = element, err
+// https://developer.apple.com/documentation/xctest/xcuiprotectedresource?language=objc
+const (
+	WDAProtectedResourceContacts               WDAProtectedResource = 1
+	WDAProtectedResourceCalendar               WDAProtectedResource = 2
+	WDAProtectedResourceReminders              WDAProtectedResource = 3
+	WDAProtectedResourcePhotos                 WDAProtectedResource = 4
+	WDAProtectedResourceMicrophone             WDAProtectedResource = 5
+	WDAProtectedResourceCamera                 WDAProtectedResource = 6
+	WDAProtectedResourceMediaLibrary           WDAProtectedResource = 7
+	WDAProtectedResourceHomeKit                WDAProtectedResource = 8
+	WDAProtectedResourceSystemRootDirectory    WDAProtectedResource = 0x40000000
+	WDAProtectedResourceUserDesktopDirectory   WDAProtectedResource = 0x40000001
+	WDAProtectedResourceUserDownloadsDirectory WDAProtectedResource = 0x40000002
+	WDAProtectedResourceUserDocumentsDirectory WDAProtectedResource = 0x40000003
+	WDAProtectedResourceBluetooth              WDAProtectedResource = -0x40000000
+	WDAProtectedResourceKeyboardNetwork        WDAProtectedResource = -0x40000001
+	WDAProtectedResourceLocation               WDAProtectedResource = -0x40000002
+	WDAProtectedResourceHealth                 WDAProtectedResource = -0x40000003
+)
 
-	body.set("match", true)
-
-	// [FBRoute POST:@"/wda/touch_id"]
-	wdaResp, err := executePost("###############", urlJoin(s.sessionURL, "/wda/touch_id"), body)
-	_, _ = err, wdaResp
-	// fmt.Println(err, wdaResp)
+func (s *Session) AppAuthReset(resource WDAProtectedResource) (err error) {
+	body := newWdaBody().set("resource", resource)
+	_, err = executePost("AppAuthReset", urlJoin(s.sessionURL, "/wda/resetAppAuth"), body)
+	return
 }
