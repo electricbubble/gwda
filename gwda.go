@@ -81,14 +81,14 @@ func executeHTTP(actionName, method, sURL string, body wdaBody) (wdaResp wdaResp
 	httpClient := http.DefaultClient
 
 	filteredURL, _ := url.Parse(sURL)
-	if filteredURL.Port() == "" && len(filteredURL.Host) == 40 {
+	if filteredURL.Port() == "" {
 		udid := filteredURL.Host
-		filteredURL.Host = "__UDID__"
 		if tmpClient, ok := usbHTTPClient[udid]; !ok {
 			// much better for debugging
 			return nil, fmt.Errorf("no http client: %s", sURL)
 			// return nil, fmt.Errorf("no http client: %s", filteredURL.String())
 		} else {
+			filteredURL.Host = "__UDID__"
 			httpClient = tmpClient
 		}
 	}
@@ -102,6 +102,8 @@ func executeHTTP(actionName, method, sURL string, body wdaBody) (wdaResp wdaResp
 		return nil, fmt.Errorf("%s: failed to send request %w", actionName, err)
 	}
 	defer func() {
+		// https://github.com/etcd-io/etcd/blob/v3.3.25/pkg/httputil/httputil.go#L16-L22
+		_, _ = io.Copy(ioutil.Discard, resp.Body)
 		_ = resp.Body.Close()
 	}()
 
