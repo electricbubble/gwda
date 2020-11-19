@@ -838,6 +838,7 @@ type WebDriver interface {
 	BatteryInfo() (BatteryInfo, error)
 	WindowSize() (Size, error)
 	Screen() (Screen, error)
+	Scale() (float64, error)
 	ActiveAppInfo() (AppInfo, error)
 	// ActiveAppsList Retrieves the information about the currently active apps
 	ActiveAppsList() ([]AppBaseInfo, error)

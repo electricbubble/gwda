@@ -216,6 +216,14 @@ func (wd *remoteWD) Screen() (screen Screen, err error) {
 	return
 }
 
+func (wd *remoteWD) Scale() (float64, error) {
+	screen, err := wd.Screen()
+	if err != nil {
+		return 0, err
+	}
+	return screen.Scale, nil
+}
+
 func (wd *remoteWD) ActiveAppInfo() (info AppInfo, err error) {
 	// [[FBRoute GET:@"/wda/activeAppInfo"] respondWithTarget:self action:@selector(handleActiveAppInfo:)]
 	// [[FBRoute GET:@"/wda/activeAppInfo"].withoutSession
