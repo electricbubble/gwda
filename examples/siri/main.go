@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"github.com/electricbubble/gwda"
 	"log"
 )
@@ -12,13 +11,11 @@ func main() {
 		log.Fatalln(err)
 	}
 
-	source, err := driver.Source()
+	err = driver.SiriActivate("What's the weather like today")
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalln(err)
 	}
-	fmt.Println(source)
 
-	fmt.Println(driver.AccessibleSource())
-
-	gwda.SetDebug(true)
+	// It doesn't actually work
+	// driver.SiriOpenUrl("Prefs:root=Bluetooth")
 }

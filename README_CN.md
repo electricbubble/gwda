@@ -3,21 +3,26 @@
 [![go report](https://goreportcard.com/badge/github.com/electricbubble/gwda)](https://goreportcard.com/report/github.com/electricbubble/gwda)
 [![license](https://img.shields.io/github/license/electricbubble/gwda)](https://github.com/electricbubble/gwda/blob/master/LICENSE)
 
-[appium/WebDriverAgent](https://github.com/appium/WebDriverAgent) Client Library in Golang
+使用 Golang 实现 [appium/WebDriverAgent](https://github.com/appium/WebDriverAgent) 的客户端库
 
-> `Android` can use [electricbubble/guia2](https://github.com/electricbubble/guia2)
+参考 facebook-wda (python): [https://github.com/openatx/facebook-wda](https://github.com/openatx/facebook-wda)
 
-[中文 README](README_CN.md)
+## 扩展库
 
-## Installation
+- [electricbubble/gwda-ext-opencv](https://github.com/electricbubble/gwda-ext-opencv) 直接通过指定图片进行操作
 
-> First, install WebDriverAgent for iOS devices
+> 如果使用 `Android` 设备, 可查看 [electricbubble/guia2](https://github.com/electricbubble/guia2)
+
+## 安装
+
+> 必须先安装好 `WDA`，安装步骤可参考 [ATX 文档 - iOS 真机如何安装 WebDriverAgent](https://testerhome.com/topics/7220) 或者
+> [WebDriverAgent 安装](http://leixipaopao.com/posts/0005-wda-appium-installing/)
 
 ```shell script
 go get github.com/electricbubble/gwda
 ```
 
-#### [Connection Device](examples/connect/main.go)
+#### [连接设备](examples/connect/main.go)
 
 ```go
 package main
@@ -29,10 +34,10 @@ import (
 
 func main() {
 	// var urlPrefix = "http://localhost:8100"
-	// The function may also require 'iproxy 8100 8100' to forward the device port first
+	// 该函数或许还需要 `iproxy 8100 8100` 先进行设备端口转发
 	// driver, _ := gwda.NewDriver(nil, urlPrefix)
 
-	// Connect devices via USB
+	// 通过 USB 直连设备
 	driver, _ := gwda.NewUSBDriver(nil)
 
 	log.Println(driver.IsWdaHealthy())
@@ -40,7 +45,7 @@ func main() {
 
 ```
 
-#### [Touch](examples/touch/main.go)
+#### [手势操作](examples/touch/main.go)
 
 ```go
 package main
@@ -72,9 +77,9 @@ func main() {
 
 ```
 
-> [AssistiveTouch](examples/touch/main.go) `driver.PerformW3CActions` `driver.PerformAppiumTouchActions`
+> [自定义手势](examples/touch/main.go) `driver.PerformW3CActions` `driver.PerformAppiumTouchActions`
 
-#### [App Actions](examples/app/main.go)
+#### [App 操作](examples/app/main.go)
 
 ```go
 package main
@@ -96,13 +101,13 @@ func main() {
 
 	driver.AppActivate(bundleId)
 
-	// Resets the 📷 camera authorization status of the current application
+	// 重置当前 App 的 相机📷 权限
 	// driver.AppAuthReset(gwda.ProtectedResourceCamera)
 }
 
 ```
 
-#### [Keyboard](examples/keyboard/main.go)
+#### [键盘输入](examples/keyboard/main.go)
 
 ```go
 package main
@@ -119,10 +124,10 @@ func main() {
 
 ```
 
-> [specified element](examples/keyboard/main.go) `element.SendKeys`
+> [指定元素的输入](examples/keyboard/main.go) `element.SendKeys`
 
 
-#### [Siri](examples/siri/main.go)
+#### [Siri 操作](examples/siri/main.go)
 
 ```go
 package main
@@ -139,7 +144,7 @@ func main() {
 
 ```
 
-#### [Alert](examples/alert/main.go)
+#### [弹窗操作](examples/alert/main.go)
 
 ```go
 package main
@@ -166,7 +171,7 @@ func main() {
 
 ```
 
-#### [Device information](examples/info/main.go)
+#### [基本设备信息](examples/info/main.go)
 
 ```go
 package main
@@ -194,7 +199,7 @@ func main() {
 
 ```
 
-#### [Hardware button](examples/button/main.go)
+#### [按键操作](examples/button/main.go)
 
 ```go
 package main
@@ -215,7 +220,7 @@ func main() {
 
 ```
 
-#### [Screenshot](examples/screenshot/main.go)
+#### [截图](examples/screenshot/main.go)
 
 ```go
 package main
@@ -236,7 +241,7 @@ func main() {
 
 ```
 
-#### [Debug](examples/debug/main.go)
+#### [调试函数](examples/debug/main.go)
 
 ```go
 package main
@@ -258,19 +263,6 @@ func main() {
 }
 
 ```
-
-
-## Extensions
-
-| |About|
-|---|---|
-|[electricbubble/gwda-ext-opencv](https://github.com/electricbubble/gwda-ext-opencv)|Operate with pictures|
-
-## Alternatives
-
-| |About|
-|---|---|
-|[openatx/facebook-wda](https://github.com/openatx/facebook-wda)|Facebook WebDriverAgent Python Client Library (not official)|
 
 ## Thanks
 

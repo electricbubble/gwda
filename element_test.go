@@ -2,655 +2,367 @@ package gwda
 
 import (
 	"math"
-	"os"
-	"path/filepath"
-	"strconv"
 	"testing"
 )
 
-func TestElement_Tap(t *testing.T) {
-	c, err := NewClient(deviceURL)
-	checkErr(t, err)
-	_ = c.Unlock()
-	s, err := c.NewSession()
-	checkErr(t, err)
-	// _ = c.Homescreen()
-	element, err := s.FindElement(WDALocator{Predicate: "type == 'XCUIElementTypeIcon' AND visible == true"})
-	checkErr(t, err)
-	t.Log(element)
-
-	rect, err := element.Rect()
-	checkErr(t, err)
-	t.Log(rect)
-
-	WDADebug(true)
-	err = element.Tap(rect.X+4, rect.Y+4)
-	checkErr(t, err)
+func setupElement(t *testing.T, by BySelector) WebElement {
+	setup(t)
+	element, err := driver.FindElement(by)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return element
 }
 
-func TestElement_DoubleTap(t *testing.T) {
-	c, err := NewClient(deviceURL)
-	checkErr(t, err)
-	_ = c.Unlock()
-	s, err := c.NewSession()
-	checkErr(t, err)
-	// _ = c.Homescreen()
-	element, err := s.FindElement(WDALocator{Predicate: "type == 'XCUIElementTypeIcon' AND visible == true"})
-	// element, err := s.FindElement(WDALocator{PartialLinkText: NewWDAElementAttribute().SetLabel("文件夹")})
-	checkErr(t, err)
-	t.Log(element)
+func Test_remoteWE_Click(t *testing.T) {
+	element := setupElement(t, BySelector{LinkText: NewElementAttribute().WithLabel("设置")})
 
-	rect, err := element.Rect()
-	checkErr(t, err)
-	t.Log(rect)
-
-	WDADebug(true)
-	err = element.DoubleTap()
-	checkErr(t, err)
+	err := element.Click()
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
-func TestElement_TwoFingerTap(t *testing.T) {
-	c, err := NewClient(deviceURL)
-	checkErr(t, err)
-	_ = c.Unlock()
-	s, err := c.NewSession()
-	checkErr(t, err)
-	WDADebug(true)
-	element, err := s.FindElement(WDALocator{Name: "自定手势作用区域"})
-	checkErr(t, err)
+func Test_remoteWE_SendKeys(t *testing.T) {
+	element := setupElement(t, BySelector{ClassName: ElementType{SearchField: true}})
 
-	err = element.TwoFingerTap()
-	checkErr(t, err)
+	err := element.SendKeys("App Store")
+	// err := element.SendKeys("App Store", 3)
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
-func TestElement_TapWithNumberOfTaps(t *testing.T) {
-	c, err := NewClient(deviceURL)
-	checkErr(t, err)
-	_ = c.Unlock()
-	s, err := c.NewSession()
-	checkErr(t, err)
-	WDADebug(true)
-	element, err := s.FindElement(WDALocator{Name: "自定手势作用区域"})
-	checkErr(t, err)
+func Test_remoteWE_Clear(t *testing.T) {
+	element := setupElement(t, BySelector{ClassName: ElementType{SearchField: true}})
 
-	err = element.TapWithNumberOfTaps(3, 3)
-	checkErr(t, err)
+	err := element.Clear()
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
-func TestElement_TouchAndHold(t *testing.T) {
-	c, err := NewClient(deviceURL)
-	checkErr(t, err)
-	_ = c.Unlock()
-	s, err := c.NewSession()
-	checkErr(t, err)
-	// _ = c.Homescreen()
-	element, err := s.FindElement(WDALocator{Predicate: "type == 'XCUIElementTypeIcon' AND visible == true"})
-	checkErr(t, err)
+func Test_remoteWE_Tap(t *testing.T) {
+	element := setupElement(t, BySelector{Name: "touchableView"})
 
-	WDADebug(true)
-	err = element.TouchAndHold(1)
-	// err = element.TouchAndHoldFloat(2.5)
-	checkErr(t, err)
+	err := element.Tap(10, 20)
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
-func TestElement_ForceTouch(t *testing.T) {
-	c, err := NewClient(deviceURL)
-	checkErr(t, err)
-	_ = c.Unlock()
-	s, err := c.NewSession()
-	checkErr(t, err)
-	// launchOpt := NewWDAAppLaunchOption().SetShouldWaitForQuiescence(true).SetArguments([]string{"-AppleLanguages", "(en-US)"})
-	// s.AppLaunch(bundleId, launchOpt)
-	// return
-	WDADebug(true)
-	// element, err := s.FindElement(WDALocator{Predicate: "type == 'XCUIElementTypeCell' AND name == '灵敏度评估'"})
-	// element, err := s.FindElement(WDALocator{Predicate: "type == 'XCUIElementTypeIcon' AND visible == true"})
-	// element, err := s.FindElement(WDALocator{ClassName: WDAElementType{Cell: true}})
-	element, err := s.FindElement(WDALocator{Name: "自定手势作用区域"})
-	checkErr(t, err)
+func Test_remoteWE_DoubleTap(t *testing.T) {
+	element := setupElement(t, BySelector{Name: "touchableView"})
 
-	// element.TouchAndHold()
-	// fmt.Println(element.GetAttribute(NewWDAElementAttribute().SetName("")))
-	// err = element.ForceTouch(0.67)
-	// err = element.ForceTouch(0.67, 3)
-	// err = element.ForceTouch(2.2, 1.0)
-	// err = element.ForceTouch(2.2, 0.5)
-	// err = element.ForceTouch(1, 1.0)
-	err = element.ForceTouch(1)
-	// err = element.ForceTouchCoordinate(WDACoordinate{100, 100}, 2)
-
-	// err = element.ForceTouchPeek()
-	// err = element.ForceTouchPop()
-	checkErr(t, err)
-
-	// body := newWdaBody().set("pressure", 2.0).set("duration", 1.0)
-	// 弱
-	// body := newWdaBody().set("pressure", 0.52).set("duration", 6.0) // 预览	pressure > 0.51 && duration < 6.0
-	// body := newWdaBody().set("pressure", 0.72).set("duration", 1.97) // 打开?	pressure > 0.71 && duration > 1.98
-	// body := newWdaBody().set("pressure", 2.0).set("duration", 1.0)
-	// 中 > 0.66
-	// body := newWdaBody().set("pressure", 0.66).set("duration", 1.0)
-	// body := newWdaBody().set("pressure", 0.67).set("duration", 1.0) // 预览 pressure > 0.66
-	// body := newWdaBody().set("pressure", 2.20).set("duration", 1.0) // 打开? pressure > 2.1
-	// 强 > 0.66
-	// body := newWdaBody().set("pressure", 0.67).set("duration", 1.0) // 预览 pressure > 0.66
-	// body := newWdaBody().set("pressure", 2.20).set("duration", 1.0) // 打开? pressure > 2.1
+	err := element.DoubleTap()
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
-func TestElement_Drag(t *testing.T) {
-	c, err := NewClient(deviceURL)
-	checkErr(t, err)
-	_ = c.Unlock()
-	s, err := c.NewSession()
-	checkErr(t, err)
-	// _ = c.Homescreen()
-	element, err := s.FindElement(WDALocator{Predicate: "type == 'XCUIElementTypeIcon' AND visible == true"})
-	checkErr(t, err)
+func Test_remoteWE_TouchAndHold(t *testing.T) {
+	element := setupElement(t, BySelector{Name: "touchableView"})
 
-	WDADebug(true)
-	// err = element.Drag(230, 130, 230, 480, 2)
-	// err = element.Drag(230, 130, 230, 480)
-	// err = element.Drag(230, 130, 230, 30)
-	// err = element.Drag(230, 130, 130, 130)
-	err = element.Drag(230, 130, 330, 130)
-	checkErr(t, err)
+	err := element.TouchAndHold(-1)
+	// err := element.TouchAndHold(5)
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
-func TestElement_Swipe(t *testing.T) {
-	c, err := NewClient(deviceURL)
-	checkErr(t, err)
-	_ = c.Unlock()
-	s, err := c.NewSession()
-	checkErr(t, err)
-	// _ = c.Homescreen()
-	// element, err := s.FindElement(WDALocator{ClassName: WDAElementType{Table: true}})
-	// element, err := s.FindElement(WDALocator{ClassName: WDAElementType{PageIndicator: true}})
-	// element, err := s.FindElement(WDALocator{ClassName: WDAElementType{Cell: true}})
-	// element, err := s.FindElement(WDALocator{Predicate: "type == 'XCUIElementTypeIcon' AND visible == true"})
-	element, err := s.FindElement(WDALocator{Name: "自定手势作用区域"})
-	// element, err := s.FindElement(WDALocator{Name: "辅助功能"})
-	// element, err := s.FindElement(WDALocator{Name: "com.apple.mobilesafari"})
-	// element, err := s.FindElement(WDALocator{ClassName: WDAElementType{Image: true}})
-	checkErr(t, err)
+func Test_remoteWE_TwoFingerTap(t *testing.T) {
+	element := setupElement(t, BySelector{Name: "touchableView"})
 
-	WDADebug(true)
-	// rect, _ := element.Rect()
-	// 相对元素自身的坐标
-	// err = element.Swipe(rect.X, rect.Y+rect.Height/2, rect.X+rect.Width, rect.Y+rect.Height/2)
-	// err = element.SwipeDirection(WDASwipeDirectionRight)
-	err = element.SwipeRight()
-	// err = element.SwipeLeft()
-	// err = element.SwipeUp()
-	checkErr(t, err)
+	err := element.TwoFingerTap()
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
-func TestElement_Pinch(t *testing.T) {
-	c, err := NewClient(deviceURL)
-	checkErr(t, err)
-	_ = c.Unlock()
-	s, err := c.NewSession()
-	checkErr(t, err)
-	// _ = c.Homescreen()
-	// element, err := s.FindElement(WDALocator{ClassName: WDAElementType{Image: true}})
-	element, err := s.FindElement(WDALocator{Name: "自定手势作用区域"})
-	checkErr(t, err)
+func Test_remoteWE_TapWithNumberOfTaps(t *testing.T) {
+	element := setupElement(t, BySelector{Name: "touchableView"})
 
-	WDADebug(true)
-	// - 放大的捏放在屏幕中心
-	// - 缩小是 左上角+右下角 向中心靠拢
-
-	// zoom in 放大
-	// err = element.Pinch(49, 50)
-	// err = element.Pinch(2, 32)
-	// err = element.Pinch(2, 8)
-	// err = element.Pinch(1.9, 3.6)
-	// err = element.Pinch(1.9, 3.6)
-	// err = element.PinchToZoomIn()
-	// zoom out 缩小
-	// - iPhoneX 测试结果无法缩小（相册照片），开启 引导式访问 也无效
-	// - iPad Pro 横屏会触发右上角的 控制中心（竖屏可成功触发缩小效果）
-	// err = element.Pinch(0.9, -0.9)
-	// err = element.Pinch(0.9, -3.6)
-	// err = element.Pinch(0.9, -14.4)
-	// err = element.PinchToZoomOut()
-
-	err = element.PinchToZoomOutByActions()
-	// err = element.PinchToZoomOutByActions(23)
-
-	checkErr(t, err)
+	err := element.TapWithNumberOfTaps(3, 3)
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
-func TestElement_Rotate(t *testing.T) {
-	c, err := NewClient(deviceURL)
-	checkErr(t, err)
-	_ = c.Unlock()
-	s, err := c.NewSession()
-	checkErr(t, err)
-	element, err := s.FindElement(WDALocator{Name: "自定手势作用区域"})
-	checkErr(t, err)
+func Test_remoteWE_ForceTouch(t *testing.T) {
+	element := setupElement(t, BySelector{Name: "touchableView"})
 
-	WDADebug(true)
-	// 顺时针 90度
-	err = element.Rotate(math.Pi / 2)
-	// 逆时针 180度
-	// err = element.Rotate(math.Pi * -2)
-	checkErr(t, err)
+	// err := element.ForceTouch(1, -1)
+	err := element.ForceTouchFloat(10, 20, 1, -1)
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
-func TestElement_Scroll(t *testing.T) {
-	c, err := NewClient(deviceURL)
-	checkErr(t, err)
-	_ = c.Unlock()
-	s, err := c.NewSession()
-	checkErr(t, err)
-	element, err := s.FindElement(WDALocator{ClassName: WDAElementType{Table: true}})
-	// element, err := s.FindElement(WDALocator{Predicate: "type == 'XCUIElementTypeCell' AND name == '手机淘宝'"})
-	checkErr(t, err)
+func Test_remoteWE_Drag(t *testing.T) {
+	element := setupElement(t, BySelector{Name: "touchableView"})
 
-	WDADebug(true)
-	// err = element.ScrollUp()
-	// err = element.ScrollDown()
-	// err = element.ScrollLeft()
-	// err = element.ScrollRight()
+	// err := element.Drag(10, 20, 10, 300, -1)
+	err := element.Swipe(10, 20, 10, 300)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func Test_remoteWE_SwipeDirection(t *testing.T) {
+	element := setupElement(t, BySelector{Name: "touchableView"})
+
+	// err := element.SwipeDirection(DirectionUp, -1)
+	err := element.SwipeDirection(DirectionDown, 120)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func Test_remoteWE_Pinch(t *testing.T) {
+	element := setupElement(t, BySelector{Name: "touchableView"})
+
+	// zoom in
+	// err := element.Pinch(2,10)
+	// zoom out
+	err := element.Pinch(0.9, -4.5)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func Test_remoteWE_PinchToZoomOutByW3CAction(t *testing.T) {
+	element := setupElement(t, BySelector{Name: "touchableView"})
+
+	err := element.PinchToZoomOutByW3CAction(15)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func Test_remoteWE_Rotate(t *testing.T) {
+	element := setupElement(t, BySelector{Name: "touchableView"})
+
+	// 90 CW
+	// err := element.Rotate(math.Pi / 2)
+	// 180 CCW
+	err := element.Rotate(math.Pi * -2)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func Test_remoteWE_PickerWheelSelect(t *testing.T) {
+	element := setupElement(t, BySelector{ClassName: ElementType{PickerWheel: true}})
+
+	err := element.PickerWheelSelect(PickerWheelOrderNext, 3)
+	err = element.PickerWheelSelect(PickerWheelOrderPrevious)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func Test_remoteWE_scroll(t *testing.T) {
+	element := setupElement(t, BySelector{ClassName: ElementType{Table: true}})
+
+	var err error
+	// err = element.ScrollElementByName("电池")
+	// err = element.ScrollElementByPredicate("type == 'XCUIElementTypeCell' AND name LIKE 'Safari*'")
+	err = element.ScrollDirection(DirectionDown, 0.8)
+
+	// element, err = driver.FindElement(BySelector{PartialLinkText: NewElementAttribute().WithLabel("Safari")})
+	// if err != nil {
+	// 	t.Fatal(err)
+	// }
 	// err = element.ScrollToVisible()
-	// err = element.ScrollElementByPredicate("type == 'XCUIElementTypeCell' AND name LIKE '*Keynote*'")
-	err = element.ScrollElementByPredicate("type == 'XCUIElementTypeCell' AND name == '音乐'")
-	// err = element.ScrollElementByName("其他")
-	// err = element.ScrollElementByName("iCloud 帐户")
 
-	// It's not working
-	// err = element.ScrollElementByName("音乐")
-	checkErr(t, err)
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
-func TestElement_PickerWheelSelect(t *testing.T) {
-	c, err := NewClient(deviceURL)
-	checkErr(t, err)
-	_ = c.Unlock()
-	s, err := c.NewSession()
-	checkErr(t, err)
-	element, err := s.FindElement(WDALocator{ClassName: WDAElementType{PickerWheel: true}})
-	checkErr(t, err)
+func Test_remoteWE_FindElement(t *testing.T) {
+	element := setupElement(t, BySelector{ClassName: ElementType{Table: true}})
 
-	WDADebug(true)
-	err = element.PickerWheelSelect(WDAPickerWheelSelectOrderNext, 3)
-	checkErr(t, err)
-	err = element.PickerWheelSelectNext()
-	checkErr(t, err)
-	err = element.PickerWheelSelectPrevious(3)
-	checkErr(t, err)
-}
+	SetDebug(true)
 
-func TestElement_Click(t *testing.T) {
-	c, err := NewClient(deviceURL)
-	checkErr(t, err)
-	_ = c.Unlock()
-	s, err := c.NewSession()
-	checkErr(t, err)
-	_ = s.AppLaunch(bundleId)
-	WDADebug(true)
-	element, err := s.FindElement(WDALocator{LinkText: NewWDAElementAttribute().SetValue("通知")})
-	checkErr(t, err)
-	t.Log(element)
-
-	err = element.Click()
-	checkErr(t, err)
-}
-
-func TestElement_SendKeys(t *testing.T) {
-	c, err := NewClient(deviceURL)
-	checkErr(t, err)
-	_ = c.Unlock()
-	s, err := c.NewSession()
-	checkErr(t, err)
-	_ = s.AppLaunch(bundleId)
-	WDADebug(true)
-	element, err := s.FindElement(WDALocator{ClassName: WDAElementType{SearchField: true}})
-	checkErr(t, err)
-
-	err = element.SendKeys(bundleId)
-	checkErr(t, err)
-}
-
-func TestElement_Clear(t *testing.T) {
-	c, err := NewClient(deviceURL)
-	checkErr(t, err)
-	_ = c.Unlock()
-	s, err := c.NewSession()
-	checkErr(t, err)
-	defer func() {
-		_ = s.DeleteSession()
-	}()
-	_ = s.AppLaunch(bundleId)
-	WDADebug(true)
-	element, err := s.FindElement(WDALocator{ClassName: WDAElementType{SearchField: true}})
-	checkErr(t, err)
-
-	err = element.SendKeys(bundleId)
-	checkErr(t, err)
-
-	err = element.Clear()
-	checkErr(t, err)
-}
-
-func TestElement_Rect(t *testing.T) {
-	c, err := NewClient(deviceURL)
-	checkErr(t, err)
-	s, err := c.NewSession()
-	checkErr(t, err)
-	WDADebug(true)
-	element, err := s.FindElement(WDALocator{LinkText: NewWDAElementAttribute().SetValue("通知")})
-	checkErr(t, err)
-	t.Log(element)
-
-	rect, err := element.Rect()
-	checkErr(t, err)
-	t.Log(rect)
-}
-
-func TestElement_IsEnabled(t *testing.T) {
-	c, err := NewClient(deviceURL)
-	checkErr(t, err)
-	bundleId := "com.apple.Preferences"
-	_ = bundleId
-	s, err := c.NewSession()
-	checkErr(t, err)
-	WDADebug(true)
-	element, err := s.FindElement(WDALocator{LinkText: NewWDAElementAttribute().SetValue("通知")})
-	checkErr(t, err)
-
-	isEnabled, err := element.IsEnabled()
-	checkErr(t, err)
-	t.Log(isEnabled)
-}
-
-func TestElement_IsDisplayed(t *testing.T) {
-	c, err := NewClient(deviceURL)
-	checkErr(t, err)
-	s, err := c.NewSession()
-	checkErr(t, err)
-	_ = s.AppLaunch(bundleId)
-	WDADebug(true)
-	element, err := s.FindElement(WDALocator{LinkText: NewWDAElementAttribute().SetValue("通知")})
-	checkErr(t, err)
-
-	displayed, err := element.IsDisplayed()
-	checkErr(t, err)
-	t.Log(displayed)
-}
-
-func TestElement_IsSelected(t *testing.T) {
-	c, err := NewClient(deviceURL)
-	checkErr(t, err)
-	s, err := c.NewSession()
-	checkErr(t, err)
-	_ = s.AppLaunch(bundleId)
-	WDADebug(true)
-	element, err := s.FindElement(WDALocator{LinkText: NewWDAElementAttribute().SetValue("通知")})
-	checkErr(t, err)
-
-	isSelected, err := element.IsSelected()
-	checkErr(t, err)
-	t.Log(isSelected)
-
-	if isSelected {
-		return
+	var err error
+	element, err = element.FindElement(BySelector{PartialLinkText: NewElementAttribute().WithLabel("Safari")})
+	if err != nil {
+		t.Fatal(err)
 	}
 
-	// iPad 左右分栏
-	element, err = s.FindElement(WDALocator{Predicate: "selected == true AND label == '通用'"})
-	checkErr(t, err)
-	isSelected, err = element.IsSelected()
-	checkErr(t, err)
-	t.Log(isSelected)
+	SetDebug(false)
+	err = element.Click()
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
-func TestElement_GetAttribute(t *testing.T) {
-	c, err := NewClient(deviceURL)
-	checkErr(t, err)
-	_ = c.Unlock()
-	s, err := c.NewSession()
-	checkErr(t, err)
-	WDADebug(true)
-	element, err := s.FindElement(WDALocator{LinkText: NewWDAElementAttribute().SetLabel("通用")})
-	checkErr(t, err)
+func Test_remoteWE_FindElements(t *testing.T) {
+	element := setupElement(t, BySelector{ClassName: ElementType{Table: true}})
 
-	// attrName := "type"
-	attr := NewWDAElementAttribute().SetUID("")
-	// attr = NewWDAElementAttribute().SetAccessibilityContainer(false)
-	value, err := element.GetAttribute(attr)
-	checkErr(t, err)
+	SetDebug(true)
 
-	t.Log(attr.getAttributeName(), "=", value)
-	t.Log("element.UID", "=", element.UID)
+	elements, err := element.FindElements(BySelector{ClassName: ElementType{Cell: true}})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	SetDebug(false)
+	err = elements[0].Click()
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
-func TestElement_Text(t *testing.T) {
-	c, err := NewClient(deviceURL)
-	checkErr(t, err)
-	_ = c.Unlock()
-	s, err := c.NewSession()
-	checkErr(t, err)
-	_ = s.AppLaunch(bundleId)
-	WDADebug(true)
-	element, err := s.FindElement(WDALocator{LinkText: NewWDAElementAttribute().SetLabel("通用")})
-	checkErr(t, err)
+func Test_remoteWE_FindVisibleCells(t *testing.T) {
+	element := setupElement(t, BySelector{ClassName: ElementType{Table: true}})
 
-	// attrName := "type"
-	// attrName = NewWDAElementAttribute().SetUID("").GetAttributeName()
-	// attrName = NewWDAElementAttribute().SetAccessibilityContainer(false).GetAttributeName()
+	SetDebug(true)
+
+	cells, err := element.FindVisibleCells()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	SetDebug(false)
+	err = cells[0].Click()
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func Test_remoteWE_Rect(t *testing.T) {
+	element := setupElement(t, BySelector{ClassName: ElementType{Switch: true}})
+
+	rect, err := element.Rect()
+	location, err := element.Location()
+	size, err := element.Size()
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, _, _ = rect, location, size
+	t.Log(rect, location, size)
+}
+
+func Test_remoteWE_Text(t *testing.T) {
+	element := setupElement(t, BySelector{ClassName: ElementType{Switch: true}})
+
 	text, err := element.Text()
-	checkErr(t, err)
-
-	t.Log(text)
+	if err != nil {
+		t.Fatal(err)
+	}
+	_ = text
+	// t.Log(text)
 }
 
-func TestElement_Type(t *testing.T) {
-	c, err := NewClient(deviceURL)
-	checkErr(t, err)
-	_ = c.Unlock()
-	s, err := c.NewSession()
-	checkErr(t, err)
-	_ = s.AppLaunch(bundleId)
-	WDADebug(true)
-	element, err := s.FindElement(WDALocator{LinkText: NewWDAElementAttribute().SetLabel("通用")})
-	checkErr(t, err)
+func Test_remoteWE_Type(t *testing.T) {
+	element := setupElement(t, BySelector{ClassName: ElementType{Switch: true}})
 
 	elemType, err := element.Type()
-	checkErr(t, err)
-
-	t.Log(elemType)
-	t.Log(elemType == WDAElementType{Cell: true}.String())
-	// t.Log(elemType == fmt.Sprintf("%s", WDAElementType{StaticText: true}))
-}
-
-func TestElement_FindElement(t *testing.T) {
-	c, err := NewClient(deviceURL)
-	checkErr(t, err)
-	_ = c.Unlock()
-	s, err := c.NewSession()
-	checkErr(t, err)
-	_ = s.AppLaunch(bundleId)
-	element, err := s.FindElement(WDALocator{LinkText: NewWDAElementAttribute().SetLabel("通用")})
-	checkErr(t, err)
-	WDADebug(true)
-	subElement, err := element.FindElement(WDALocator{ClassName: WDAElementType{Image: true}})
-	checkErr(t, err)
-
-	userHomeDir, _ := os.UserHomeDir()
-	err = subElement.ScreenshotToDisk(filepath.Join(userHomeDir, "Desktop", "e2.png"))
-	checkErr(t, err)
-}
-
-func TestElement_FindElements(t *testing.T) {
-	c, err := NewClient(deviceURL)
-	checkErr(t, err)
-	_ = c.Unlock()
-	s, err := c.NewSession()
-	checkErr(t, err)
-	_ = s.AppLaunch(bundleId)
-	element, err := s.FindElement(WDALocator{LinkText: NewWDAElementAttribute().SetLabel("通用")})
-	checkErr(t, err)
-	WDADebug(true)
-	subElements, err := element.FindElements(WDALocator{Predicate: "value != 'abc123'"})
-	checkErr(t, err)
-
-	userHomeDir, _ := os.UserHomeDir()
-	for i := range subElements {
-		err = subElements[i].ScreenshotToDisk(filepath.Join(userHomeDir, "Desktop", "es"+strconv.FormatInt(int64(i), 10)+".png"))
-		checkErr(t, err)
+	if err != nil {
+		t.Fatal(err)
 	}
+	_ = elemType
+	// t.Log(elemType)
 }
 
-func TestElement_FindVisibleCells(t *testing.T) {
-	c, err := NewClient(deviceURL)
-	checkErr(t, err)
-	_ = c.Unlock()
-	s, err := c.NewSession()
-	checkErr(t, err)
-	// bundleId = "com.apple.mobilenotes"
-	_ = s.AppLaunch(bundleId)
-	element, err := s.FindElement(WDALocator{ClassName: WDAElementType{Table: true}})
-	checkErr(t, err)
-	WDADebug(true)
-	elemCells, err := element.FindVisibleCells()
-	checkErr(t, err)
+func Test_remoteWE_IsEnabled(t *testing.T) {
+	element := setupElement(t, BySelector{ClassName: ElementType{Switch: true}})
 
-	for i := range elemCells {
-		text, err := elemCells[i].Text()
-		checkErr(t, err)
-		t.Log(text)
+	enabled, err := element.IsEnabled()
+	if err != nil {
+		t.Fatal(err)
 	}
+	_ = enabled
+	// t.Log(enabled)
 }
 
-func TestElement_Screenshot(t *testing.T) {
-	c, err := NewClient(deviceURL)
-	checkErr(t, err)
-	_ = c.Unlock()
-	s, err := c.NewSession()
-	checkErr(t, err)
-	_ = s.AppLaunch(bundleId)
-	WDADebug(true)
-	element, err := s.FindElement(WDALocator{Predicate: "type == 'XCUIElementTypeCell' AND name == '通知'"})
-	checkErr(t, err)
-	t.Log(element)
+func Test_remoteWE_IsDisplayed(t *testing.T) {
+	element := setupElement(t, BySelector{PartialLinkText: NewElementAttribute().WithLabel("Safari")})
 
-	_, err = element.Screenshot()
-	checkErr(t, err)
+	displayed, err := element.IsDisplayed()
+	if err != nil {
+		t.Fatal(err)
+	}
+	_ = displayed
+	// t.Log(displayed)
 }
 
-func TestElement_ScreenshotToImage(t *testing.T) {
-	c, err := NewClient(deviceURL)
-	checkErr(t, err)
-	_ = c.Unlock()
-	s, err := c.NewSession()
-	checkErr(t, err)
-	_ = s.AppLaunch(bundleId)
-	WDADebug(true)
-	// element, err := s.FindElement(WDALocator{LinkText: NewWDAElementAttribute().SetValue("通知")})
-	element, err := s.FindElement(WDALocator{Predicate: "type == 'XCUIElementTypeCell' AND name == '通知'"})
-	checkErr(t, err)
+func Test_remoteWE_IsSelected(t *testing.T) {
+	element := setupElement(t, BySelector{ClassName: ElementType{Switch: true}})
+	// element := setupElement(t, BySelector{Name: "添加到主屏幕"})
+	// element := setupElement(t, BySelector{Name: "仅App资源库"})
 
-	// toPng, err := element.ScreenshotToJpeg()
-	img, format, err := element.ScreenshotToImage()
-	checkErr(t, err)
-	t.Log("元素图片的格式:", format)
-	t.Log("元素图片的大小:", img.Bounds().Size())
-	t.Log(element.Rect())
+	selected, err := element.IsSelected()
+	if err != nil {
+		t.Fatal(err)
+	}
+	_ = selected
+	// t.Log(selected)
 }
 
-func TestElement_ScreenshotToDisk(t *testing.T) {
-	c, err := NewClient(deviceURL)
-	checkErr(t, err)
-	_ = c.Unlock()
-	s, err := c.NewSession()
-	checkErr(t, err)
-	_ = s.AppLaunch(bundleId)
-	WDADebug(true)
-	// element, err := s.FindElement(WDALocator{LinkText: NewWDAElementAttribute().SetValue("通知")})
-	element, err := s.FindElement(WDALocator{Predicate: "type == 'XCUIElementTypeCell' AND name == '通知'"})
-	checkErr(t, err)
+func Test_remoteWE_IsAccessible(t *testing.T) {
+	element := setupElement(t, BySelector{ClassName: ElementType{Switch: true}})
 
-	userHomeDir, _ := os.UserHomeDir()
-	// err = element.ScreenshotToDiskAsJpeg(filepath.Join(userHomeDir, "Desktop", "e1.png"))
-	err = element.ScreenshotToDisk(filepath.Join(userHomeDir, "Desktop", "e1.png"))
-	checkErr(t, err)
+	accessible, err := element.IsAccessible()
+	if err != nil {
+		t.Fatal(err)
+	}
+	_ = accessible
+	// t.Log(accessible)
 }
 
-func TestElement_IsAccessible(t *testing.T) {
-	c, err := NewClient(deviceURL)
-	checkErr(t, err)
-	_ = c.Unlock()
-	s, err := c.NewSession()
-	checkErr(t, err)
-	_ = s.AppLaunch(bundleId)
-	WDADebug(true)
-	element, err := s.FindElement(WDALocator{Predicate: "type == 'XCUIElementTypeCell' AND name == '通知'"})
-	checkErr(t, err)
-
-	isAccessible, err := element.IsAccessible()
-	checkErr(t, err)
-	t.Log(isAccessible)
-
-	element, err = s.FindElement(WDALocator{Predicate: "type == 'XCUIElementTypeStaticText' AND name == '通知'"})
-	checkErr(t, err)
-
-	isAccessible, err = element.IsAccessible()
-	checkErr(t, err)
-	t.Log(isAccessible)
-}
-
-func TestElement_IsAccessibilityContainer(t *testing.T) {
-	c, err := NewClient(deviceURL)
-	checkErr(t, err)
-	_ = c.Unlock()
-	s, err := c.NewSession()
-	checkErr(t, err)
-	_ = s.AppLaunch(bundleId)
-	WDADebug(true)
-	element, err := s.FindElement(WDALocator{Predicate: "type == 'XCUIElementTypeCell' AND name == '通知'"})
-	checkErr(t, err)
+func Test_remoteWE_IsAccessibilityContainer(t *testing.T) {
+	// element := setupElement(t, BySelector{ClassName: ElementType{Switch: true}})
+	element := setupElement(t, BySelector{ClassName: ElementType{Table: true}})
 
 	isAccessibilityContainer, err := element.IsAccessibilityContainer()
-	checkErr(t, err)
-	t.Log(isAccessibilityContainer)
-
-	element, err = s.FindElement(WDALocator{Predicate: "type == 'XCUIElementTypeStaticText' AND name == '通知'"})
-	checkErr(t, err)
-
-	isAccessibilityContainer, err = element.IsAccessibilityContainer()
-	checkErr(t, err)
-	t.Log(isAccessibilityContainer)
+	if err != nil {
+		t.Fatal(err)
+	}
+	_ = isAccessibilityContainer
+	// t.Log(isAccessibilityContainer)
 }
 
-func TestElement_Tmp(t *testing.T) {
-	c, err := NewClient(deviceURL)
-	checkErr(t, err)
-	_ = c.Unlock()
-	s, err := c.NewSession()
-	checkErr(t, err)
-	WDADebug(true)
-	element, err := s.FindElement(WDALocator{ClassName: WDAElementType{PickerWheel: true}})
-	// element, err := s.FindElement(WDALocator{ClassName: WDAElementType{Table: true}})
-	// element, err := s.FindElement(WDALocator{Predicate: "type == 'XCUIElementTypeCell' AND name == '手机淘宝'"})
-	// element, err := s.FindElement(WDALocator{Name: "自定手势作用区域"})
-	// element, err := s.FindElement(WDALocator{ClassName: WDAElementType{Image: true}})
-	// element, err := s.FindElement(WDALocator{Predicate: "type == 'XCUIElementTypeIcon' AND visible == true"})
-	// element, err := s.FindElement(WDALocator{Predicate: "type == 'XCUIElementTypeCell' AND name == '灵敏度评估'"})
-	// element, err := s.FindElement(WDALocator{LinkText: NewWDAElementAttribute().SetLabel("通用")})
-	// element, err := s.FindElement(WDALocator{ClassName: WDAElementType{Table: true}})
-	// element, err := s.FindElement(WDALocator{ClassName: WDAElementType{StatusBar: true}})
-	// element, err := s.FindElement(WDALocator{Predicate: "selected == true AND label == '通用'"})
-	// element, err := s.FindElements(WDALocator{LinkText: NewWDAElementAttribute().SetLabel("通用")})
-	checkErr(t, err)
+func Test_remoteWE_GetAttribute(t *testing.T) {
+	element := setupElement(t, BySelector{ClassName: ElementType{StaticText: true}})
 
-	// elemType, err := element.Type()
-	// fmt.Println(err, elemType)
-	// text, _ := element.Text()
-	// t.Log(text)
-	// element.ScrollUp(10)
-	// return
-	element.tttTmp()
-	// text, _ = element.Text()
-	// t.Log(text)
+	value, err := element.GetAttribute(NewElementAttribute().WithValue(""))
+	if err != nil {
+		t.Fatal(err)
+	}
+	_ = value
+	// t.Log(value)
+}
+
+func Test_remoteWE_Screenshot(t *testing.T) {
+	element := setupElement(t, BySelector{ClassName: ElementType{TextView: true}})
+
+	screenshot, err := element.Screenshot()
+	if err != nil {
+		t.Fatal(err)
+	}
+	_ = screenshot
+
+	// img, format, err := image.Decode(screenshot)
+	// if err != nil {
+	// 	t.Fatal(err)
+	// }
+	// userHomeDir, _ := os.UserHomeDir()
+	// file, err := os.Create(userHomeDir + "/Desktop/e1." + format)
+	// if err != nil {
+	// 	t.Fatal(err)
+	// }
+	// defer func() { _ = file.Close() }()
+	// switch format {
+	// case "png":
+	// 	err = png.Encode(file, img)
+	// case "jpeg":
+	// 	err = jpeg.Encode(file, img, nil)
+	// }
+	// if err != nil {
+	// 	t.Fatal(err)
+	// }
+	// t.Log(file.Name())
 }
