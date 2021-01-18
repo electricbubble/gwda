@@ -29,6 +29,12 @@ func main() {
 	}
 	log.Println(windowSize)
 
+	location, err := driver.Location()
+	if err != nil {
+		log.Fatalln(err)
+	}
+	log.Println(location)
+
 	// screen, err := driver.Screen()
 	// if err != nil {
 	// 	log.Fatalln(err)

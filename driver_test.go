@@ -733,3 +733,13 @@ func Test_remoteWD_Wait(t *testing.T) {
 
 	// t.Log(element.Rect())
 }
+
+func Test_remoteWD_Location(t *testing.T) {
+	setup(t)
+
+	location, err := driver.Location()
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log(location)
+}

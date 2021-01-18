@@ -188,6 +188,12 @@ func main() {
 	windowSize, _ := driver.WindowSize()
 	log.Println(windowSize)
 
+	location, err := driver.Location()
+	if err != nil {
+		log.Fatalln(err)
+	}
+	log.Println(location)
+
 	// screen, _ := driver.Screen()
 	// log.Println(screen)
 }

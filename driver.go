@@ -174,6 +174,22 @@ func (wd *remoteWD) DeviceInfo() (deviceInfo DeviceInfo, err error) {
 	return
 }
 
+func (wd *remoteWD) Location() (location Location, err error) {
+	// [[FBRoute GET:@"/wda/device/location"] respondWithTarget:self action:@selector(handleGetLocation:)]
+	// [[FBRoute GET:@"/wda/device/location"].withoutSession
+	var rawResp rawResponse
+	if rawResp, err = wd.executeGet("/session", wd.sessionId, "/wda/device/location"); err != nil {
+		return Location{}, err
+	}
+	var reply = new(struct{ Value struct{ Location } })
+	if err = json.Unmarshal(rawResp, reply); err != nil {
+		return Location{}, err
+	}
+	location = reply.Value.Location
+	fmt.Println(string(rawResp))
+	return
+}
+
 func (wd *remoteWD) BatteryInfo() (batteryInfo BatteryInfo, err error) {
 	// [[FBRoute GET:@"/wda/batteryInfo"] respondWithTarget:self action:@selector(handleGetBatteryInfo:)]
 	var rawResp rawResponse
