@@ -186,7 +186,6 @@ func (wd *remoteWD) Location() (location Location, err error) {
 		return Location{}, err
 	}
 	location = reply.Value.Location
-	fmt.Println(string(rawResp))
 	return
 }
 
