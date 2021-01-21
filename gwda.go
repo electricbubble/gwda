@@ -460,6 +460,12 @@ const (
 	TextDelete    string = "\u007F"
 )
 
+// type KeyboardKeyLabel string
+//
+// const (
+// 	KeyboardKeyReturn = "return"
+// )
+
 // DeviceButton A physical button on an iOS device.
 type DeviceButton string
 
@@ -948,6 +954,9 @@ type WebDriver interface {
 	// otherwise an error is raised.
 	//  frequency: Frequency of typing (letters per sec). The default value is 60
 	SendKeys(text string, frequency ...int) error
+
+	// KeyboardDismiss Tries to dismiss the on-screen keyboard
+	KeyboardDismiss(keyNames ...string) error
 
 	// PressButton Presses the corresponding hardware button on the device
 	PressButton(devBtn DeviceButton) error

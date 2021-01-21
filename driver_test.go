@@ -743,3 +743,13 @@ func Test_remoteWD_Location(t *testing.T) {
 	}
 	t.Log(location)
 }
+
+func Test_remoteWD_KeyboardDismiss(t *testing.T) {
+	setup(t)
+	SetDebug(true)
+
+	err := driver.KeyboardDismiss()
+	if err != nil {
+		t.Fatal(err)
+	}
+}

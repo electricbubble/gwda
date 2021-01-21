@@ -567,6 +567,16 @@ func (wd *remoteWD) SendKeys(text string, frequency ...int) (err error) {
 	return
 }
 
+func (wd *remoteWD) KeyboardDismiss(keyNames ...string) (err error) {
+	// [[FBRoute POST:@"/wda/keyboard/dismiss"] respondWithTarget:self action:@selector(handleDismissKeyboardCommand:)]
+	if len(keyNames) == 0 {
+		keyNames = []string{"return"}
+	}
+	data := map[string]interface{}{"keyNames": keyNames}
+	_, err = wd.executePost(data, "/session", wd.sessionId, "/wda/keyboard/dismiss")
+	return
+}
+
 func (wd *remoteWD) PressButton(devBtn DeviceButton) (err error) {
 	// [[FBRoute POST:@"/wda/pressButton"] respondWithTarget:self action:@selector(handlePressButtonCommand:)]
 	data := map[string]interface{}{"name": devBtn}
