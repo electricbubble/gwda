@@ -584,6 +584,20 @@ func (wd *remoteWD) PressButton(devBtn DeviceButton) (err error) {
 	return
 }
 
+func (wd *remoteWD) ExpectNotification(notifyName string, notifyType NotificationType, second ...int) (err error) {
+	// [[FBRoute POST:@"/wda/expectNotification"] respondWithTarget:self action:@selector(handleExpectNotification:)]
+	if len(second) == 0 {
+		second = []int{60}
+	}
+	data := map[string]interface{}{
+		"name":    notifyName,
+		"type":    notifyType,
+		"timeout": second[0],
+	}
+	_, err = wd.executePost(data, "/session", wd.sessionId, "/wda/expectNotification")
+	return
+}
+
 func (wd *remoteWD) SiriActivate(text string) (err error) {
 	// [[FBRoute POST:@"/wda/siri/activate"] respondWithTarget:self action:@selector(handleActivateSiri:)]
 	data := map[string]interface{}{"text": text}

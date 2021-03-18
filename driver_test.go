@@ -753,3 +753,14 @@ func Test_remoteWD_KeyboardDismiss(t *testing.T) {
 		t.Fatal(err)
 	}
 }
+
+func Test_remoteWD_ExpectNotification(t *testing.T) {
+	setup(t)
+	SetDebug(true)
+
+	// bundleId = "com.apple.shortcuts"
+	// err := driver.ExpectNotification("shortcuts", NotificationTypePlain, 10)
+	// if err != nil {
+	// 	t.Fatal(err)
+	// }
+}

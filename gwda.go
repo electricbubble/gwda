@@ -475,6 +475,13 @@ const (
 	DeviceButtonVolumeDown DeviceButton = "volumeDown"
 )
 
+type NotificationType string
+
+const (
+	NotificationTypePlain  NotificationType = "plain"
+	NotificationTypeDarwin NotificationType = "darwin"
+)
+
 type Orientation string
 
 const (
@@ -960,6 +967,9 @@ type WebDriver interface {
 
 	// PressButton Presses the corresponding hardware button on the device
 	PressButton(devBtn DeviceButton) error
+
+	// ExpectNotification Creates an expectation that is fulfilled when an expected Notification is received
+	ExpectNotification(notifyName string, notifyType NotificationType, second ...int) error
 
 	// SiriActivate Activates Siri service voice recognition with the given text to parse
 	SiriActivate(text string) error
