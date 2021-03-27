@@ -283,6 +283,20 @@ func (caps Capabilities) WithShouldUseSingletonTestManager(b bool) Capabilities 
 	return caps
 }
 
+// WithDisableAutomaticScreenshots
+//  Defaults to `true`
+func (caps Capabilities) WithDisableAutomaticScreenshots(b bool) Capabilities {
+	caps["disableAutomaticScreenshots"] = b
+	return caps
+}
+
+// WithShouldTerminateApp
+//  Defaults to `true`
+func (caps Capabilities) WithShouldTerminateApp(b bool) Capabilities {
+	caps["shouldTerminateApp"] = b
+	return caps
+}
+
 // WithEventloopIdleDelaySec
 // Delays the invocation of '-[XCUIApplicationProcess setEventLoopHasIdled:]' by the timer interval passed.
 // which is skipped on setting it to zero.
