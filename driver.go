@@ -6,8 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	goUSBMux "github.com/electricbubble/go-usbmuxd-device"
-	"net"
+	giDevice "github.com/electricbubble/gidevice"
 	"net/http"
 	"net/url"
 	"path"
@@ -40,16 +39,16 @@ func NewUSBDriver(capabilities Capabilities, device ...Device) (driver WebDriver
 	wd := new(remoteWD)
 	wd.viaUSB = true
 
-	var conn net.Conn
-	if conn, err = goUSBMux.NewUSBHub().CreateConnect(dev.DeviceID(), dev.Port); err != nil {
+	var innerConn giDevice.InnerConn
+	if innerConn, err = dev.d.NewConnect(dev.Port); err != nil {
 		return nil, fmt.Errorf("create connection: %w", err)
 	}
-	wd.httpClient = convertToHTTPClient(conn)
+	wd.httpClient = convertToHTTPClient(innerConn.RawConn())
 
-	if conn, err = goUSBMux.NewUSBHub().CreateConnect(dev.DeviceID(), dev.MjpegPort); err != nil {
-		return nil, fmt.Errorf("usb %w", err)
+	if innerConn, err = dev.d.NewConnect(dev.MjpegPort); err != nil {
+		return nil, fmt.Errorf("create connection MJPEG: %w", err)
 	}
-	wd.mjpegClient = convertToHTTPClient(conn)
+	wd.mjpegClient = convertToHTTPClient(innerConn.RawConn())
 
 	if wd.urlPrefix, err = url.Parse("http://" + dev.serialNumber); err != nil {
 		return nil, err

@@ -2,7 +2,7 @@ package gwda
 
 import (
 	"fmt"
-	goUSBMux "github.com/electricbubble/go-usbmuxd-device"
+	giDevice "github.com/electricbubble/gidevice"
 )
 
 type Device struct {
@@ -10,20 +10,29 @@ type Device struct {
 	serialNumber string
 	Port         int
 	MjpegPort    int
+
+	d giDevice.Device
 }
 
 func DeviceList() (devices []Device, err error) {
-	var deviceList []goUSBMux.USBDevice
-	if deviceList, err = goUSBMux.NewUSBHub().DeviceList(); err != nil {
+	var usbmux giDevice.Usbmux
+	if usbmux, err = giDevice.NewUsbmux(); err != nil {
+		return nil, fmt.Errorf("usbmuxd: %w", err)
+	}
+
+	var deviceList []giDevice.Device
+	if deviceList, err = usbmux.Devices(); err != nil {
 		return nil, fmt.Errorf("device list: %w", err)
 	}
+
 	devices = make([]Device, len(deviceList))
 
 	for i := range devices {
-		devices[i].deviceID = deviceList[i].DeviceID
-		devices[i].serialNumber = deviceList[i].SerialNumber
+		devices[i].deviceID = deviceList[i].Properties().DeviceID
+		devices[i].serialNumber = deviceList[i].Properties().SerialNumber
 		devices[i].Port = 8100
 		devices[i].MjpegPort = 9100
+		devices[i].d = deviceList[i]
 	}
 
 	return
