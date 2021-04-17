@@ -1,5 +1,5 @@
-github.com/electricbubble/gidevice v0.0.2 h1:ZmKwa8w96tesSFGpp0uqUwbEHHWr4UnaH/PLSKIiJW0=
-github.com/electricbubble/gidevice v0.0.2/go.mod h1:hWRHIPf4uyiEB56hnVHVvu6MoVg7RlJY8ZV2FVgLKZA=
+github.com/electricbubble/gidevice v0.0.4 h1:PbOt4AngNQTtO5j0vCZ3Xcj9mByDtZmjBYLTh8PJ9kc=
+github.com/electricbubble/gidevice v0.0.4/go.mod h1:hWRHIPf4uyiEB56hnVHVvu6MoVg7RlJY8ZV2FVgLKZA=
 github.com/jessevdk/go-flags v1.4.0/go.mod h1:4FA24M0QyGHXBuZZK/XkWh8h0e1EYbRYJSGM75WSRxI=
 github.com/kr/pretty v0.1.0 h1:L/CwN0zerZDmRFUapSPitk6f+Q3+0za1rQkzVuMiMFI=
 github.com/kr/pretty v0.1.0/go.mod h1:dAy3ld7l9f0ibDNOQOHHMYYIIbhfbHSm3C4ZsoJORNo=

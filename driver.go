@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	giDevice "github.com/electricbubble/gidevice"
+	"net"
 	"net/http"
 	"net/url"
 	"path"
@@ -15,7 +16,10 @@ import (
 )
 
 // NewDriver creates new remote client, this will also start a new session.
-func NewDriver(capabilities Capabilities, urlPrefix string) (driver WebDriver, err error) {
+func NewDriver(capabilities Capabilities, urlPrefix string, mjpegPort ...int) (driver WebDriver, err error) {
+	if len(mjpegPort) == 0 {
+		mjpegPort = []int{9100}
+	}
 	wd := new(remoteWD)
 	if wd.urlPrefix, err = url.Parse(urlPrefix); err != nil {
 		return nil, err
@@ -25,6 +29,13 @@ func NewDriver(capabilities Capabilities, urlPrefix string) (driver WebDriver, e
 		return nil, err
 	}
 	wd.sessionId = sessionInfo.SessionId
+
+	var conn net.Conn
+	if conn, err = net.Dial("tcp", fmt.Sprintf("%s:%d", wd.urlPrefix.Hostname(), mjpegPort[0])); err != nil {
+		return nil, err
+	}
+	wd.mjpegClient = convertToHTTPClient(conn)
+
 	return wd, nil
 }
 
@@ -40,12 +51,12 @@ func NewUSBDriver(capabilities Capabilities, device ...Device) (driver WebDriver
 	wd.viaUSB = true
 
 	var innerConn giDevice.InnerConn
-	if innerConn, err = dev.d.NewConnect(dev.Port); err != nil {
+	if innerConn, err = dev.d.NewConnect(dev.Port, 0); err != nil {
 		return nil, fmt.Errorf("create connection: %w", err)
 	}
 	wd.httpClient = convertToHTTPClient(innerConn.RawConn())
 
-	if innerConn, err = dev.d.NewConnect(dev.MjpegPort); err != nil {
+	if innerConn, err = dev.d.NewConnect(dev.MjpegPort, 0); err != nil {
 		return nil, fmt.Errorf("create connection MJPEG: %w", err)
 	}
 	wd.mjpegClient = convertToHTTPClient(innerConn.RawConn())
