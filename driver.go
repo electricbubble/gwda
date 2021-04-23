@@ -594,6 +594,20 @@ func (wd *remoteWD) PressButton(devBtn DeviceButton) (err error) {
 	return
 }
 
+func (wd *remoteWD) IOHIDEvent(pageID EventPageID, usageID EventUsageID, duration ...float64) (err error) {
+	// [[FBRoute POST:@"/wda/performIoHidEvent"] respondWithTarget:self action:@selector(handlePeformIOHIDEvent:)]
+	if len(duration) == 0 || duration[0] <= 0 {
+		duration = []float64{0.005}
+	}
+	data := map[string]interface{}{
+		"page":     pageID,
+		"usage":    usageID,
+		"duration": duration[0],
+	}
+	_, err = wd.executePost(data, "/session", wd.sessionId, "/wda/performIoHidEvent")
+	return
+}
+
 func (wd *remoteWD) ExpectNotification(notifyName string, notifyType NotificationType, second ...int) (err error) {
 	// [[FBRoute POST:@"/wda/expectNotification"] respondWithTarget:self action:@selector(handleExpectNotification:)]
 	if len(second) == 0 {

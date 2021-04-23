@@ -496,19 +496,35 @@ const (
 	NotificationTypeDarwin NotificationType = "darwin"
 )
 
+// EventPageID The event page identifier
+type EventPageID int
+
+const EventPageIDConsumer EventPageID = 0x0C
+
+// EventUsageID The event usage identifier (usages are defined per-page)
+type EventUsageID int
+
+const (
+	EventUsageIDCsmrVolumeUp   EventUsageID = 0xE9
+	EventUsageIDCsmrVolumeDown EventUsageID = 0xEA
+	EventUsageIDCsmrHome       EventUsageID = 0x40
+	EventUsageIDCsmrPower      EventUsageID = 0x30
+	EventUsageIDCsmrSnapshot   EventUsageID = 0x65 // Power + Home
+)
+
 type Orientation string
 
 const (
-	// Device oriented vertically, home button on the bottom
+	// OrientationPortrait Device oriented vertically, home button on the bottom
 	OrientationPortrait Orientation = "PORTRAIT"
 
-	// Device oriented vertically, home button on the top
+	// OrientationPortraitUpsideDown Device oriented vertically, home button on the top
 	OrientationPortraitUpsideDown Orientation = "UIA_DEVICE_ORIENTATION_PORTRAIT_UPSIDEDOWN"
 
-	// Device oriented horizontally, home button on the right
+	// OrientationLandscapeLeft Device oriented horizontally, home button on the right
 	OrientationLandscapeLeft Orientation = "LANDSCAPE"
 
-	// Device oriented horizontally, home button on the left
+	// OrientationLandscapeRight Device oriented horizontally, home button on the left
 	OrientationLandscapeRight Orientation = "UIA_DEVICE_ORIENTATION_LANDSCAPERIGHT"
 )
 
@@ -981,6 +997,10 @@ type WebDriver interface {
 
 	// PressButton Presses the corresponding hardware button on the device
 	PressButton(devBtn DeviceButton) error
+
+	// IOHIDEvent Emulated triggering of the given low-level IOHID device event.
+	//  duration: The event duration in float seconds (XCTest uses 0.005 for a single press event)
+	IOHIDEvent(pageID EventPageID, usageID EventUsageID, duration ...float64) error
 
 	// ExpectNotification Creates an expectation that is fulfilled when an expected Notification is received
 	ExpectNotification(notifyName string, notifyType NotificationType, second ...int) error

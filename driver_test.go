@@ -764,3 +764,13 @@ func Test_remoteWD_ExpectNotification(t *testing.T) {
 	// 	t.Fatal(err)
 	// }
 }
+
+func Test_remoteWD_IOHIDEvent(t *testing.T) {
+	setup(t)
+	SetDebug(true)
+
+	err := driver.IOHIDEvent(EventPageIDConsumer, EventUsageIDCsmrVolumeDown)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
