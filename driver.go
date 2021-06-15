@@ -65,6 +65,9 @@ func NewUSBDriver(capabilities Capabilities, device ...Device) (driver WebDriver
 		return nil, err
 	}
 	_, err = wd.NewSession(capabilities)
+
+	keepAlive(wd)
+
 	return wd, err
 }
 

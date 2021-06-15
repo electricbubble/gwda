@@ -22,8 +22,12 @@ import (
 // HTTPClient The default client to use to communicate with the WebDriver server.
 var HTTPClient = http.DefaultClient
 
-var DefaultWaitTimeout = time.Second * 60
-var DefaultWaitInterval = time.Millisecond * 400
+var (
+	DefaultWaitTimeout  = 60 * time.Second
+	DefaultWaitInterval = 400 * time.Millisecond
+
+	DefaultKeepAliveInterval = 30 * time.Second
+)
 
 func newRequest(method string, url string, rawBody []byte) (request *http.Request, err error) {
 	var header = map[string]string{
@@ -76,6 +80,24 @@ func executeHTTP(method string, rawURL string, rawBody []byte, usbHTTPClient ...
 	}
 
 	return
+}
+
+func keepAlive(d WebDriver) {
+	go func() {
+		if DefaultKeepAliveInterval <= 0 {
+			return
+		}
+		ticker := time.NewTicker(DefaultKeepAliveInterval)
+		for {
+			select {
+			case <-ticker.C:
+				if _, err := d.Status(); err != nil {
+					ticker.Stop()
+					return
+				}
+			}
+		}
+	}()
 }
 
 var debugFlag = false
