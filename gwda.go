@@ -16,6 +16,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -43,6 +44,8 @@ func newRequest(method string, url string, rawBody []byte) (request *http.Reques
 	return
 }
 
+var _mUSB sync.Mutex
+
 func executeHTTP(method string, rawURL string, rawBody []byte, usbHTTPClient ...*http.Client) (rawResp rawResponse, err error) {
 	debugLog(fmt.Sprintf("--> %s %s\n%s", method, rawURL, rawBody))
 	var req *http.Request
@@ -53,6 +56,8 @@ func executeHTTP(method string, rawURL string, rawBody []byte, usbHTTPClient ...
 	tmpHTTPClient := HTTPClient
 	if len(usbHTTPClient) != 0 {
 		tmpHTTPClient = usbHTTPClient[0]
+		_mUSB.Lock()
+		defer _mUSB.Unlock()
 	}
 
 	start := time.Now()
