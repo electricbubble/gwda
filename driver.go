@@ -12,6 +12,7 @@ import (
 	"net/url"
 	"path"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -91,7 +92,7 @@ func (wd *remoteWD) _usbHTTPClient() []*http.Client {
 }
 
 func (wd *remoteWD) executeGet(pathElem ...string) (rawResp rawResponse, err error) {
-	return executeHTTP(http.MethodGet, wd._requestURL(nil, pathElem...), nil, wd._usbHTTPClient()...)
+	return executeHTTP(wd, http.MethodGet, wd._requestURL(nil, pathElem...), nil, wd._usbHTTPClient()...)
 }
 
 func (wd *remoteWD) executePost(data interface{}, pathElem ...string) (rawResp rawResponse, err error) {
@@ -101,11 +102,11 @@ func (wd *remoteWD) executePost(data interface{}, pathElem ...string) (rawResp r
 			return nil, err
 		}
 	}
-	return executeHTTP(http.MethodPost, wd._requestURL(nil, pathElem...), bsJSON, wd._usbHTTPClient()...)
+	return executeHTTP(wd, http.MethodPost, wd._requestURL(nil, pathElem...), bsJSON, wd._usbHTTPClient()...)
 }
 
 func (wd *remoteWD) executeDelete(pathElem ...string) (rawResp rawResponse, err error) {
-	return executeHTTP(http.MethodDelete, wd._requestURL(nil, pathElem...), nil, wd._usbHTTPClient()...)
+	return executeHTTP(wd, http.MethodDelete, wd._requestURL(nil, pathElem...), nil, wd._usbHTTPClient()...)
 }
 
 func (wd *remoteWD) GetMjpegHTTPClient() *http.Client {
@@ -118,6 +119,7 @@ type remoteWD struct {
 
 	viaUSB                  bool
 	httpClient, mjpegClient *http.Client
+	UsbLock                 sync.Mutex
 }
 
 func (wd *remoteWD) NewSession(capabilities Capabilities) (sessionInfo SessionInfo, err error) {
@@ -782,7 +784,7 @@ func (wd *remoteWD) Source(srcOpt ...SourceOption) (source string, err error) {
 	}
 
 	var rawResp rawResponse
-	if rawResp, err = executeHTTP(http.MethodGet, wd._requestURL(tmp, "/source"), nil, wd._usbHTTPClient()...); err != nil {
+	if rawResp, err = executeHTTP(wd, http.MethodGet, wd._requestURL(tmp, "/source"), nil, wd._usbHTTPClient()...); err != nil {
 		return "", nil
 	}
 	if toJsonRaw {
