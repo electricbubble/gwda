@@ -16,7 +16,6 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 )
 
@@ -44,8 +43,6 @@ func newRequest(method string, url string, rawBody []byte) (request *http.Reques
 	return
 }
 
-var _mUSB sync.Mutex
-
 func executeHTTP(wd *remoteWD, method string, rawURL string, rawBody []byte, usbHTTPClient ...*http.Client) (rawResp rawResponse, err error) {
 	debugLog(fmt.Sprintf("--> %s %s\n%s", method, rawURL, rawBody))
 	var req *http.Request
@@ -59,6 +56,8 @@ func executeHTTP(wd *remoteWD, method string, rawURL string, rawBody []byte, usb
 		wd.UsbLock.Lock()
 		defer wd.UsbLock.Unlock()
 	}
+
+	tmpHTTPClient.Timeout = 0
 
 	start := time.Now()
 	var resp *http.Response
@@ -126,6 +125,7 @@ func convertToHTTPClient(_conn net.Conn) *http.Client {
 				return _conn, nil
 			},
 		},
+		Timeout: 0,
 	}
 }
 
