@@ -803,14 +803,12 @@ func (wd *remoteWD) Source(srcOpt ...SourceOption) (source string, err error) {
 	toJsonRaw := false
 	if len(srcOpt) != 0 {
 		q := tmp.Query()
-		if vFormat, ok := srcOpt[0]["format"]; ok {
-			q.Set("format", vFormat.(string))
-			if vFormat.(string) == "json" {
+		for k, val := range srcOpt[0] {
+			v := val.(string)
+			q.Set(k, v)
+			if k == "format" && v == "json" {
 				toJsonRaw = true
 			}
-		}
-		if vAttr, ok := srcOpt[0]["excluded_attributes"]; ok {
-			q.Set("excluded_attributes", vAttr.(string))
 		}
 		tmp.RawQuery = q.Encode()
 	}

@@ -566,6 +566,16 @@ func (opt SourceOption) WithFormatAsDescription() SourceOption {
 	return opt
 }
 
+// WithScope Allows to provide XML scope.
+//  only `xml` is supported.
+func (opt SourceOption) WithScope(scope string) SourceOption {
+	if vFormat, ok := opt["format"]; ok && vFormat != "xml" {
+		return opt
+	}
+	opt["scope"] = scope
+	return opt
+}
+
 // WithExcludedAttributes Excludes the given attribute names.
 // only `xml` is supported.
 func (opt SourceOption) WithExcludedAttributes(attributes []string) SourceOption {

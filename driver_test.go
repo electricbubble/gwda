@@ -19,6 +19,28 @@ func setup(t *testing.T) {
 	}
 }
 
+func TestViaUSB(t *testing.T) {
+	devices, err := DeviceList()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	drivers := make([]WebDriver, 0, len(devices))
+
+	for _, dev := range devices {
+		d, err := NewUSBDriver(nil, dev)
+		if err != nil {
+			t.Errorf("%s: %s", dev.SerialNumber(), err)
+			continue
+		}
+		drivers = append(drivers, d)
+	}
+
+	for _, d := range drivers {
+		t.Log(d.Status())
+	}
+}
+
 func TestNewDriver(t *testing.T) {
 	var err error
 	driver, err = NewDriver(nil, urlPrefix)
@@ -143,6 +165,8 @@ func Test_remoteWD_Status(t *testing.T) {
 
 func Test_remoteWD_DeviceInfo(t *testing.T) {
 	setup(t)
+
+	SetDebug(true)
 
 	info, err := driver.DeviceInfo()
 	if err != nil {
@@ -668,7 +692,14 @@ func Test_remoteWD_Source(t *testing.T) {
 	var source string
 	var err error
 
-	source, err = driver.Source()
+	SetDebug(true)
+
+	// source, err = driver.Source()
+	// if err != nil {
+	// 	t.Fatal(err)
+	// }
+
+	source, err = driver.Source(NewSourceOption().WithScope("AppiumAUT"))
 	if err != nil {
 		t.Fatal(err)
 	}
