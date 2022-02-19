@@ -48,14 +48,18 @@ func NewUSBDriver(capabilities Capabilities, device ...Device) (driver WebDriver
 	}
 	dev := device[0]
 
-	wd := new(remoteWD)
-	wd.viaUSB = true
+	var wd = &remoteWD{
+		usbCli: &struct {
+			httpCli *http.Client
+			sync.Mutex
+		}{},
+	}
 
 	var innerConn giDevice.InnerConn
 	if innerConn, err = dev.d.NewConnect(dev.Port, 0); err != nil {
 		return nil, fmt.Errorf("create connection: %w", err)
 	}
-	wd.httpClient = convertToHTTPClient(innerConn.RawConn())
+	wd.usbCli.httpCli = convertToHTTPClient(innerConn.RawConn())
 
 	if innerConn, err = dev.d.NewConnect(dev.MjpegPort, 0); err != nil {
 		return nil, fmt.Errorf("create connection MJPEG: %w", err)
@@ -67,7 +71,21 @@ func NewUSBDriver(capabilities Capabilities, device ...Device) (driver WebDriver
 	}
 	_, err = wd.NewSession(capabilities)
 
-	keepAlive(wd)
+	go func() {
+		if DefaultKeepAliveInterval <= 0 {
+			return
+		}
+		ticker := time.NewTicker(DefaultKeepAliveInterval)
+		for {
+			select {
+			case <-ticker.C:
+				if healthy, err := wd.IsWdaHealthy(); err != nil || !healthy {
+					ticker.Stop()
+					return
+				}
+			}
+		}
+	}()
 
 	return wd, err
 }
@@ -84,15 +102,14 @@ func (wd *remoteWD) _requestURL(tmpURL *url.URL, elem ...string) string {
 	return tmp.String()
 }
 
-func (wd *remoteWD) _usbHTTPClient() []*http.Client {
-	if wd.viaUSB {
-		return []*http.Client{wd.httpClient}
-	}
-	return nil
-}
-
 func (wd *remoteWD) executeGet(pathElem ...string) (rawResp rawResponse, err error) {
-	return executeHTTP(wd, http.MethodGet, wd._requestURL(nil, pathElem...), nil, wd._usbHTTPClient()...)
+	var httpCli *http.Client
+	if wd.usbCli != nil {
+		wd.usbCli.Lock()
+		defer wd.usbCli.Unlock()
+		httpCli = wd.usbCli.httpCli
+	}
+	return executeHTTP(http.MethodGet, wd._requestURL(nil, pathElem...), nil, httpCli)
 }
 
 func (wd *remoteWD) executePost(data interface{}, pathElem ...string) (rawResp rawResponse, err error) {
@@ -102,11 +119,23 @@ func (wd *remoteWD) executePost(data interface{}, pathElem ...string) (rawResp r
 			return nil, err
 		}
 	}
-	return executeHTTP(wd, http.MethodPost, wd._requestURL(nil, pathElem...), bsJSON, wd._usbHTTPClient()...)
+	var httpCli *http.Client
+	if wd.usbCli != nil {
+		wd.usbCli.Lock()
+		defer wd.usbCli.Unlock()
+		httpCli = wd.usbCli.httpCli
+	}
+	return executeHTTP(http.MethodPost, wd._requestURL(nil, pathElem...), bsJSON, httpCli)
 }
 
 func (wd *remoteWD) executeDelete(pathElem ...string) (rawResp rawResponse, err error) {
-	return executeHTTP(wd, http.MethodDelete, wd._requestURL(nil, pathElem...), nil, wd._usbHTTPClient()...)
+	var httpCli *http.Client
+	if wd.usbCli != nil {
+		wd.usbCli.Lock()
+		defer wd.usbCli.Unlock()
+		httpCli = wd.usbCli.httpCli
+	}
+	return executeHTTP(http.MethodDelete, wd._requestURL(nil, pathElem...), nil, httpCli)
 }
 
 func (wd *remoteWD) GetMjpegHTTPClient() *http.Client {
@@ -117,9 +146,12 @@ type remoteWD struct {
 	urlPrefix *url.URL
 	sessionId string
 
-	viaUSB                  bool
-	httpClient, mjpegClient *http.Client
-	UsbLock                 sync.Mutex
+	usbCli *struct {
+		httpCli *http.Client
+		sync.Mutex
+	}
+
+	mjpegClient *http.Client
 }
 
 func (wd *remoteWD) NewSession(capabilities Capabilities) (sessionInfo SessionInfo, err error) {
@@ -783,8 +815,15 @@ func (wd *remoteWD) Source(srcOpt ...SourceOption) (source string, err error) {
 		tmp.RawQuery = q.Encode()
 	}
 
+	var httpCli *http.Client
+	if wd.usbCli != nil {
+		wd.usbCli.Lock()
+		defer wd.usbCli.Unlock()
+		httpCli = wd.usbCli.httpCli
+	}
+
 	var rawResp rawResponse
-	if rawResp, err = executeHTTP(wd, http.MethodGet, wd._requestURL(tmp, "/source"), nil, wd._usbHTTPClient()...); err != nil {
+	if rawResp, err = executeHTTP(http.MethodGet, wd._requestURL(tmp, "/source"), nil, httpCli); err != nil {
 		return "", nil
 	}
 	if toJsonRaw {

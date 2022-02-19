@@ -43,25 +43,22 @@ func newRequest(method string, url string, rawBody []byte) (request *http.Reques
 	return
 }
 
-func executeHTTP(wd *remoteWD, method string, rawURL string, rawBody []byte, usbHTTPClient ...*http.Client) (rawResp rawResponse, err error) {
+func executeHTTP(method string, rawURL string, rawBody []byte, httpCli *http.Client) (rawResp rawResponse, err error) {
 	debugLog(fmt.Sprintf("--> %s %s\n%s", method, rawURL, rawBody))
 	var req *http.Request
 	if req, err = newRequest(method, rawURL, rawBody); err != nil {
 		return
 	}
 
-	tmpHTTPClient := HTTPClient
-	if len(usbHTTPClient) != 0 {
-		tmpHTTPClient = usbHTTPClient[0]
-		wd.UsbLock.Lock()
-		defer wd.UsbLock.Unlock()
+	tmpCli := HTTPClient
+	if httpCli != nil {
+		tmpCli = httpCli
 	}
-
-	tmpHTTPClient.Timeout = 0
+	tmpCli.Timeout = 0
 
 	start := time.Now()
 	var resp *http.Response
-	if resp, err = tmpHTTPClient.Do(req); err != nil {
+	if resp, err = tmpCli.Do(req); err != nil {
 		return nil, err
 	}
 	defer func() {
@@ -84,24 +81,6 @@ func executeHTTP(wd *remoteWD, method string, rawURL string, rawBody []byte, usb
 	}
 
 	return
-}
-
-func keepAlive(d WebDriver) {
-	go func() {
-		if DefaultKeepAliveInterval <= 0 {
-			return
-		}
-		ticker := time.NewTicker(DefaultKeepAliveInterval)
-		for {
-			select {
-			case <-ticker.C:
-				if _, err := d.Status(); err != nil {
-					ticker.Stop()
-					return
-				}
-			}
-		}
-	}()
 }
 
 var debugFlag = false
