@@ -350,6 +350,7 @@ type DeviceInfo struct {
 	UserInterfaceStyle string `json:"userInterfaceStyle"`
 	Name               string `json:"name"`
 	IsSimulator        bool   `json:"isSimulator"`
+	ThermalState       int    `json:"thermalState"`
 }
 
 type Location struct {
