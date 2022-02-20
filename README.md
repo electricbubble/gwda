@@ -1,4 +1,5 @@
 # Golang-WDA
+
 [![go doc](https://godoc.org/github.com/electricbubble/gwda?status.svg)](https://pkg.go.dev/github.com/electricbubble/gwda?tab=doc#pkg-index)
 [![go report](https://goreportcard.com/badge/github.com/electricbubble/gwda)](https://goreportcard.com/report/github.com/electricbubble/gwda)
 [![license](https://img.shields.io/github/license/electricbubble/gwda)](https://github.com/electricbubble/gwda/blob/master/LICENSE)
@@ -7,7 +8,7 @@
 
 > `Android` can use [electricbubble/guia2](https://github.com/electricbubble/guia2)
 
-[中文 README](README_CN.md)
+English | [🇨🇳中文](README_CN.md)
 
 ## Installation
 
@@ -66,7 +67,7 @@ func main() {
 
 	driver.Swipe(fromX, fromY, toX, toY)
 
-	// 需要 3D Touch 硬件支持
+	// requires hardware support: 3D Touch 
 	// driver.ForceTouch(x, y, 0.8)
 }
 
@@ -120,7 +121,6 @@ func main() {
 ```
 
 > [specified element](examples/keyboard/main.go) `element.SendKeys`
-
 
 #### [Siri](examples/siri/main.go)
 
@@ -264,7 +264,6 @@ func main() {
 }
 
 ```
-
 
 ## Extensions
 
