@@ -45,6 +45,9 @@ func NewUSBDriver(capabilities Capabilities, device ...Device) (driver WebDriver
 		if device, err = DeviceList(); err != nil {
 			return nil, err
 		}
+		if len(device) == 0 {
+			return nil, errors.New("no device")
+		}
 	}
 	dev := device[0]
 
