@@ -31,11 +31,10 @@ func NewDriver(capabilities Capabilities, urlPrefix string, mjpegPort ...int) (d
 	}
 	wd.sessionId = sessionInfo.SessionId
 
-	var conn net.Conn
-	if conn, err = net.Dial("tcp", fmt.Sprintf("%s:%d", wd.urlPrefix.Hostname(), mjpegPort[0])); err != nil {
+	if wd.mjpegConn, err = net.Dial("tcp", fmt.Sprintf("%s:%d", wd.urlPrefix.Hostname(), mjpegPort[0])); err != nil {
 		return nil, err
 	}
-	wd.mjpegClient = convertToHTTPClient(conn)
+	wd.mjpegClient = convertToHTTPClient(wd.mjpegConn)
 
 	return wd, nil
 }
@@ -51,23 +50,22 @@ func NewUSBDriver(capabilities Capabilities, device ...Device) (driver WebDriver
 	}
 	dev := device[0]
 
-	var wd = &remoteWD{
+	wd := &remoteWD{
 		usbCli: &struct {
-			httpCli *http.Client
+			httpCli                *http.Client
+			defaultConn, mjpegConn giDevice.InnerConn
 			sync.Mutex
 		}{},
 	}
-
-	var innerConn giDevice.InnerConn
-	if innerConn, err = dev.d.NewConnect(dev.Port, 0); err != nil {
+	if wd.usbCli.defaultConn, err = dev.d.NewConnect(dev.Port, 0); err != nil {
 		return nil, fmt.Errorf("create connection: %w", err)
 	}
-	wd.usbCli.httpCli = convertToHTTPClient(innerConn.RawConn())
+	wd.usbCli.httpCli = convertToHTTPClient(wd.usbCli.defaultConn.RawConn())
 
-	if innerConn, err = dev.d.NewConnect(dev.MjpegPort, 0); err != nil {
+	if wd.usbCli.mjpegConn, err = dev.d.NewConnect(dev.MjpegPort, 0); err != nil {
 		return nil, fmt.Errorf("create connection MJPEG: %w", err)
 	}
-	wd.mjpegClient = convertToHTTPClient(innerConn.RawConn())
+	wd.mjpegClient = convertToHTTPClient(wd.usbCli.mjpegConn.RawConn())
 
 	if wd.urlPrefix, err = url.Parse("http://" + dev.serialNumber); err != nil {
 		return nil, err
@@ -145,16 +143,36 @@ func (wd *remoteWD) GetMjpegHTTPClient() *http.Client {
 	return wd.mjpegClient
 }
 
+func (wd *remoteWD) Close() error {
+	if wd.usbCli == nil {
+		wd.mjpegClient.CloseIdleConnections()
+		return wd.mjpegConn.Close()
+	}
+
+	wd.usbCli.Lock()
+	defer wd.usbCli.Unlock()
+
+	if wd.usbCli.defaultConn != nil {
+		wd.usbCli.defaultConn.Close()
+	}
+	if wd.usbCli.mjpegConn != nil {
+		wd.usbCli.mjpegConn.Close()
+	}
+	return nil
+}
+
 type remoteWD struct {
 	urlPrefix *url.URL
 	sessionId string
 
 	usbCli *struct {
-		httpCli *http.Client
+		httpCli                *http.Client
+		defaultConn, mjpegConn giDevice.InnerConn
 		sync.Mutex
 	}
 
 	mjpegClient *http.Client
+	mjpegConn   net.Conn
 }
 
 func (wd *remoteWD) NewSession(capabilities Capabilities) (sessionInfo SessionInfo, err error) {

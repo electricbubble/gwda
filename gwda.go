@@ -1071,6 +1071,9 @@ type WebDriver interface {
 	Wait(condition Condition) error
 
 	GetMjpegHTTPClient() *http.Client
+
+	// Close inner connections properly
+	Close() error
 }
 
 // WebElement defines method supported by web elements.
