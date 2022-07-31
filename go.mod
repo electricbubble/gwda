@@ -1,6 +1,6 @@
 module github.com/electricbubble/gwda
 
-go 1.15
+go 1.16
 
 require (
 	github.com/electricbubble/gidevice v0.6.2
