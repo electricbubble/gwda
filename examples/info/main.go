@@ -1,8 +1,9 @@
 package main
 
 import (
-	"github.com/electricbubble/gwda"
 	"log"
+
+	"github.com/electricbubble/gwda"
 )
 
 func main() {

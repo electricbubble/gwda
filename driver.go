@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	giDevice "github.com/electricbubble/gidevice"
 	"net"
 	"net/http"
 	"net/url"
@@ -14,6 +13,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	giDevice "github.com/electricbubble/gidevice"
 )
 
 // NewDriver creates new remote client, this will also start a new session.
