@@ -2,6 +2,7 @@ package gwda
 
 import (
 	"fmt"
+
 	giDevice "github.com/electricbubble/gidevice"
 )
 
@@ -44,4 +45,8 @@ func (d Device) DeviceID() int {
 
 func (d Device) SerialNumber() string {
 	return d.serialNumber
+}
+
+func (d Device) GIDevice() giDevice.Device {
+	return d.d
 }

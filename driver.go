@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	giDevice "github.com/electricbubble/gidevice"
 	"net"
 	"net/http"
 	"net/url"
@@ -14,6 +13,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	giDevice "github.com/electricbubble/gidevice"
 )
 
 // NewDriver creates new remote client, this will also start a new session.
@@ -39,6 +40,7 @@ func NewDriver(capabilities Capabilities, urlPrefix string, mjpegPort ...int) (d
 	return wd, nil
 }
 
+// NewUSBDriver creates new client via USB connected device, this will also start a new session.
 func NewUSBDriver(capabilities Capabilities, device ...Device) (driver WebDriver, err error) {
 	if len(device) == 0 {
 		if device, err = DeviceList(); err != nil {
@@ -78,12 +80,10 @@ func NewUSBDriver(capabilities Capabilities, device ...Device) (driver WebDriver
 		}
 		ticker := time.NewTicker(DefaultKeepAliveInterval)
 		for {
-			select {
-			case <-ticker.C:
-				if healthy, err := wd.IsWdaHealthy(); err != nil || !healthy {
-					ticker.Stop()
-					return
-				}
+			<-ticker.C
+			if healthy, err := wd.IsWdaHealthy(); err != nil || !healthy {
+				ticker.Stop()
+				return
 			}
 		}
 	}()
@@ -178,7 +178,7 @@ type remoteWD struct {
 func (wd *remoteWD) NewSession(capabilities Capabilities) (sessionInfo SessionInfo, err error) {
 	// [[FBRoute POST:@"/session"].withoutSession respondWithTarget:self action:@selector(handleCreateSession:)]
 	data := make(map[string]interface{})
-	if capabilities == nil || len(capabilities) == 0 {
+	if len(capabilities) == 0 {
 		data["capabilities"] = make(map[string]interface{})
 	} else {
 		data["capabilities"] = map[string]interface{}{"alwaysMatch": capabilities}
