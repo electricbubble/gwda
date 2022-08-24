@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	giDevice "github.com/electricbubble/gidevice"
-	"github.com/pkg/errors"
 )
 
 const (
@@ -21,35 +20,35 @@ type Device struct {
 	d giDevice.Device
 }
 
-type DeviceOptions func(d *Device)
+type DeviceOption func(d *Device)
 
-func WithSerialNumber(serialNumber string) DeviceOptions {
+func WithSerialNumber(serialNumber string) DeviceOption {
 	return func(d *Device) {
 		d.serialNumber = serialNumber
 	}
 }
 
-func WithPort(port int) DeviceOptions {
+func WithPort(port int) DeviceOption {
 	return func(d *Device) {
 		d.Port = port
 	}
 }
 
-func WithMjpegPort(port int) DeviceOptions {
+func WithMjpegPort(port int) DeviceOption {
 	return func(d *Device) {
 		d.MjpegPort = port
 	}
 }
 
-func NewDevice(options ...DeviceOptions) (device *Device, err error) {
+func NewDevice(options ...DeviceOption) (device *Device, err error) {
 	var usbmux giDevice.Usbmux
 	if usbmux, err = giDevice.NewUsbmux(); err != nil {
-		return nil, errors.Wrap(err, "init usbmux failed")
+		return nil, fmt.Errorf("init usbmux failed: %v", err)
 	}
 
 	var deviceList []giDevice.Device
 	if deviceList, err = usbmux.Devices(); err != nil {
-		return nil, errors.Wrap(err, "get attached devices failed")
+		return nil, fmt.Errorf("get attached devices failed: %v", err)
 	}
 
 	device = &Device{
