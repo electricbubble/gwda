@@ -9,9 +9,12 @@ import (
 	"strings"
 )
 
+// All elements returned by search endpoints have assigned element_id.
+// Given element_id you can query properties like:
+// enabled, rect, size, location, text, displayed, accessible, name
 type remoteWE struct {
 	parent *remoteWD
-	id     string
+	id     string // element_id
 }
 
 func (we remoteWE) Click() (err error) {

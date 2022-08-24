@@ -606,6 +606,7 @@ func elementIDFromValue(val map[string]string) string {
 	return ""
 }
 
+// performance ranking: class name > accessibility id > link text > predicate > class chain > xpath
 type BySelector struct {
 	ClassName ElementType `json:"class name"`
 
@@ -624,7 +625,7 @@ type BySelector struct {
 
 	ClassChain string `json:"class chain"`
 
-	XPath string `json:"xpath"`
+	XPath string `json:"xpath"` // not recommended, it's slow because it is not supported by XCTest natively
 }
 
 func (wl BySelector) getUsingAndValue() (using, value string) {
@@ -879,8 +880,8 @@ const (
 )
 
 type Point struct {
-	X int `json:"x"`
-	Y int `json:"y"`
+	X int `json:"x"` // upper left X coordinate of selected element
+	Y int `json:"y"` // upper left Y coordinate of selected element
 }
 
 type Rect struct {

@@ -155,6 +155,9 @@ func Test_remoteWE_PickerWheelSelect(t *testing.T) {
 	element := setupElement(t, BySelector{ClassName: ElementType{PickerWheel: true}})
 
 	err := element.PickerWheelSelect(PickerWheelOrderNext, 3)
+	if err != nil {
+		t.Fatal(err)
+	}
 	err = element.PickerWheelSelect(PickerWheelOrderPrevious)
 	if err != nil {
 		t.Fatal(err)
@@ -236,7 +239,13 @@ func Test_remoteWE_Rect(t *testing.T) {
 	element := setupElement(t, BySelector{ClassName: ElementType{Switch: true}})
 
 	rect, err := element.Rect()
+	if err != nil {
+		t.Fatal(err)
+	}
 	location, err := element.Location()
+	if err != nil {
+		t.Fatal(err)
+	}
 	size, err := element.Size()
 	if err != nil {
 		t.Fatal(err)
