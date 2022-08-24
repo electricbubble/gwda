@@ -20,7 +20,7 @@ import (
 // NewDriver creates new remote client, this will also start a new session.
 func NewDriver(capabilities Capabilities, urlPrefix string, mjpegPort ...int) (driver WebDriver, err error) {
 	if len(mjpegPort) == 0 {
-		mjpegPort = []int{9100}
+		mjpegPort = []int{defaultMjpegPort}
 	}
 	wd := new(remoteWD)
 	if wd.urlPrefix, err = url.Parse(urlPrefix); err != nil {

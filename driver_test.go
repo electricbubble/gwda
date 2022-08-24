@@ -41,6 +41,28 @@ func TestViaUSB(t *testing.T) {
 	}
 }
 
+func TestNewDevice(t *testing.T) {
+	device, _ := NewDevice()
+	if device != nil {
+		t.Log(device)
+	}
+
+	device, _ = NewDevice(WithSerialNumber("xxxx"))
+	if device != nil {
+		t.Log(device)
+	}
+
+	device, _ = NewDevice(WithPort(8700), WithMjpegPort(8800))
+	if device != nil {
+		t.Log(device)
+	}
+
+	device, _ = NewDevice(WithSerialNumber("xxxx"), WithPort(8700), WithMjpegPort(8800))
+	if device != nil {
+		t.Log(device)
+	}
+}
+
 func TestNewDriver(t *testing.T) {
 	var err error
 	driver, err = NewDriver(nil, urlPrefix)
