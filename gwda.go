@@ -68,7 +68,12 @@ func executeHTTP(method string, rawURL string, rawBody []byte, httpCli *http.Cli
 	}()
 
 	rawResp, err = ioutil.ReadAll(resp.Body)
-	debugLog(fmt.Sprintf("<-- %s %s %d %s\n%s\n", method, rawURL, resp.StatusCode, time.Since(start), rawResp))
+	respBody := fmt.Sprintf("<-- %s %s %d %s", method, rawURL, resp.StatusCode, time.Since(start))
+	if !strings.HasSuffix(rawURL, "screenshot") {
+		// avoid printing screenshot data
+		respBody += fmt.Sprintf("\n%s", rawResp)
+	}
+	debugLog(respBody)
 	if err != nil {
 		return nil, err
 	}
