@@ -894,6 +894,8 @@ type Rect struct {
 	Size
 }
 
+type DataOption map[string]interface{}
+
 // WebDriver defines methods supported by WebDriver drivers.
 type WebDriver interface {
 	// NewSession starts a new session and returns the SessionInfo.
@@ -976,8 +978,8 @@ type WebDriver interface {
 	AppAuthReset(ProtectedResource) error
 
 	// Tap Sends a tap event at the coordinate.
-	Tap(x, y int) error
-	TapFloat(x, y float64) error
+	Tap(x, y int, option ...DataOption) error
+	TapFloat(x, y float64, option ...DataOption) error
 
 	// DoubleTap Sends a double tap event at the coordinate.
 	DoubleTap(x, y int) error

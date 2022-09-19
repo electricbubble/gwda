@@ -496,15 +496,22 @@ func (wd *remoteWD) AppAuthReset(resource ProtectedResource) (err error) {
 	return
 }
 
-func (wd *remoteWD) Tap(x, y int) error {
-	return wd.TapFloat(float64(x), float64(y))
+func (wd *remoteWD) Tap(x, y int, option ...DataOption) error {
+	return wd.TapFloat(float64(x), float64(y), option...)
 }
 
-func (wd *remoteWD) TapFloat(x, y float64) (err error) {
+func (wd *remoteWD) TapFloat(x, y float64, option ...DataOption) (err error) {
 	// [[FBRoute POST:@"/wda/tap/:uuid"] respondWithTarget:self action:@selector(handleTap:)]
 	data := map[string]interface{}{
 		"x": x,
 		"y": y,
+	}
+	// append options in post data for extra WDA configurations
+	// e.g. add identifier in tap event logs
+	if len(option) > 0 {
+		for k, v := range option[0] {
+			data[k] = v
+		}
 	}
 	_, err = wd.executePost(data, "/session", wd.sessionId, "/wda/tap/0")
 	return
