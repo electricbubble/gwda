@@ -496,11 +496,11 @@ func (wd *remoteWD) AppAuthReset(resource ProtectedResource) (err error) {
 	return
 }
 
-func (wd *remoteWD) Tap(x, y int, option ...DataOption) error {
-	return wd.TapFloat(float64(x), float64(y), option...)
+func (wd *remoteWD) Tap(x, y int, options ...DataOption) error {
+	return wd.TapFloat(float64(x), float64(y), options...)
 }
 
-func (wd *remoteWD) TapFloat(x, y float64, option ...DataOption) (err error) {
+func (wd *remoteWD) TapFloat(x, y float64, options ...DataOption) (err error) {
 	// [[FBRoute POST:@"/wda/tap/:uuid"] respondWithTarget:self action:@selector(handleTap:)]
 	data := map[string]interface{}{
 		"x": x,
@@ -508,10 +508,8 @@ func (wd *remoteWD) TapFloat(x, y float64, option ...DataOption) (err error) {
 	}
 	// append options in post data for extra WDA configurations
 	// e.g. add identifier in tap event logs
-	if len(option) > 0 {
-		for k, v := range option[0] {
-			data[k] = v
-		}
+	for _, option := range options {
+		option(data)
 	}
 	_, err = wd.executePost(data, "/session", wd.sessionId, "/wda/tap/0")
 	return
@@ -549,11 +547,11 @@ func (wd *remoteWD) TouchAndHoldFloat(x, y float64, second ...float64) (err erro
 	return
 }
 
-func (wd *remoteWD) Drag(fromX, fromY, toX, toY int, pressForDuration ...float64) error {
-	return wd.DragFloat(float64(fromX), float64(fromY), float64(toX), float64(toY), pressForDuration...)
+func (wd *remoteWD) Drag(fromX, fromY, toX, toY int, options ...DataOption) error {
+	return wd.DragFloat(float64(fromX), float64(fromY), float64(toX), float64(toY), options...)
 }
 
-func (wd *remoteWD) DragFloat(fromX, fromY, toX, toY float64, pressForDuration ...float64) (err error) {
+func (wd *remoteWD) DragFloat(fromX, fromY, toX, toY float64, options ...DataOption) (err error) {
 	// [[FBRoute POST:@"/wda/dragfromtoforduration"] respondWithTarget:self action:@selector(handleDragCoordinate:)]
 	data := map[string]interface{}{
 		"fromX": fromX,
@@ -561,20 +559,26 @@ func (wd *remoteWD) DragFloat(fromX, fromY, toX, toY float64, pressForDuration .
 		"toX":   toX,
 		"toY":   toY,
 	}
-	if len(pressForDuration) == 0 || pressForDuration[0] < 0 {
-		pressForDuration = []float64{1.0}
+
+	// append options in post data for extra WDA configurations
+	// e.g. use WithPressDuration to set pressForDuration
+	for _, option := range options {
+		option(data)
 	}
-	data["duration"] = pressForDuration[0]
+
+	if _, ok := data["duration"]; !ok {
+		data["duration"] = 1.0 // default duration
+	}
 	_, err = wd.executePost(data, "/session", wd.sessionId, "/wda/dragfromtoforduration")
 	return
 }
 
-func (wd *remoteWD) Swipe(fromX, fromY, toX, toY int) error {
-	return wd.SwipeFloat(float64(fromX), float64(fromY), float64(toX), float64(toY))
+func (wd *remoteWD) Swipe(fromX, fromY, toX, toY int, options ...DataOption) error {
+	return wd.SwipeFloat(float64(fromX), float64(fromY), float64(toX), float64(toY), options...)
 }
 
-func (wd *remoteWD) SwipeFloat(fromX, fromY, toX, toY float64) error {
-	return wd.DragFloat(fromX, fromY, toX, toY, 0)
+func (wd *remoteWD) SwipeFloat(fromX, fromY, toX, toY float64, options ...DataOption) error {
+	return wd.DragFloat(fromX, fromY, toX, toY, options...)
 }
 
 func (wd *remoteWD) ForceTouch(x, y int, pressure float64, second ...float64) error {

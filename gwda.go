@@ -894,7 +894,19 @@ type Rect struct {
 	Size
 }
 
-type DataOption map[string]interface{}
+type DataOption func(data map[string]interface{})
+
+func WithCustomOption(key string, value interface{}) DataOption {
+	return func(data map[string]interface{}) {
+		data[key] = value
+	}
+}
+
+func WithPressDuration(duraion float64) DataOption {
+	return func(data map[string]interface{}) {
+		data["duration"] = duraion
+	}
+}
 
 // WebDriver defines methods supported by WebDriver drivers.
 type WebDriver interface {
@@ -978,8 +990,8 @@ type WebDriver interface {
 	AppAuthReset(ProtectedResource) error
 
 	// Tap Sends a tap event at the coordinate.
-	Tap(x, y int, option ...DataOption) error
-	TapFloat(x, y float64, option ...DataOption) error
+	Tap(x, y int, options ...DataOption) error
+	TapFloat(x, y float64, options ...DataOption) error
 
 	// DoubleTap Sends a double tap event at the coordinate.
 	DoubleTap(x, y int) error
@@ -991,13 +1003,13 @@ type WebDriver interface {
 	TouchAndHoldFloat(x, y float64, second ...float64) error
 
 	// Drag Initiates a press-and-hold gesture at the coordinate, then drags to another coordinate.
-	//  pressForDuration: The default value is 1 second.
-	Drag(fromX, fromY, toX, toY int, pressForDuration ...float64) error
-	DragFloat(fromX, fromY, toX, toY float64, pressForDuration ...float64) error
+	// WithPressDuration option can be used to set pressForDuration (default to 1 second).
+	Drag(fromX, fromY, toX, toY int, options ...DataOption) error
+	DragFloat(fromX, fromY, toX, toY float64, options ...DataOption) error
 
 	// Swipe works like Drag, but `pressForDuration` value is 0
-	Swipe(fromX, fromY, toX, toY int) error
-	SwipeFloat(fromX, fromY, toX, toY float64) error
+	Swipe(fromX, fromY, toX, toY int, options ...DataOption) error
+	SwipeFloat(fromX, fromY, toX, toY float64, options ...DataOption) error
 
 	ForceTouch(x, y int, pressure float64, second ...float64) error
 	ForceTouchFloat(x, y, pressure float64, second ...float64) error
