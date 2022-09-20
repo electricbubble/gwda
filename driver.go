@@ -574,10 +574,12 @@ func (wd *remoteWD) DragFloat(fromX, fromY, toX, toY float64, options ...DataOpt
 }
 
 func (wd *remoteWD) Swipe(fromX, fromY, toX, toY int, options ...DataOption) error {
+	options = append(options, WithPressDuration(0))
 	return wd.SwipeFloat(float64(fromX), float64(fromY), float64(toX), float64(toY), options...)
 }
 
 func (wd *remoteWD) SwipeFloat(fromX, fromY, toX, toY float64, options ...DataOption) error {
+	options = append(options, WithPressDuration(0))
 	return wd.DragFloat(fromX, fromY, toX, toY, options...)
 }
 
