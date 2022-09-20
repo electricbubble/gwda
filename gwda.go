@@ -68,7 +68,12 @@ func executeHTTP(method string, rawURL string, rawBody []byte, httpCli *http.Cli
 	}()
 
 	rawResp, err = ioutil.ReadAll(resp.Body)
-	debugLog(fmt.Sprintf("<-- %s %s %d %s\n%s\n", method, rawURL, resp.StatusCode, time.Since(start), rawResp))
+	respBody := fmt.Sprintf("<-- %s %s %d %s", method, rawURL, resp.StatusCode, time.Since(start))
+	if !strings.HasSuffix(rawURL, "screenshot") {
+		// avoid printing screenshot data
+		respBody += fmt.Sprintf("\n%s", rawResp)
+	}
+	debugLog(respBody)
 	if err != nil {
 		return nil, err
 	}
@@ -606,6 +611,7 @@ func elementIDFromValue(val map[string]string) string {
 	return ""
 }
 
+// performance ranking: class name > accessibility id > link text > predicate > class chain > xpath
 type BySelector struct {
 	ClassName ElementType `json:"class name"`
 
@@ -624,7 +630,7 @@ type BySelector struct {
 
 	ClassChain string `json:"class chain"`
 
-	XPath string `json:"xpath"`
+	XPath string `json:"xpath"` // not recommended, it's slow because it is not supported by XCTest natively
 }
 
 func (wl BySelector) getUsingAndValue() (using, value string) {
@@ -879,13 +885,33 @@ const (
 )
 
 type Point struct {
-	X int `json:"x"`
-	Y int `json:"y"`
+	X int `json:"x"` // upper left X coordinate of selected element
+	Y int `json:"y"` // upper left Y coordinate of selected element
 }
 
 type Rect struct {
 	Point
 	Size
+}
+
+type DataOption func(data map[string]interface{})
+
+func WithCustomOption(key string, value interface{}) DataOption {
+	return func(data map[string]interface{}) {
+		data[key] = value
+	}
+}
+
+func WithPressDuration(duraion float64) DataOption {
+	return func(data map[string]interface{}) {
+		data["duration"] = duraion
+	}
+}
+
+func WithFrequency(frequency int) DataOption {
+	return func(data map[string]interface{}) {
+		data["frequency"] = frequency
+	}
 }
 
 // WebDriver defines methods supported by WebDriver drivers.
@@ -970,8 +996,8 @@ type WebDriver interface {
 	AppAuthReset(ProtectedResource) error
 
 	// Tap Sends a tap event at the coordinate.
-	Tap(x, y int) error
-	TapFloat(x, y float64) error
+	Tap(x, y int, options ...DataOption) error
+	TapFloat(x, y float64, options ...DataOption) error
 
 	// DoubleTap Sends a double tap event at the coordinate.
 	DoubleTap(x, y int) error
@@ -983,13 +1009,13 @@ type WebDriver interface {
 	TouchAndHoldFloat(x, y float64, second ...float64) error
 
 	// Drag Initiates a press-and-hold gesture at the coordinate, then drags to another coordinate.
-	//  pressForDuration: The default value is 1 second.
-	Drag(fromX, fromY, toX, toY int, pressForDuration ...float64) error
-	DragFloat(fromX, fromY, toX, toY float64, pressForDuration ...float64) error
+	// WithPressDuration option can be used to set pressForDuration (default to 1 second).
+	Drag(fromX, fromY, toX, toY int, options ...DataOption) error
+	DragFloat(fromX, fromY, toX, toY float64, options ...DataOption) error
 
 	// Swipe works like Drag, but `pressForDuration` value is 0
-	Swipe(fromX, fromY, toX, toY int) error
-	SwipeFloat(fromX, fromY, toX, toY float64) error
+	Swipe(fromX, fromY, toX, toY int, options ...DataOption) error
+	SwipeFloat(fromX, fromY, toX, toY float64, options ...DataOption) error
 
 	ForceTouch(x, y int, pressure float64, second ...float64) error
 	ForceTouchFloat(x, y, pressure float64, second ...float64) error
@@ -1006,8 +1032,8 @@ type WebDriver interface {
 
 	// SendKeys Types a string into active element. There must be element with keyboard focus,
 	// otherwise an error is raised.
-	//  frequency: Frequency of typing (letters per sec). The default value is 60
-	SendKeys(text string, frequency ...int) error
+	// WithFrequency option can be used to set frequency of typing (letters per sec). The default value is 60
+	SendKeys(text string, options ...DataOption) error
 
 	// KeyboardDismiss Tries to dismiss the on-screen keyboard
 	KeyboardDismiss(keyNames ...string) error

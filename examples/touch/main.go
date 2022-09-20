@@ -1,8 +1,9 @@
 package main
 
 import (
-	"github.com/electricbubble/gwda"
 	"log"
+
+	"github.com/electricbubble/gwda"
 )
 
 func main() {
@@ -14,6 +15,16 @@ func main() {
 	x, y := 50, 256
 
 	err = driver.Tap(x, y)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	// tap action with specified identifier
+	option := gwda.WithCustomOption("log", map[string]interface{}{
+		"enable": true,
+		"data":   "identifier-tap-A",
+	})
+	err = driver.Tap(x, y, option)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -35,7 +46,27 @@ func main() {
 		log.Fatalln(err)
 	}
 
+	// drag action with specified identifier
+	option = gwda.WithCustomOption("log", map[string]interface{}{
+		"enable": true,
+		"data":   "identifier-drag-B",
+	})
+	err = driver.Drag(fromX, fromY, toX, toY, option)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
 	err = driver.Swipe(fromX, fromY, toX, toY)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	// swipe action with specified identifier
+	option = gwda.WithCustomOption("log", map[string]interface{}{
+		"enable": true,
+		"data":   "identifier-swipe-C",
+	})
+	err = driver.Swipe(fromX, fromY, toX, toY, option)
 	if err != nil {
 		log.Fatalln(err)
 	}
