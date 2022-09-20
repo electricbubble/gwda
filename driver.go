@@ -635,13 +635,19 @@ func (wd *remoteWD) GetPasteboard(contentType PasteboardType) (raw *bytes.Buffer
 	return
 }
 
-func (wd *remoteWD) SendKeys(text string, frequency ...int) (err error) {
+func (wd *remoteWD) SendKeys(text string, options ...DataOption) (err error) {
 	// [[FBRoute POST:@"/wda/keys"] respondWithTarget:self action:@selector(handleKeys:)]
 	data := map[string]interface{}{"value": strings.Split(text, "")}
-	if len(frequency) == 0 || frequency[0] <= 0 {
-		frequency = []int{60}
+
+	// append options in post data for extra WDA configurations
+	// e.g. use WithFrequency to set frequency of typing
+	for _, option := range options {
+		option(data)
 	}
-	data["frequency"] = frequency[0]
+
+	if _, ok := data["frequency"]; !ok {
+		data["frequency"] = 60 // default frequency
+	}
 	_, err = wd.executePost(data, "/session", wd.sessionId, "/wda/keys")
 	return
 }

@@ -908,6 +908,12 @@ func WithPressDuration(duraion float64) DataOption {
 	}
 }
 
+func WithFrequency(frequency int) DataOption {
+	return func(data map[string]interface{}) {
+		data["frequency"] = frequency
+	}
+}
+
 // WebDriver defines methods supported by WebDriver drivers.
 type WebDriver interface {
 	// NewSession starts a new session and returns the SessionInfo.
@@ -1026,8 +1032,8 @@ type WebDriver interface {
 
 	// SendKeys Types a string into active element. There must be element with keyboard focus,
 	// otherwise an error is raised.
-	//  frequency: Frequency of typing (letters per sec). The default value is 60
-	SendKeys(text string, frequency ...int) error
+	// WithFrequency option can be used to set frequency of typing (letters per sec). The default value is 60
+	SendKeys(text string, options ...DataOption) error
 
 	// KeyboardDismiss Tries to dismiss the on-screen keyboard
 	KeyboardDismiss(keyNames ...string) error
