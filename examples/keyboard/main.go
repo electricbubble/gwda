@@ -1,8 +1,9 @@
 package main
 
 import (
-	"github.com/electricbubble/gwda"
 	"log"
+
+	"github.com/electricbubble/gwda"
 )
 
 func main() {
@@ -12,6 +13,12 @@ func main() {
 	}
 
 	err = driver.SendKeys("hello")
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	// send keys with specified frequency
+	err = driver.SendKeys("world", gwda.WithFrequency(30))
 	if err != nil {
 		log.Fatalln(err)
 	}

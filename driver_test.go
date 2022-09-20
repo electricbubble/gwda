@@ -454,7 +454,7 @@ func Test_remoteWD_TouchAndHold(t *testing.T) {
 func Test_remoteWD_Drag(t *testing.T) {
 	setup(t)
 
-	// err := driver.Drag(200, 300, 200, 500, -1)
+	// err := driver.Drag(200, 300, 200, 500, WithPressDuration(0.5))
 	err := driver.Swipe(200, 300, 200, 500)
 	if err != nil {
 		t.Fatal(err)
@@ -511,7 +511,7 @@ func Test_remoteWD_SendKeys(t *testing.T) {
 	setup(t)
 
 	err := driver.SendKeys("App Store")
-	// err := driver.SendKeys("App Store", 3)
+	// err := driver.SendKeys("App Store", WithFrequency(3))
 	if err != nil {
 		t.Fatal(err)
 	}
