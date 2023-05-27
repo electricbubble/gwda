@@ -61,6 +61,7 @@ func NewDevice(options ...DeviceOption) (device *Device, err error) {
 	device = &Device{
 		Port:      defaultPort,
 		MjpegPort: defaultMjpegPort,
+		ConnType:  "USB",
 	}
 	for _, option := range options {
 		option(device)
