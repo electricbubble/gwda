@@ -16,6 +16,7 @@ type Device struct {
 	serialNumber string
 	Port         int
 	MjpegPort    int
+	ConnType     string
 
 	d giDevice.Device
 }
@@ -37,6 +38,12 @@ func WithPort(port int) DeviceOption {
 func WithMjpegPort(port int) DeviceOption {
 	return func(d *Device) {
 		d.MjpegPort = port
+	}
+}
+
+func WithConnType(typ string) DeviceOption {
+	return func(d *Device) {
+		d.ConnType = typ
 	}
 }
 
@@ -62,7 +69,7 @@ func NewDevice(options ...DeviceOption) (device *Device, err error) {
 	serialNumber := device.serialNumber
 	for _, d := range deviceList {
 		// find device by serial number if specified
-		if serialNumber != "" && d.Properties().SerialNumber != serialNumber {
+		if serialNumber != "" && d.Properties().SerialNumber != serialNumber && d.Properties().ConnectionType == device.ConnType {
 			continue
 		}
 
@@ -86,14 +93,20 @@ func DeviceList() (devices []Device, err error) {
 		return nil, fmt.Errorf("device list: %w", err)
 	}
 
-	devices = make([]Device, len(deviceList))
+	for i := range deviceList {
+		if deviceList[i].Properties().ConnectionType != "USB" {
+			continue
+		}
 
-	for i := range devices {
-		devices[i].deviceID = deviceList[i].Properties().DeviceID
-		devices[i].serialNumber = deviceList[i].Properties().SerialNumber
-		devices[i].Port = defaultPort
-		devices[i].MjpegPort = defaultMjpegPort
-		devices[i].d = deviceList[i]
+		d := Device{
+			deviceID:     deviceList[i].Properties().DeviceID,
+			serialNumber: deviceList[i].Properties().SerialNumber,
+			ConnType:     deviceList[i].Properties().ConnectionType,
+			Port:         defaultPort,
+			MjpegPort:    defaultMjpegPort,
+			d:            deviceList[i],
+		}
+		devices = append(devices, d)
 	}
 
 	return
