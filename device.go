@@ -70,7 +70,7 @@ func NewDevice(options ...DeviceOption) (device *Device, err error) {
 	serialNumber := device.serialNumber
 	for _, d := range deviceList {
 		// find device by serial number if specified
-		if serialNumber != "" && d.Properties().SerialNumber != serialNumber && d.Properties().ConnectionType == device.ConnType {
+		if (serialNumber != "" && d.Properties().SerialNumber != serialNumber) || d.Properties().ConnectionType != device.ConnType {
 			continue
 		}
 
